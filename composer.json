@@ -1,0 +1,18 @@
+{
+    "name": "yason/website-template",
+    "description": "Simple PHP MVC framework",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Yason\\WebsiteTemplate\\": "app/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Yason"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {}
+}
