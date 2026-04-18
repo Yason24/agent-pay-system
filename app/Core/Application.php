@@ -23,7 +23,7 @@ class Application extends Container
         $this->basePath = $basePath;
 
         $this->registerBaseBindings();
-        $this->loadEnvironment();
+        $this->loadEnvironment(); // ✅ ОСТАВИТЬ
         $this->loadConfig();
     }
 
@@ -40,12 +40,18 @@ class Application extends Container
 
     protected function registerBaseBindings(): void
     {
-        $this->instance(Application::class, $this);
+        // Application
+        $this->instance(self::class, $this);
         $this->instance('app', $this);
 
-        $this->singleton(Router::class, fn() => new Router($this));
-        $this->singleton(Kernel::class, fn() => new Kernel($this));
+        // Router
+        $this->singleton(Router::class, fn($app) => new Router($app));
+        $this->alias(Router::class, 'router'); // ⭐ для Facade
 
+        // Kernel
+        $this->singleton(Kernel::class, fn($app) => new Kernel($app));
+
+        // Request
         $this->singleton(Request::class, fn() => new Request());
     }
 

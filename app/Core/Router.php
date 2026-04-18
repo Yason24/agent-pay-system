@@ -5,8 +5,8 @@ namespace Yason\WebsiteTemplate\Core;
 class Router
 {
     private array $routes = [];
-
-    private array $routeMiddleware = [];
+    protected array $groupStack = [];
+    protected array $groupMiddleware = [];
     private Container $container;
 
     public function __construct(Container $container)
@@ -16,15 +16,65 @@ class Router
 
     public function get(string $uri, array $action, array $middleware = []): void
     {
-        $this->routes[$uri] = [
+        $prefix = '';
+        $middlewareStack = [];
+
+        foreach ($this->groupStack as $group) {
+
+            $prefix .= $group['prefix'] ?? '';
+
+            if (isset($group['middleware'])) {
+
+                $groupMiddleware = $group['middleware'];
+
+                if (!is_array($groupMiddleware)) {
+                    $groupMiddleware = [$groupMiddleware];
+                }
+
+                $middlewareStack = array_merge(
+                    $middlewareStack,
+                    $groupMiddleware
+                );
+            }
+        }
+
+        $this->routes[$prefix . $uri] = [
             'action' => $action,
-            'middleware' => $middleware,
+            'middleware' => $middlewareStack,
         ];
     }
 
-    public function middleware(array $middleware): self
+    public function middleware(string|array $middleware): self
     {
-        $this->routeMiddleware = $middleware;
+        $this->groupMiddleware = (array) $middleware;
+
+        return $this;
+    }
+
+    public function prefix(string $prefix): self
+    {
+        return $this->group([
+            'prefix' => $prefix
+        ], fn () => $this);
+    }
+
+    public function group($attributes, callable $callback = null): self
+    {
+        if ($attributes instanceof \Closure) {
+            $callback = $attributes;
+            $attributes = [];
+        }
+
+        if (!empty($this->groupMiddleware)) {
+            $attributes['middleware'] = $this->groupMiddleware;
+            $this->groupMiddleware = [];
+        }
+
+        $this->groupStack[] = $attributes;
+
+        $callback($this);
+
+        array_pop($this->groupStack);
 
         return $this;
     }
@@ -43,9 +93,17 @@ class Router
 
         $pipeline = new Pipeline($this->container);
 
+        $kernel = $this->container->make(
+            \Yason\WebsiteTemplate\Core\Http\Kernel::class
+        );
+
+        $middleware = $kernel->resolveMiddleware(
+            $route['middleware']
+        );
+
         return $pipeline
             ->send($request)
-            ->through($route['middleware'])
+            ->through($middleware)
             ->then(function ($request) use ($controller, $method) {
 
                 $controllerInstance =

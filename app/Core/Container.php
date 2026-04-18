@@ -9,6 +9,12 @@ class Container
 {
     protected array $singletons = [];
     protected array $instances = [];
+    protected array $aliases = [];
+
+    public function alias(string $abstract, string $alias): void
+    {
+        $this->aliases[$alias] = $abstract;
+    }
 
     public function instance(string $abstract, $instance): void
     {
@@ -32,6 +38,10 @@ class Container
     */
     public function make(string $abstract)
     {
+        if (isset($this->aliases[$abstract])) {
+            $abstract = $this->aliases[$abstract];
+        }
+
         /*
         |--------------------------------------------------------------------------
         | Existing instance

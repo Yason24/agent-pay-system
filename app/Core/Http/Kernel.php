@@ -12,8 +12,8 @@ class Kernel
     protected Application $app;
 
     protected array $middleware = [
-        // глобальные middleware
-        // \App\Middleware\LoggerMiddleware::class,
+        \Yason\WebsiteTemplate\Core\Http\Middleware\TrustProxies::class,
+        \Yason\WebsiteTemplate\Core\Http\Middleware\TrimStrings::class,
     ];
 
     public function __construct(Application $app)
@@ -29,7 +29,7 @@ class Kernel
 
     public function handle(Request $request)
     {
-        $this->loadRoutes(); // 🔥 ВАЖНО
+        $this->loadRoutes();
 
         $pipeline = new Pipeline($this->app);
 
@@ -37,7 +37,8 @@ class Kernel
             ->send($request)
             ->through($this->middleware)
             ->then(function ($request) {
-                $router = $this->app->make(Router::class);
+
+                $router = $this->app->make('router');
 
                 return $router->dispatch($request->uri());
             });
@@ -48,5 +49,43 @@ class Kernel
         $router = $this->app->make(\Yason\WebsiteTemplate\Core\Router::class);
 
         require $this->app->basePath('routes/web.php');
+    }
+
+    protected array $middlewareGroups = [
+        'web' => [
+            \Yason\WebsiteTemplate\Core\Http\Middleware\WebMiddleware::class,
+        ],
+    ];
+
+    protected array $routeMiddleware = [
+        'auth' => \App\Http\Middleware\AuthMiddleware::class,
+    ];
+
+    public function resolveMiddleware(array $middleware): array
+    {
+        $resolved = [];
+
+        foreach ($middleware as $name) {
+
+            // group
+            if (isset($this->middlewareGroups[$name])) {
+                $resolved = array_merge(
+                    $resolved,
+                    $this->middlewareGroups[$name]
+                );
+                continue;
+            }
+
+            // alias
+            if (isset($this->routeMiddleware[$name])) {
+                $resolved[] = $this->routeMiddleware[$name];
+                continue;
+            }
+
+            // already class
+            $resolved[] = $name;
+        }
+
+        return $resolved;
     }
 }

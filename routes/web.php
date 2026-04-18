@@ -1,14 +1,10 @@
 <?php
 
+use Yason\WebsiteTemplate\Core\Support\Facades\Route;
 use Yason\WebsiteTemplate\Controllers\HomeController;
 
-/** @var $router \Yason\WebsiteTemplate\Core\Router */
+Route::middleware('web')->group(function () {
 
-$router->get('/', [
-    HomeController::class,
-    'index'
-], [
-    \Yason\WebsiteTemplate\Middleware\LoggerMiddleware::class
-]);
+    Route::get('/', [HomeController::class, 'index']);
 
-//dd('ROUTES LOADED');
+});
