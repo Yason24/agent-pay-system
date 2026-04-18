@@ -1,5 +1,6 @@
 <?php
 
+use Yason\WebsiteTemplate\Core\Application;
 function dd($data)
 {
     echo '<pre>';
@@ -12,20 +13,24 @@ function env(string $key, $default = null)
     return $_ENV[$key] ?? $_SERVER[$key] ?? $default;
 }
 
-function app()
+function app($abstract = null)
 {
-    return \Yason\WebsiteTemplate\Core\Application::getInstance();
+    $app = Application::getInstance();
+
+    if ($abstract) {
+        return $app->make($abstract);
+    }
+
+    return $app;
 }
 
-function config(string $key = null, $default = null)
+function config(string $key = null)
 {
-    $config = app()->make(
-        \Yason\WebsiteTemplate\Core\Config\ConfigRepository::class
-    );
+    $config = app()->make('config');
 
     if (!$key) {
         return $config;
     }
 
-    return $config->get($key, $default);
+    return $config->get($key);
 }
