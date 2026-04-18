@@ -4,6 +4,9 @@ namespace Yason\WebsiteTemplate\Core;
 
 use Yason\WebsiteTemplate\Core\Support\ServiceProvider;
 use Yason\WebsiteTemplate\Core\Config\ConfigLoader;
+use Yason\WebsiteTemplate\Core\Http\Kernel;
+use Yason\WebsiteTemplate\Core\Router;
+use Yason\WebsiteTemplate\Core\Request;
 
 class Application extends Container
 {
@@ -39,6 +42,11 @@ class Application extends Container
     {
         $this->instance(Application::class, $this);
         $this->instance('app', $this);
+
+        $this->singleton(Router::class, fn() => new Router($this));
+        $this->singleton(Kernel::class, fn() => new Kernel($this));
+
+        $this->singleton(Request::class, fn() => new Request());
     }
 
     /*

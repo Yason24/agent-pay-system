@@ -7,8 +7,8 @@ use Yason\WebsiteTemplate\Core\Request;
 
 class HomeController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        dd($request->method());
+        return 'Framework works 🚀';
     }
 }

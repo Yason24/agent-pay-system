@@ -14,16 +14,12 @@ class Router
         $this->container = $container;
     }
 
-    public function get(string $uri, array $action): self
+    public function get(string $uri, array $action, array $middleware = []): void
     {
         $this->routes[$uri] = [
             'action' => $action,
-            'middleware' => $this->routeMiddleware
+            'middleware' => $middleware,
         ];
-
-        $this->routeMiddleware = [];
-
-        return $this;
     }
 
     public function middleware(array $middleware): self
@@ -33,10 +29,10 @@ class Router
         return $this;
     }
 
-    public function dispatch($uri)
+    public function dispatch(string $uri)
     {
         if (!isset($this->routes[$uri])) {
-            die('404');
+            throw new \Exception('Route not found');
         }
 
         $route = $this->routes[$uri];
@@ -52,7 +48,8 @@ class Router
             ->through($route['middleware'])
             ->then(function ($request) use ($controller, $method) {
 
-                $controllerInstance = $this->container->make($controller);
+                $controllerInstance =
+                    $this->container->make($controller);
 
                 return $this->container->call(
                     $controllerInstance,
