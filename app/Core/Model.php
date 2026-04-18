@@ -4,11 +4,15 @@ namespace Yason\WebsiteTemplate\Core;
 
 use PDO;
 
+use Yason\WebsiteTemplate\Core\Relations\BelongsTo;
+
 abstract class Model
 {
     protected static string $table;
 
     protected array $attributes = [];
+
+    protected array $relations = []; // ✅ ВОТ ЭТО
 
     protected PDO $db;
 
@@ -31,9 +35,19 @@ abstract class Model
             return $this->attributes[$key];
         }
 
-        // relation
+        // relation cache
+        if (isset($this->relations[$key])) {
+            return $this->relations[$key];
+        }
+
+        // lazy relation load
         if (method_exists($this, $key)) {
-            return $this->$key();
+
+            $relation = $this->$key()->getResults();
+
+            $this->relations[$key] = $relation;
+
+            return $relation;
         }
 
         return null;
@@ -41,6 +55,11 @@ abstract class Model
 
     public function __set($key, $value)
     {
+        if ($value instanceof self || is_array($value)) {
+            $this->relations[$key] = $value;
+            return;
+        }
+
         $this->attributes[$key] = $value;
     }
 
@@ -90,23 +109,6 @@ abstract class Model
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return $data ? new static($data) : null;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | ALL
-    |--------------------------------------------------------------------------
-    */
-
-    public static function all(): array
-    {
-        $db = (new Database())->getConnection();
-
-        $stmt = $db->query("SELECT * FROM " . static::$table);
-
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        return array_map(fn($row) => new static($row), $rows);
     }
 
     /*
@@ -177,22 +179,12 @@ abstract class Model
 
     /*
     |--------------------------------------------------------------------------
-    | get
-    |--------------------------------------------------------------------------
-    */
-    public static function get(): array
-    {
-        return static::query()->get(static::class);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
     | first
     |--------------------------------------------------------------------------
     */
     public static function first()
     {
-        return static::query()->first(static::class);
+        return static::query()->first();
     }
 
     /*
@@ -203,13 +195,11 @@ abstract class Model
 
     public function belongsTo(string $related, string $foreignKey)
     {
-        $relatedModel = new $related();
-
-        return $related::where(
-            'id',
-            '=',
-            $this->$foreignKey
-        )->first();
+        return new BelongsTo(
+            $this,
+            $related,
+            $foreignKey
+        );
     }
 
     /*
@@ -225,5 +215,45 @@ abstract class Model
             '=',
             $this->id
         )->get();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | with
+    |--------------------------------------------------------------------------
+    */
+    /*protected static array $with = [];*/
+
+    public static function with(string|array $relations): QueryBuilder
+    {
+        return static::query()->with($relations);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Eager Loader Engine
+    |--------------------------------------------------------------------------
+    */
+    public static function whereIn($column, array $values)
+    {
+        $placeholders = implode(',', array_fill(0, count($values), '?'));
+
+        $sql = "SELECT * FROM " . static::$table .
+            " WHERE $column IN ($placeholders)";
+
+        $db = (new Database())->getConnection();
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($values);
+
+        return array_map(
+            fn($row) => new static($row),
+            $stmt->fetchAll(\PDO::FETCH_ASSOC)
+        );
+    }
+
+    public function setRelation(string $key, $value): void
+    {
+        $this->relations[$key] = $value;
     }
 }

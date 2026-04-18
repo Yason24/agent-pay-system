@@ -17,6 +17,8 @@ class QueryBuilder
 
     private string $modelClass;
 
+    private array $with = [];
+
     public function __construct(string $table, string $modelClass)
     {
         $this->db = (new Database())->getConnection();
@@ -102,10 +104,14 @@ class QueryBuilder
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        return array_map(
+        $models = array_map(
             fn($row) => new $this->modelClass($row),
             $rows
         );
+
+        $this->eagerLoad($models);
+
+        return $models;
     }
 
     /*
@@ -121,5 +127,57 @@ class QueryBuilder
         $result = $this->get();
 
         return $result[0] ?? null;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FIRST
+    |--------------------------------------------------------------------------
+    */
+    public function with(string|array $relations): self
+    {
+        $this->with = (array)$relations;
+        return $this;
+    }
+
+    private function eagerLoad(array $models): void
+    {
+        if (!$this->with || !$models) {
+            return;
+        }
+
+        $model = new $this->modelClass;
+
+        foreach ($this->with as $relation) {
+
+            if (!method_exists($model, $relation)) {
+                continue;
+            }
+
+            $relationObject = $model->$relation();
+
+            $foreignKey = $relationObject->getForeignKey();
+            $ownerKey   = $relationObject->getOwnerKey();
+            $related    = $relationObject->getRelated();
+
+            $ids = array_unique(
+                array_map(fn($m) => $m->$foreignKey, $models)
+            );
+
+            if (!$ids) continue;
+
+            $relatedModels = $related::whereIn($ownerKey, $ids);
+
+            $dictionary = [];
+
+            foreach ($relatedModels as $relModel) {
+                $dictionary[$relModel->$ownerKey] = $relModel;
+            }
+
+            foreach ($models as $modelInstance) {
+                $key = $modelInstance->$foreignKey;
+                $modelInstance->setRelation($relation, $dictionary[$key] ?? null);
+            }
+        }
     }
 }
