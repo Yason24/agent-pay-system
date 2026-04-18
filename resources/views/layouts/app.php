@@ -1,5 +1,6 @@
+<?php /** @var string $content */ ?>
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <title><?= $title ?? 'Agent Pay' ?></title>
 </head>

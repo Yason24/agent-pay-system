@@ -25,7 +25,7 @@ function app($abstract = null)
     return $app;
 }
 
-function config(string $key = null)
+function config(?string $key = null)
 {
     $config = app()->make('config');
 

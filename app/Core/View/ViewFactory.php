@@ -4,6 +4,7 @@ namespace Yason\WebsiteTemplate\Core\View;
 
 class ViewFactory
 {
+    protected string $viewsPath;
     protected string $basePath;
 
     public function __construct(string $basePath)
