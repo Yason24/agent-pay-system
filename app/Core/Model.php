@@ -12,7 +12,7 @@ abstract class Model
 
     protected array $attributes = [];
 
-    protected array $relations = []; // ✅ ВОТ ЭТО
+    protected array $relations = [];
 
     protected PDO $db;
 

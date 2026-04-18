@@ -2,16 +2,23 @@
 
 namespace Yason\WebsiteTemplate\Core\Relations;
 
+use Yason\WebsiteTemplate\Core\Model;
+
 class HasMany extends Relation
 {
     protected string $foreignKey;
-    protected string $localKey = 'id';
+    protected string $localKey;
 
-    public function __construct($parent, string $related, string $foreignKey)
-    {
+    public function __construct(
+        Model $parent,
+        string $related,
+        string $foreignKey,
+        string $localKey = 'id'
+    ) {
         parent::__construct($parent, $related);
 
         $this->foreignKey = $foreignKey;
+        $this->localKey = $localKey;
     }
 
     public function getResults()

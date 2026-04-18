@@ -15,11 +15,6 @@ abstract class Relation
         $this->related = $related;
     }
 
-    public function getParent(): Model
-    {
-        return $this->parent;
-    }
-
     public function getRelated(): string
     {
         return $this->related;

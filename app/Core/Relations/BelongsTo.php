@@ -2,16 +2,23 @@
 
 namespace Yason\WebsiteTemplate\Core\Relations;
 
+use Yason\WebsiteTemplate\Core\Model;
+
 class BelongsTo extends Relation
 {
     protected string $foreignKey;
-    protected string $ownerKey = 'id';
+    protected string $ownerKey;
 
-    public function __construct($parent, string $related, string $foreignKey)
-    {
+    public function __construct(
+        Model $parent,
+        string $related,
+        string $foreignKey,
+        string $ownerKey = 'id'
+    ) {
         parent::__construct($parent, $related);
 
         $this->foreignKey = $foreignKey;
+        $this->ownerKey = $ownerKey;
     }
 
     public function getForeignKey()
