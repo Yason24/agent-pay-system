@@ -5,7 +5,8 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Yason\\WebsiteTemplate\\": "app/"
+            "Yason\\WebsiteTemplate\\": "app/",
+            "Seeders\\": "seeders/"
         }
     },
     "authors": [

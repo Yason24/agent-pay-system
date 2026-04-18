@@ -28,44 +28,66 @@ class MigrationRunner
         ");
     }
 
-    public function run(): void
+    public function run()
     {
-        $files = glob(ROOT . '/migrations/*.php');
+        MigrationLock::lock($this->db);
 
-        $executed = $this->db
-            ->query("SELECT migration FROM migrations")
-            ->fetchAll(\PDO::FETCH_COLUMN);
+        try {
 
-        $batch = (int)$this->db
-            ->query("SELECT COALESCE(MAX(batch),0)+1 FROM migrations")
-            ->fetchColumn();
+            $this->db->beginTransaction();
 
-        foreach ($files as $file) {
+            $files = glob(ROOT.'/migrations/*.php');
 
-            $name = basename($file);
+            $executed = $this->db
+                ->query("SELECT migration FROM migrations")
+                ->fetchAll(PDO::FETCH_COLUMN);
 
-            if (in_array($name, $executed)) {
-                continue;
+            $batch = $this->db
+                ->query("SELECT COALESCE(MAX(batch),0)+1 FROM migrations")
+                ->fetchColumn();
+
+            foreach ($files as $file) {
+
+                $name = basename($file);
+
+                if (in_array($name, $executed)) {
+                    continue;
+                }
+
+                echo "Running $name...\n";
+
+                $migration = require $file;
+
+                $migration['up']($this->db);
+
+                $stmt = $this->db->prepare(
+                    "INSERT INTO migrations (migration,batch) VALUES (?,?)"
+                );
+
+                $stmt->execute([$name,$batch]);
             }
 
-            echo "Running $name...\n";
+            $this->db->commit();
 
-            $migration = require $file;
+            echo "Migrations complete ✅\n";
 
-            $migration($this->db);
+        } catch (\Throwable $e) {
 
-            $stmt = $this->db->prepare(
-                "INSERT INTO migrations (migration, batch) VALUES (?, ?)"
-            );
+            $this->db->rollBack();
 
-            $stmt->execute([$name, $batch]);
+            echo "Migration failed ❌\n";
+            echo $e->getMessage()."\n";
         }
 
-        echo "Migrations complete ✅\n";
+        MigrationLock::unlock($this->db);
     }
 
-    public function rollback(): void
+    public function rollback()
     {
+        MigrationLock::lock($this->db);
+
+        $this->db->beginTransaction();
+
         $batch = $this->db
             ->query("SELECT MAX(batch) FROM migrations")
             ->fetchColumn();
@@ -75,26 +97,53 @@ class MigrationRunner
             return;
         }
 
-        $migrations = $this->db
-            ->prepare("SELECT migration FROM migrations WHERE batch=? ORDER BY id DESC");
+        $stmt = $this->db->prepare(
+            "SELECT migration FROM migrations
+         WHERE batch = ?
+         ORDER BY id DESC"
+        );
 
-        $migrations->execute([$batch]);
+        $stmt->execute([$batch]);
 
-        foreach ($migrations->fetchAll(\PDO::FETCH_COLUMN) as $fileName) {
+        foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $file) {
 
-            echo "Rollback $fileName...\n";
+            echo "Rollback $file...\n";
 
-            $migration = require ROOT . "/migrations/$fileName";
+            $migration = require ROOT."/migrations/$file";
 
-            if (is_array($migration) && isset($migration['down'])) {
-                $migration['down']($this->db);
-            }
+            $migration['down']($this->db);
 
-            $this->db
-                ->prepare("DELETE FROM migrations WHERE migration=?")
-                ->execute([$fileName]);
+            $del = $this->db->prepare(
+                "DELETE FROM migrations WHERE migration=?"
+            );
+
+            $del->execute([$file]);
         }
 
+        $this->db->commit();
+
+        MigrationLock::unlock($this->db);
+
         echo "Rollback complete ✅\n";
+    }
+
+    public function status()
+    {
+        $files = glob(ROOT.'/migrations/*.php');
+
+        $executed = $this->db
+            ->query("SELECT migration FROM migrations")
+            ->fetchAll(PDO::FETCH_COLUMN);
+
+        foreach ($files as $file) {
+
+            $name = basename($file);
+
+            $status = in_array($name,$executed)
+                ? 'YES'
+                : 'NO';
+
+            echo str_pad($name,45)." | $status\n";
+        }
     }
 }

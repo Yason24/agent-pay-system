@@ -7,6 +7,7 @@ require ROOT . '/vendor/autoload.php';
 
 use Yason\WebsiteTemplate\Core\MigrationRunner;
 use Yason\WebsiteTemplate\Core\MigrationCreator;
+use Yason\WebsiteTemplate\Core\SeederRunner;
 
 $command = $argv[1] ?? null;
 $name    = $argv[2] ?? null;
@@ -28,6 +29,19 @@ switch ($command) {
 
     case 'rollback':
         (new MigrationRunner())->rollback();
+        break;
+
+    case 'migrate:status':
+        (new MigrationRunner())->status();
+        break;
+
+    case 'db:seed':
+        if (!$name) {
+            echo "Provide seeder name\n";
+            exit;
+        }
+
+        (new SeederRunner())->run($name);
         break;
 
     default:
