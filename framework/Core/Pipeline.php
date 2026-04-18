@@ -7,7 +7,7 @@ use Closure;
 class Pipeline
 {
     protected array $pipes = [];
-
+    protected $passable;
     protected Container $container;
 
     public function __construct(Container $container)

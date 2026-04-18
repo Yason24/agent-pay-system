@@ -5,7 +5,7 @@ namespace Yason\WebsiteTemplate\Core;
 use PDO;
 
 use Yason\WebsiteTemplate\Core\Relations\BelongsTo;
-
+use Yason\WebsiteTemplate\Core\Relations\HasMany;
 use Yason\WebsiteTemplate\Core\Collection;
 
 

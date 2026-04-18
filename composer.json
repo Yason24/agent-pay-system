@@ -20,7 +20,9 @@
         }
     ],
     "minimum-stability": "stable",
-    "require": {},
+    "require": {
+        "ext-pdo": "*"
+    },
     "extra": {
         "providers": [
             "App\\Providers\\AppServiceProvider"
