@@ -1,24 +1,23 @@
 <?php
-
 declare(strict_types=1);
 
 define('ROOT', dirname(__DIR__));
 
-require ROOT.'/vendor/autoload.php';
+require ROOT . '/vendor/autoload.php';
 
-use Yason\WebsiteTemplate\Core\Container;
-use Yason\WebsiteTemplate\Core\Router;
+use Yason\WebsiteTemplate\Core\Application;
 use Yason\WebsiteTemplate\Core\Request;
-use Yason\WebsiteTemplate\Core\Kernel;
+use Yason\WebsiteTemplate\Core\Router;
 
-$container = new Container();
+$app = new Application(ROOT);   // 🔥 ВАЖНО
 
-$router = new Router($container);
+$router = new Router($app);
 
-require ROOT.'/routes/web.php';
+$router->get('/', [
+    Yason\WebsiteTemplate\Controllers\HomeController::class,
+    'index'
+]);
 
-$request = new Request();
-
-$kernel = new Kernel($container, $router);
-
-$kernel->handle($request);
+$router->dispatch(
+    (new Request())->uri()
+);

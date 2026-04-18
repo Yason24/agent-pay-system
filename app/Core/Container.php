@@ -7,8 +7,24 @@ use ReflectionMethod;
 
 class Container
 {
+    protected array $singletons = [];
     protected array $instances = [];
 
+    public function instance(string $abstract, $instance): void
+    {
+        $this->instances[$abstract] = $instance;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | singleton
+    |--------------------------------------------------------------------------
+    */
+
+    public function singleton(string $abstract, callable $factory): void
+    {
+        $this->singletons[$abstract] = $factory;
+    }
     /*
     |--------------------------------------------------------------------------
     | MAKE CLASS
@@ -16,11 +32,37 @@ class Container
     */
     public function make(string $abstract)
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Existing instance
+        |--------------------------------------------------------------------------
+        */
+
         if (isset($this->instances[$abstract])) {
             return $this->instances[$abstract];
         }
 
-        $reflection = new ReflectionClass($abstract);
+        /*
+        |--------------------------------------------------------------------------
+        | Singleton
+        |--------------------------------------------------------------------------
+        */
+
+        if (isset($this->singletons[$abstract])) {
+
+            $this->instances[$abstract] =
+                ($this->singletons[$abstract])($this);
+
+            return $this->instances[$abstract];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Auto resolve
+        |--------------------------------------------------------------------------
+        */
+
+        $reflection = new \ReflectionClass($abstract);
 
         if (!$reflection->isInstantiable()) {
             throw new \Exception("Class {$abstract} not instantiable");
@@ -39,9 +81,7 @@ class Container
             $type = $parameter->getType();
 
             if ($type && !$type->isBuiltin()) {
-                $dependencies[] = $this->make(
-                    $type->getName()
-                );
+                $dependencies[] = $this->make($type->getName());
             } else {
                 $dependencies[] = null;
             }

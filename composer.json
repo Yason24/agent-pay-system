@@ -18,5 +18,10 @@
         }
     ],
     "minimum-stability": "stable",
-    "require": {}
+    "require": {},
+    "extra": {
+        "providers": [
+            "Yason\\WebsiteTemplate\\Providers\\AppServiceProvider"
+        ]
+    }
 }
