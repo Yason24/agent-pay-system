@@ -5,6 +5,8 @@ namespace Yason\WebsiteTemplate\Core;
 class Router
 {
     private array $routes = [];
+
+    private array $routeMiddleware = [];
     private Container $container;
 
     public function __construct(Container $container)
@@ -12,9 +14,23 @@ class Router
         $this->container = $container;
     }
 
-    public function get(string $uri, array $action): void
+    public function get(string $uri, array $action): self
     {
-        $this->routes[$uri] = $action;
+        $this->routes[$uri] = [
+            'action' => $action,
+            'middleware' => $this->routeMiddleware
+        ];
+
+        $this->routeMiddleware = [];
+
+        return $this;
+    }
+
+    public function middleware(array $middleware): self
+    {
+        $this->routeMiddleware = $middleware;
+
+        return $this;
     }
 
     public function dispatch($uri)
@@ -23,13 +39,25 @@ class Router
             die('404');
         }
 
-        [$controller, $method] = $this->routes[$uri];
+        $route = $this->routes[$uri];
 
-        $controllerInstance = $this->container->make($controller);
+        [$controller, $method] = $route['action'];
 
-        return $this->container->call(
-            $controllerInstance,
-            $method
-        );
+        $request = $this->container->make(Request::class);
+
+        $pipeline = new Pipeline($this->container);
+
+        return $pipeline
+            ->send($request)
+            ->through($route['middleware'])
+            ->then(function ($request) use ($controller, $method) {
+
+                $controllerInstance = $this->container->make($controller);
+
+                return $this->container->call(
+                    $controllerInstance,
+                    $method
+                );
+            });
     }
 }
