@@ -1,0 +1,21 @@
+#!/usr/bin/env php
+<?php
+
+define('ROOT', __DIR__);
+
+require ROOT . '/vendor/autoload.php';
+
+use Yason\WebsiteTemplate\Core\MigrationRunner;
+
+$command = $argv[1] ?? null;
+
+switch ($command) {
+
+    case 'migrate':
+        (new MigrationRunner())->run();
+        break;
+
+    default:
+        echo "Available commands:\n";
+        echo "php console migrate\n";
+}
