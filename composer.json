@@ -6,11 +6,11 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
-            "Yason\\WebsiteTemplate\\": "app/",
+            "Yason\\WebsiteTemplate\\": "framework/",
             "Seeders\\": "seeders/"
         },
         "files": [
-            "app/Core/helpers.php",
+            "framework/Core/helpers.php",
             "app/helpers.php"
         ]
     },
