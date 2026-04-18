@@ -8,6 +8,8 @@ use Yason\WebsiteTemplate\Core\Relations\BelongsTo;
 
 use Yason\WebsiteTemplate\Core\Collection;
 
+
+
 abstract class Model
 {
     protected static string $table;
@@ -262,7 +264,7 @@ abstract class Model
     |--------------------------------------------------------------------------
     */
 
-    public static function get(): Collection
+    public static function get()
     {
         return static::query()->get();
     }

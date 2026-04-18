@@ -4,8 +4,6 @@ namespace Yason\WebsiteTemplate\Core;
 
 use PDO;
 
-use Yason\WebsiteTemplate\Core\Collection;
-
 class QueryBuilder
 {
     private string $table;

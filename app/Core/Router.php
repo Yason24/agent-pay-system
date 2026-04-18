@@ -1,33 +1,35 @@
 <?php
 
 namespace Yason\WebsiteTemplate\Core;
-use Yason\WebsiteTemplate\Core\Container;
 
 class Router
 {
     private array $routes = [];
+    private Container $container;
+
+    public function __construct(Container $container)
+    {
+        $this->container = $container;
+    }
 
     public function get(string $uri, array $action): void
     {
         $this->routes[$uri] = $action;
     }
 
-    public function dispatch(string $requestUri): void
+    public function dispatch($uri)
     {
-        $uri = parse_url($requestUri, PHP_URL_PATH);
-
         if (!isset($this->routes[$uri])) {
-            http_response_code(404);
-            echo '404 Not Found';
-            return;
+            die('404');
         }
 
         [$controller, $method] = $this->routes[$uri];
 
-        $container = new Container();
+        $controllerInstance = $this->container->make($controller);
 
-        $controllerInstance = $container->make($controller);
-
-        $controllerInstance->$method();
+        return $this->container->call(
+            $controllerInstance,
+            $method
+        );
     }
 }

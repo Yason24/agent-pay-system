@@ -1,18 +1,24 @@
 <?php
-
 declare(strict_types=1);
 
 define('ROOT', dirname(__DIR__));
 
 require ROOT . '/vendor/autoload.php';
 
-use Yason\WebsiteTemplate\Core\Env;
+use Yason\WebsiteTemplate\Core\Container;
 use Yason\WebsiteTemplate\Core\Router;
+use Yason\WebsiteTemplate\Core\Request;
+use Yason\WebsiteTemplate\Controllers\HomeController;
 
-Env::load(ROOT . '/.env');
+$container = new Container();
 
-$router = new Router();
+$router = new Router($container);
 
-require ROOT . '/routes/web.php';
+$router->get('/', [
+    HomeController::class,
+    'index'
+]);
 
-$router->dispatch($_SERVER['REQUEST_URI']);
+$router->dispatch(
+    (new Request())->uri()
+);
