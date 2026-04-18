@@ -1,6 +1,6 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Models;
+namespace App\Models;
 
 use Framework\Core\Model;
 

@@ -10,6 +10,12 @@ use Framework\Core\Http\Kernel;
 
 $app = new Application(ROOT);
 
+$app = new Framework\Core\Application(
+    dirname(__DIR__)
+);
+
+$app->boot();
+
 $request = Request::capture();
 
 $kernel = $app->make(Kernel::class);

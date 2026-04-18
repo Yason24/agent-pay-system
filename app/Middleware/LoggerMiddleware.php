@@ -1,6 +1,6 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Middleware;
+namespace App\Middleware;
 
 use Closure;
 use Framework\Core\Request;

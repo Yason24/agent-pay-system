@@ -1,14 +1,11 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Controllers;
+namespace App\Controllers;
 
-use Framework\Core\Controller;
-use Framework\Core\Request;
-
-class HomeController extends Controller
+class HomeController
 {
     public function index()
     {
-        return 'Framework works 🚀';
+        echo "HOME OK";
     }
 }

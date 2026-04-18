@@ -18,19 +18,30 @@ class Application extends Container
     protected array $booted = [];
     protected string $basePath;
 
-    public function __construct(string $basePath)
+    public function __construct($basePath)
     {
-        static::$instance = $this;
-
         $this->basePath = $basePath;
+
+        static::$instance = $this;
 
         $this->registerBaseBindings();
 
-        \Framework\Core\Support\Facades\Facade
-            ::setFacadeApplication($this);
+        Facade::setFacadeApplication($this);
+
+        $this->registerBaseServices();
 
         $this->registerConfiguredProviders();
-        $this->bootProviders();
+    }
+
+    protected function registerBaseServices()
+    {
+        $this->singleton('router', function () {
+            return new \Framework\Core\Router();
+        });
+
+        $this->singleton('view', function () {
+            return new \Framework\Core\View\ViewFactory();
+        });
     }
 
     public static function getInstance(): self
@@ -108,13 +119,11 @@ class Application extends Container
     |--------------------------------------------------------------------------
     */
 
-    public function register(string $provider): void
+    public function register($provider)
     {
-        $provider = new $provider($this);
-
         $provider->register();
 
-        $this->providers[] = $provider;
+        $this->serviceProviders[] = $provider;
     }
 
     public function bootProviders(): void
@@ -134,21 +143,23 @@ class Application extends Container
     protected function registerConfiguredProviders(): void
     {
         $composer = json_decode(
-            file_get_contents($this->basePath('composer.json')),
+            file_get_contents($this->basePath . '/composer.json'),
             true
         );
 
         $providers = $composer['extra']['providers'] ?? [];
 
         foreach ($providers as $provider) {
-            $this->register($provider);
+            $this->register(new $provider($this));
         }
     }
 
-    public function boot(): void
+    public function boot()
     {
-        foreach ($this->providers as $provider) {
-            $provider->boot();
+        foreach ($this->serviceProviders as $provider) {
+            if (method_exists($provider, 'boot')) {
+                $provider->boot();
+            }
         }
     }
 

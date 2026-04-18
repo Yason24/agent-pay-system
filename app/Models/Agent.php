@@ -1,9 +1,9 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Models;
+namespace App\Models;
 
 use Framework\Core\Model;   // ← ДОБАВИТЬ
-use Yason\WebsiteTemplate\Models\User;
+use App\Models\User;
 
 class Agent extends Model
 {

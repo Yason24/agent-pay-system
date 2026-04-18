@@ -14,7 +14,7 @@ class Kernel
     */
 
     protected array $middleware = [
-        \Yason\WebsiteTemplate\Middleware\LoggerMiddleware::class,
+        App\Middleware\LoggerMiddleware::class,
     ];
 
     public function __construct(Container $container, Router $router)
