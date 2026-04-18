@@ -210,11 +210,11 @@ abstract class Model
 
     public function hasMany(string $related, string $foreignKey)
     {
-        return $related::where(
-            $foreignKey,
-            '=',
-            $this->id
-        )->get();
+        return new HasMany(
+            $this,
+            $related,
+            $foreignKey
+        );
     }
 
     /*

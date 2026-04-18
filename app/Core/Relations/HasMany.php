@@ -2,10 +2,10 @@
 
 namespace Yason\WebsiteTemplate\Core\Relations;
 
-class BelongsTo extends Relation
+class HasMany extends Relation
 {
     protected string $foreignKey;
-    protected string $ownerKey = 'id';
+    protected string $localKey = 'id';
 
     public function __construct($parent, string $related, string $foreignKey)
     {
@@ -14,24 +14,14 @@ class BelongsTo extends Relation
         $this->foreignKey = $foreignKey;
     }
 
-    public function getForeignKey()
-    {
-        return $this->foreignKey;
-    }
-
-    public function getOwnerKey()
-    {
-        return $this->ownerKey;
-    }
-
     public function getResults()
     {
         $related = $this->related;
 
         return $related::where(
-            $this->ownerKey,
+            $this->foreignKey,
             '=',
-            $this->parent->{$this->foreignKey}
-        )->first();
+            $this->parent->{$this->localKey}
+        )->get();
     }
 }
