@@ -2,164 +2,84 @@
 
 ## Project Type
 
-Internal financial workflow system (software product).
+Custom PHP Framework (Laravel-inspired)
 
-Purpose: replace direct money transfers to agents with controlled purchase payments to reduce legal and tax risks.
+## Current Development Stage
 
----
+Framework Core Completed (Stage 1)
 
-## Business Logic
+The project already HAS:
 
-Company works with insurance agents (OSAGO).
+-  Application Container
 
-Agents receive commission monthly.
+-  HTTP Kernel
 
-Instead of transferring cash:
+-  Middleware Pipeline
 
-* agents submit purchase links
-* company dispatchers pay purchases manually
-* agent debt balance decreases
+-  Router System
 
-System acts as **internal payment accounting platform**.
+-  Middleware Groups & Aliases
 
----
+-  Dependency Injection
 
-## Core Workflow
+-  Response Handling
 
-1. Accountant sets agent balance (company debt).
-2. Agent logs in.
-3. Agent sees available balance.
-4. Agent submits purchase link/order.
-5. Dispatcher accepts order.
-6. Dispatcher pays manually using company card.
-7. Dispatcher confirms payment.
-8. Agent balance decreases.
-9. All actions logged.
+-  Basic View Engine
+
+Framework boot message:
+
+"Framework works 🚀"
 
 ---
 
-## User Roles
+## IMPORTANT
 
-### Agent
+DO NOT rebuild architecture.
 
-* personal cabinet
-* view balance
-* submit orders
-* view history
+The framework foundation EXISTS.
 
-### Dispatcher
+Future work must CONTINUE development,
 
-* see all agents
-* accept orders
-* mark paid
-* add payment amount
-
-### Accountant
-
-* adjust balances
-* create agents
-* financial control
-
-### Admin
-
-* full access
-* role management
-* system settings
+NOT restart infrastructure.
 
 ---
 
-## Technical Stack
+## Current Goal
 
-Language: PHP 8+
-Architecture: Custom MVC Framework
-Database: PostgreSQL
-Autoload: PSR-4 (Composer)
-Environment: OSPanel (local dev)
+Move from Framework Development -> Application Development.
 
-Framework Repository:
-website-template
+Next priorities:
 
-Product Repository:
-agent-pay-system
+1. Blade-level View Engine
 
----
+2. Layouts & Sections
 
-## Architecture
+3. Database Layer
 
-Request
-→ Router
-→ Container (DI)
-→ Controller
-→ Service
-→ Model
-→ Database (PDO PostgreSQL)
-→ View
+4. Authentication System
+
+5. Admin Dashboard
+
+6. Payment Logic
 
 ---
 
-## Current Status
+## Coding Style
 
-✔ MVC implemented
-✔ Dependency Injection Container
-✔ ENV configuration
-✔ Database connection
-✔ Product repository created
+-  Laravel-like structure
 
-Next Step:
-Database migrations + Auth system.
+-  Clean architecture
 
----
+-  Service-oriented design
 
-## Database Concepts (Planned)
-
-agents
-users
-roles
-balances
-orders
-payments
-operation_logs
-
-All actions must be auditable.
+-  Dependency Injection everywhere
 
 ---
 
-## Non-Functional Requirements
+## Repository Owner Intention
 
-* multiple legal entities
-* RUB currency only
-* manual payments only (initial phase)
-* concurrent dispatcher work
-* full history logging
+The author is building a long-term scalable system,
 
----
+not a quick website.
 
-## Notifications (Future)
-
-Possible external bot:
-
-* Telegram or MAX-bot
-  Messages:
-* Order accepted
-* Order completed
-
----
-
-## Development Rules
-
-* framework code separated from product
-* migrations only (no manual DB changes)
-* every action logged
-* role-based access
-
----
-
-## AI Instruction
-
-You are continuing development of an existing software product.
-
-Do NOT rebuild architecture.
-Extend existing system step-by-step.
-
-Current phase:
-START DATABASE DESIGN.
+Treat project as a framework-first architecture.
