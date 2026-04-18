@@ -12,9 +12,8 @@ use Yason\WebsiteTemplate\Core\View\ViewFactory;
 class Application extends Container
 {
     protected static self $instance;
-
     protected array $providers = [];
-
+    protected array $booted = [];
     protected string $basePath;
 
     public function __construct(string $basePath)
@@ -24,8 +23,9 @@ class Application extends Container
         $this->basePath = $basePath;
 
         $this->registerBaseBindings();
-        $this->loadEnvironment();
-        $this->loadConfig();
+
+        $this->registerConfiguredProviders();
+        $this->bootProviders();
     }
 
     public static function getInstance(): self
@@ -96,11 +96,20 @@ class Application extends Container
     |--------------------------------------------------------------------------
     */
 
-    public function register(ServiceProvider $provider): void
+    public function register(string $provider): void
     {
+        $provider = new $provider($this);
+
         $provider->register();
 
         $this->providers[] = $provider;
+    }
+
+    public function bootProviders(): void
+    {
+        foreach ($this->providers as $provider) {
+            $provider->boot();
+        }
     }
 
     public function registerProvider(string $providerClass): void
@@ -110,7 +119,7 @@ class Application extends Container
         $this->register($provider);
     }
 
-    public function registerConfiguredProviders(): void
+    protected function registerConfiguredProviders(): void
     {
         $composer = json_decode(
             file_get_contents($this->basePath('composer.json')),
@@ -120,7 +129,7 @@ class Application extends Container
         $providers = $composer['extra']['providers'] ?? [];
 
         foreach ($providers as $provider) {
-            $this->registerProvider($provider);
+            $this->register($provider);
         }
     }
 

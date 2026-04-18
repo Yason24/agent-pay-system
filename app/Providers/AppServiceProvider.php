@@ -1,24 +1,18 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Providers;
+namespace App\Providers;
 
 use Yason\WebsiteTemplate\Core\Support\ServiceProvider;
-use Yason\WebsiteTemplate\Core\Request;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        /*
-        | Bind Request as singleton
-        */
-        $this->app->singleton(Request::class, function () {
-            return new Request();
-        });
+        // bindings
     }
 
     public function boot(): void
     {
-        //
+        dd('APP PROVIDER BOOTED');
     }
 }

@@ -5,6 +5,7 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
+            "App\\": "app/",
             "Yason\\WebsiteTemplate\\": "app/",
             "Seeders\\": "seeders/"
         },
@@ -22,7 +23,7 @@
     "require": {},
     "extra": {
         "providers": [
-            "Yason\\WebsiteTemplate\\Providers\\AppServiceProvider"
+            "App\\Providers\\AppServiceProvider"
         ]
     }
 }
