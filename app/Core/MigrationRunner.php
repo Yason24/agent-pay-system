@@ -22,6 +22,7 @@ class MigrationRunner
             CREATE TABLE IF NOT EXISTS migrations (
                 id SERIAL PRIMARY KEY,
                 migration VARCHAR(255),
+                batch INT,
                 executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ");
@@ -33,7 +34,11 @@ class MigrationRunner
 
         $executed = $this->db
             ->query("SELECT migration FROM migrations")
-            ->fetchAll(PDO::FETCH_COLUMN);
+            ->fetchAll(\PDO::FETCH_COLUMN);
+
+        $batch = (int)$this->db
+            ->query("SELECT COALESCE(MAX(batch),0)+1 FROM migrations")
+            ->fetchColumn();
 
         foreach ($files as $file) {
 
@@ -50,12 +55,46 @@ class MigrationRunner
             $migration($this->db);
 
             $stmt = $this->db->prepare(
-                "INSERT INTO migrations (migration) VALUES (?)"
+                "INSERT INTO migrations (migration, batch) VALUES (?, ?)"
             );
 
-            $stmt->execute([$name]);
+            $stmt->execute([$name, $batch]);
         }
 
         echo "Migrations complete ✅\n";
+    }
+
+    public function rollback(): void
+    {
+        $batch = $this->db
+            ->query("SELECT MAX(batch) FROM migrations")
+            ->fetchColumn();
+
+        if (!$batch) {
+            echo "Nothing to rollback\n";
+            return;
+        }
+
+        $migrations = $this->db
+            ->prepare("SELECT migration FROM migrations WHERE batch=? ORDER BY id DESC");
+
+        $migrations->execute([$batch]);
+
+        foreach ($migrations->fetchAll(\PDO::FETCH_COLUMN) as $fileName) {
+
+            echo "Rollback $fileName...\n";
+
+            $migration = require ROOT . "/migrations/$fileName";
+
+            if (is_array($migration) && isset($migration['down'])) {
+                $migration['down']($this->db);
+            }
+
+            $this->db
+                ->prepare("DELETE FROM migrations WHERE migration=?")
+                ->execute([$fileName]);
+        }
+
+        echo "Rollback complete ✅\n";
     }
 }

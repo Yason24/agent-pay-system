@@ -26,8 +26,13 @@ switch ($command) {
         (new MigrationCreator())->create($name);
         break;
 
+    case 'rollback':
+        (new MigrationRunner())->rollback();
+        break;
+
     default:
         echo "Available commands:\n";
         echo "php console migrate\n";
         echo "php console make:migration NAME\n";
+        echo "php console rollback\n";
 }
