@@ -6,13 +6,11 @@
 </head>
 <body>
 
-<header>
-    <h1>Agent Pay System</h1>
-</header>
+<header>HEADER</header>
 
-<main>
-    <?= $content ?>
-</main>
+@yield('content')
+
+<footer>FOOTER</footer>
 
 </body>
 </html>

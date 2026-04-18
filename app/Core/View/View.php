@@ -4,32 +4,34 @@ namespace Yason\WebsiteTemplate\Core\View;
 
 class View
 {
-    protected string $path;
-    protected array $data;
+    protected array $sections = [];
+    protected array $sectionStack = [];
+    protected ?string $layout = null;
 
-    public function __construct(string $path, array $data = [])
+    public function extend(string $layout)
     {
-        $this->path = $path;
-        $this->data = $data;
+        $this->layout = $layout;
     }
 
-    public function render(): string
+    public function getLayout(): ?string
     {
-        if (!file_exists($this->path)) {
-            throw new ViewException("View not found: {$this->path}");
-        }
+        return $this->layout;
+    }
 
-        extract($this->data);
-
+    public function startSection(string $name)
+    {
+        $this->sectionStack[] = $name;
         ob_start();
-
-        require $this->path;
-
-        return ob_get_clean();
     }
 
-    public function __toString()
+    public function endSection()
     {
-        return $this->render();
+        $name = array_pop($this->sectionStack);
+        $this->sections[$name] = ob_get_clean();
+    }
+
+    public function yieldSection(string $name)
+    {
+        return $this->sections[$name] ?? '';
     }
 }
