@@ -1,6 +1,6 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Core\Support\Facades;
+namespace Framework\Core\Support\Facades;
 
 class Route extends Facade
 {

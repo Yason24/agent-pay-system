@@ -1,12 +1,12 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Core\Http;
+namespace Framework\Core\Http;
 
-use Yason\WebsiteTemplate\Core\Application;
-use Yason\WebsiteTemplate\Core\Request;
-use Yason\WebsiteTemplate\Core\Pipeline;
-use Yason\WebsiteTemplate\Core\Router;
-use Yason\WebsiteTemplate\Core\Http\MiddlewareRegistry;
+use Framework\Core\Application;
+use Framework\Core\Request;
+use Framework\Core\Pipeline;
+use Framework\Core\Router;
+use Framework\Core\Http\MiddlewareRegistry;
 
 
 class Kernel
@@ -16,8 +16,8 @@ class Kernel
     protected MiddlewareRegistry $registry;
 
     protected array $middleware = [
-        \Yason\WebsiteTemplate\Core\Http\Middleware\TrustProxies::class,
-        \Yason\WebsiteTemplate\Core\Http\Middleware\TrimStrings::class,
+        \Framework\Core\Http\Middleware\TrustProxies::class,
+        \Framework\Core\Http\Middleware\TrimStrings::class,
     ];
 
     public function __construct($app)
@@ -74,7 +74,7 @@ class Kernel
 
     protected function loadRoutes(): void
     {
-        $router = $this->app->make(\Yason\WebsiteTemplate\Core\Router::class);
+        $router = $this->app->make(\Framework\Core\Router::class);
 
         require $this->app->basePath('routes/web.php');
     }
@@ -94,7 +94,7 @@ class Kernel
 
         $this->registry->alias(
             'trust',
-            \Yason\WebsiteTemplate\Core\Http\Middleware\TrustProxies::class
+            \Framework\Core\Http\Middleware\TrustProxies::class
         );
 
         /*

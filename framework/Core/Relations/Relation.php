@@ -1,8 +1,8 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Core\Relations;
+namespace Framework\Core\Relations;
 
-use Yason\WebsiteTemplate\Core\Model;
+use Framework\Core\Model;
 
 abstract class Relation
 {

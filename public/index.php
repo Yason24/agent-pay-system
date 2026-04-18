@@ -2,18 +2,20 @@
 
 define('ROOT', dirname(__DIR__));
 
-require ROOT.'/vendor/autoload.php';
+require __DIR__.'/../vendor/autoload.php';
 
-use Yason\WebsiteTemplate\Core\Application;
-use Yason\WebsiteTemplate\Core\Request;
-use Yason\WebsiteTemplate\Core\Http\Kernel;
+use Framework\Core\Application;
+use Framework\Core\Request;
+use Framework\Core\Http\Kernel;
 
-$app = new Application(ROOT);
+$app = new Application(
+    dirname(__DIR__)
+);
 
 $request = $app->make(Request::class);
 
 $kernel = $app->make(
-    \Yason\WebsiteTemplate\Core\Http\Kernel::class
+    \Framework\Core\Http\Kernel::class
 );
 
 $response = $kernel->handle($request);

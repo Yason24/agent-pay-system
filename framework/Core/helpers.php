@@ -1,6 +1,6 @@
 <?php
 
-use Yason\WebsiteTemplate\Core\Application;
+use Framework\Core\Application;
 
 function dd($data)
 {

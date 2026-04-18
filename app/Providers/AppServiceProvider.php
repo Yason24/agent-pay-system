@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use Yason\WebsiteTemplate\Core\Support\ServiceProvider;
+use Framework\Core\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {

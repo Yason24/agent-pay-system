@@ -5,9 +5,9 @@ define('ROOT', __DIR__);
 
 require ROOT . '/vendor/autoload.php';
 
-use Yason\WebsiteTemplate\Core\MigrationRunner;
-use Yason\WebsiteTemplate\Core\MigrationCreator;
-use Yason\WebsiteTemplate\Core\SeederRunner;
+use Framework\Core\MigrationRunner;
+use Framework\Core\MigrationCreator;
+use Framework\Core\SeederRunner;
 
 $command = $argv[1] ?? null;
 $name    = $argv[2] ?? null;

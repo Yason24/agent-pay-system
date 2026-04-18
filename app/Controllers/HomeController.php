@@ -2,8 +2,8 @@
 
 namespace Yason\WebsiteTemplate\Controllers;
 
-use Yason\WebsiteTemplate\Core\Controller;
-use Yason\WebsiteTemplate\Core\Request;
+use Framework\Core\Controller;
+use Framework\Core\Request;
 
 class HomeController extends Controller
 {

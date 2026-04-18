@@ -1,9 +1,9 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Core\Http\Middleware;
+namespace Framework\Core\Http\Middleware;
 
 use Closure;
-use Yason\WebsiteTemplate\Core\Request;
+use Framework\Core\Request;
 
 class WebMiddleware
 {

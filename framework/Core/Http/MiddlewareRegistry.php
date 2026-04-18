@@ -1,6 +1,6 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Core\Http;
+namespace Framework\Core\Http;
 
 class MiddlewareRegistry
 {

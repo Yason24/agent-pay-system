@@ -2,7 +2,7 @@
 
 namespace Yason\WebsiteTemplate\Models;
 
-use Yason\WebsiteTemplate\Core\Model;   // ← ДОБАВИТЬ
+use Framework\Core\Model;   // ← ДОБАВИТЬ
 use Yason\WebsiteTemplate\Models\User;
 
 class Agent extends Model

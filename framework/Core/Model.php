@@ -1,12 +1,12 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Core;
+namespace Framework\Core;
 
 use PDO;
 
-use Yason\WebsiteTemplate\Core\Relations\BelongsTo;
-use Yason\WebsiteTemplate\Core\Relations\HasMany;
-use Yason\WebsiteTemplate\Core\Collection;
+use Framework\Core\Relations\BelongsTo;
+use Framework\Core\Relations\HasMany;
+use Framework\Core\Collection;
 
 
 

@@ -1,9 +1,9 @@
 <?php
 
-use Yason\WebsiteTemplate\Core\View\ViewFactory;
+use Framework\Core\View\ViewFactory;
 
 function view(string $view, array $data = [])
 {
-    return app(\Yason\WebsiteTemplate\Core\View\ViewFactory::class)
+    return app(\Framework\Core\View\ViewFactory::class)
         ->make($view, $data);
 }

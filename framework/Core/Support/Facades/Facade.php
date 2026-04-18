@@ -1,25 +1,30 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Core\Support\Facades;
+namespace Framework\Core\Support\Facades;
 
-use Yason\WebsiteTemplate\Core\Application;
+use Framework\Core\Application;
 
 abstract class Facade
 {
-    protected static function getFacadeAccessor()
+    protected static $app;
+
+    public static function setFacadeApplication($app)
     {
-        throw new \Exception('Facade does not implement accessor');
+        static::$app = $app;
     }
 
-    protected static function resolveInstance()
+    protected static function getFacadeRoot()
     {
-        return Application::getInstance()
-            ->make(static::getFacadeAccessor());
+        return static::$app->make(
+            static::getFacadeAccessor()
+        );
     }
 
     public static function __callStatic($method, $args)
     {
-        return static::resolveInstance()
+        return static::getFacadeRoot()
             ->$method(...$args);
     }
+
+    abstract protected static function getFacadeAccessor();
 }

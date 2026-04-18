@@ -1,6 +1,6 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Core;
+namespace Framework\Core;
 
 class Router
 {
@@ -94,7 +94,7 @@ class Router
         $pipeline = new Pipeline($this->container);
 
         $kernel = $this->container->make(
-            \Yason\WebsiteTemplate\Core\Http\Kernel::class
+            \Framework\Core\Http\Kernel::class
         );
 
         $middleware = $kernel->resolveMiddleware(

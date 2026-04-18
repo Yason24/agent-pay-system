@@ -1,13 +1,15 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Core;
+namespace Framework\Core;
 
-use Yason\WebsiteTemplate\Core\Support\ServiceProvider;
-use Yason\WebsiteTemplate\Core\Config\ConfigLoader;
-use Yason\WebsiteTemplate\Core\Http\Kernel;
-use Yason\WebsiteTemplate\Core\Router;
-use Yason\WebsiteTemplate\Core\Request;
-use Yason\WebsiteTemplate\Core\View\ViewFactory;
+use Framework\Core\Support\ServiceProvider;
+use Framework\Core\Config\ConfigLoader;
+use Framework\Core\Http\Kernel;
+use Framework\Core\Router;
+use Framework\Core\Request;
+use Framework\Core\View\ViewFactory;
+use Framework\Core\Support\Facades\Facade;
+
 
 class Application extends Container
 {
@@ -22,8 +24,25 @@ class Application extends Container
 
         $this->basePath = $basePath;
 
+        /*
+        |-----------------------------------
+        | Bind Core
+        |-----------------------------------
+        */
         $this->registerBaseBindings();
 
+        /*
+        |-----------------------------------
+        | Facade container
+        |-----------------------------------
+        */
+        Facade::setFacadeApplication($this);
+
+        /*
+        |-----------------------------------
+        | Providers
+        |-----------------------------------
+        */
         $this->registerConfiguredProviders();
         $this->bootProviders();
     }
@@ -46,8 +65,11 @@ class Application extends Container
         $this->instance('app', $this);
 
         // Router
-        $this->singleton(Router::class, fn($app) => new Router($app));
-        $this->alias(Router::class, 'router'); // ⭐ для Facade
+        $this->singleton(Router::class, function ($app) {
+            return new Router($app);
+        });
+
+        $this->alias(Router::class, 'router');
 
         // Kernel
         $this->singleton(Kernel::class, fn($app) => new Kernel($app));

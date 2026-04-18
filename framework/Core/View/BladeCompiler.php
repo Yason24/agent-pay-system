@@ -1,6 +1,6 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Core\View;
+namespace Framework\Core\View;
 
 class BladeCompiler
 {

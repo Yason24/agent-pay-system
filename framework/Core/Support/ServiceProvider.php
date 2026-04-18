@@ -1,8 +1,8 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Core\Support;
+namespace Framework\Core\Support;
 
-use Yason\WebsiteTemplate\Core\Container;
+use Framework\Core\Container;
 
 abstract class ServiceProvider
 {

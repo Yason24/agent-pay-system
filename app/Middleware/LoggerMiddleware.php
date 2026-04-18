@@ -3,8 +3,8 @@
 namespace Yason\WebsiteTemplate\Middleware;
 
 use Closure;
-use Yason\WebsiteTemplate\Core\Request;
-use Yason\WebsiteTemplate\Core\Middleware\Middleware;
+use Framework\Core\Request;
+use Framework\Core\Middleware\Middleware;
 
 class LoggerMiddleware implements Middleware
 {

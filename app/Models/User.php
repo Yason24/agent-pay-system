@@ -2,7 +2,7 @@
 
 namespace Yason\WebsiteTemplate\Models;
 
-use Yason\WebsiteTemplate\Core\Model;
+use Framework\Core\Model;
 
 class User extends Model
 {

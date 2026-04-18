@@ -1,6 +1,6 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Core\Config;
+namespace Framework\Core\Config;
 
 class ConfigRepository
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Core;
+namespace Framework\Core;
 
 use ReflectionClass;
 use ReflectionMethod;

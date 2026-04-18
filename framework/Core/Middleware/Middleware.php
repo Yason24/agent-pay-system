@@ -1,9 +1,9 @@
 <?php
 
-namespace Yason\WebsiteTemplate\Core\Middleware;
+namespace Framework\Core\Middleware;
 
 use Closure;
-use Yason\WebsiteTemplate\Core\Request;
+use Framework\Core\Request;
 
 interface Middleware
 {
