@@ -6,19 +6,35 @@ use Yason\WebsiteTemplate\Core\Application;
 use Yason\WebsiteTemplate\Core\Request;
 use Yason\WebsiteTemplate\Core\Pipeline;
 use Yason\WebsiteTemplate\Core\Router;
+use Yason\WebsiteTemplate\Core\Http\MiddlewareRegistry;
+
 
 class Kernel
 {
     protected Application $app;
+    protected Router $router;
+    protected MiddlewareRegistry $registry;
 
     protected array $middleware = [
         \Yason\WebsiteTemplate\Core\Http\Middleware\TrustProxies::class,
         \Yason\WebsiteTemplate\Core\Http\Middleware\TrimStrings::class,
     ];
 
-    public function __construct(Application $app)
+    public function __construct($app)
     {
         $this->app = $app;
+
+        $this->router = $app->make(Router::class);
+
+        $this->registry = new MiddlewareRegistry();
+
+        $this->registerMiddleware();
+        $this->loadRoutes();
+    }
+
+    protected function pipeline(): Pipeline
+    {
+        return new Pipeline($this->app);
     }
 
     /*
@@ -29,19 +45,31 @@ class Kernel
 
     public function handle(Request $request)
     {
-        $this->loadRoutes();
-
-        $pipeline = new Pipeline($this->app);
-
-        return $pipeline
+        $response = $this->pipeline()
             ->send($request)
             ->through($this->middleware)
-            ->then(function ($request) {
+            ->then(fn ($request) =>
+            $this->router->dispatch($request->uri())
+            );
 
-                $router = $this->app->make('router');
+        return $this->prepareResponse($response);
+    }
 
-                return $router->dispatch($request->uri());
-            });
+    protected function prepareResponse($response): Response
+    {
+        if ($response instanceof Response) {
+            return $response;
+        }
+
+        if (is_array($response)) {
+            return new Response(
+                json_encode($response),
+                200,
+                ['Content-Type' => 'application/json']
+            );
+        }
+
+        return new Response((string) $response);
     }
 
     protected function loadRoutes(): void
@@ -51,41 +79,32 @@ class Kernel
         require $this->app->basePath('routes/web.php');
     }
 
-    protected array $middlewareGroups = [
-        'web' => [
-            \Yason\WebsiteTemplate\Core\Http\Middleware\WebMiddleware::class,
-        ],
-    ];
-
-    protected array $routeMiddleware = [
-        'auth' => \App\Http\Middleware\AuthMiddleware::class,
-    ];
-
     public function resolveMiddleware(array $middleware): array
     {
-        $resolved = [];
+        return $this->registry->resolve($middleware);
+    }
 
-        foreach ($middleware as $name) {
+    protected function registerMiddleware(): void
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Aliases
+        |--------------------------------------------------------------------------
+        */
 
-            // group
-            if (isset($this->middlewareGroups[$name])) {
-                $resolved = array_merge(
-                    $resolved,
-                    $this->middlewareGroups[$name]
-                );
-                continue;
-            }
+        $this->registry->alias(
+            'trust',
+            \Yason\WebsiteTemplate\Core\Http\Middleware\TrustProxies::class
+        );
 
-            // alias
-            if (isset($this->routeMiddleware[$name])) {
-                $resolved[] = $this->routeMiddleware[$name];
-                continue;
-            }
+        /*
+        |--------------------------------------------------------------------------
+        | Groups
+        |--------------------------------------------------------------------------
+        */
 
-            // already class
-            $resolved[] = $name;
-        }
-
-        return $resolved;
+        $this->registry->group('web', [
+            'trust',
+        ]);
     }
 }

@@ -46,7 +46,7 @@ class Router
 
     public function middleware(string|array $middleware): self
     {
-        $this->groupMiddleware = (array) $middleware;
+        $this->currentMiddleware = (array) $middleware;
 
         return $this;
     }

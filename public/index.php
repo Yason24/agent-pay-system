@@ -10,7 +10,7 @@ use Yason\WebsiteTemplate\Core\Http\Kernel;
 
 $app = new Application(ROOT);
 
-$request = $app->make(Request::class);
+$request = new Request();
 
 $kernel = $app->make(
     Yason\WebsiteTemplate\Core\Http\Kernel::class
@@ -18,4 +18,4 @@ $kernel = $app->make(
 
 $response = $kernel->handle($request);
 
-echo $response;
+$response->send();
