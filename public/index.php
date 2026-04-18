@@ -10,10 +10,10 @@ use Yason\WebsiteTemplate\Core\Http\Kernel;
 
 $app = new Application(ROOT);
 
-$request = new Request();
+$request = $app->make(Request::class);
 
 $kernel = $app->make(
-    Yason\WebsiteTemplate\Core\Http\Kernel::class
+    \Yason\WebsiteTemplate\Core\Http\Kernel::class
 );
 
 $response = $kernel->handle($request);

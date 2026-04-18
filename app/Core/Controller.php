@@ -12,4 +12,11 @@ class Controller
 
         require dirname(__DIR__) . '/Views/layout.php';
     }
+
+    public function index()
+    {
+        return view('home', [
+            'message' => 'Framework works 🚀'
+        ]);
+    }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use Yason\WebsiteTemplate\Core\Application;
+
 function dd($data)
 {
     echo '<pre>';

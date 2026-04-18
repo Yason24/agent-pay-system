@@ -7,6 +7,7 @@ use Yason\WebsiteTemplate\Core\Config\ConfigLoader;
 use Yason\WebsiteTemplate\Core\Http\Kernel;
 use Yason\WebsiteTemplate\Core\Router;
 use Yason\WebsiteTemplate\Core\Request;
+use Yason\WebsiteTemplate\Core\View\ViewFactory;
 
 class Application extends Container
 {
@@ -23,7 +24,7 @@ class Application extends Container
         $this->basePath = $basePath;
 
         $this->registerBaseBindings();
-        $this->loadEnvironment(); // ✅ ОСТАВИТЬ
+        $this->loadEnvironment();
         $this->loadConfig();
     }
 
@@ -53,6 +54,14 @@ class Application extends Container
 
         // Request
         $this->singleton(Request::class, fn() => new Request());
+
+        $this->singleton(ViewFactory::class, function ($app) {
+            return new ViewFactory(
+                $app->basePath('resources/views')
+            );
+        });
+
+        $this->singleton(Request::class, fn($app) => Request::capture());
     }
 
     /*

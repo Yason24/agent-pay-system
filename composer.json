@@ -9,7 +9,8 @@
             "Seeders\\": "seeders/"
         },
         "files": [
-            "app/Core/helpers.php"
+            "app/Core/helpers.php",
+            "app/helpers.php"
         ]
     },
     "authors": [
