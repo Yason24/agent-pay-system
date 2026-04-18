@@ -7,7 +7,10 @@
         "psr-4": {
             "Yason\\WebsiteTemplate\\": "app/",
             "Seeders\\": "seeders/"
-        }
+        },
+        "files": [
+            "app/Core/helpers.php"
+        ]
     },
     "authors": [
         {

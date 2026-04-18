@@ -4,6 +4,7 @@ namespace Yason\WebsiteTemplate\Controllers;
 
 use Yason\WebsiteTemplate\Core\Controller;
 use Yason\WebsiteTemplate\Core\Database;
+use Yason\WebsiteTemplate\Models\Agent;
 
 class HomeController extends Controller
 {
@@ -14,6 +15,11 @@ class HomeController extends Controller
 
     public function index(): void
     {
-        $this->view('home');
+        $agent = Agent::where('id','>',0)
+            ->orderBy('id','DESC')
+            ->limit(1)
+            ->first();
+
+        dd($agent);
     }
 }
