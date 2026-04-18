@@ -4,6 +4,8 @@ namespace Yason\WebsiteTemplate\Core;
 
 use PDO;
 
+use Yason\WebsiteTemplate\Core\Collection;
+
 class QueryBuilder
 {
     private string $table;
@@ -50,7 +52,23 @@ class QueryBuilder
 
     public function orderBy(string $column, string $direction = 'ASC'): self
     {
-        $this->orderBy = "$column $direction";
+        $direction = strtoupper($direction);
+
+        if (!in_array($direction, ['ASC', 'DESC'], true)) {
+            $direction = 'ASC';
+        }
+
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $column)) {
+            throw new \InvalidArgumentException("Invalid orderBy column.");
+        }
+
+        if (!empty($this->modelClass::$sortable)
+            && !in_array($column, $this->modelClass::$sortable, true)) {
+            throw new \InvalidArgumentException("Column not sortable.");
+        }
+
+        $this->orderBy = "{$column} {$direction}";
+
         return $this;
     }
 
@@ -97,7 +115,7 @@ class QueryBuilder
     |--------------------------------------------------------------------------
     */
 
-    public function get(): array
+    public function get(): Collection
     {
         $stmt = $this->db->prepare($this->buildSql());
         $stmt->execute($this->bindings);
@@ -111,7 +129,7 @@ class QueryBuilder
 
         $this->eagerLoad($models);
 
-        return $models;
+        return new Collection($models);
     }
 
     /*
@@ -122,16 +140,12 @@ class QueryBuilder
 
     public function first()
     {
-        $this->limit(1);
-
-        $result = $this->get();
-
-        return $result[0] ?? null;
+        return $this->limit(1)->get()->first();
     }
 
     /*
     |--------------------------------------------------------------------------
-    | FIRST
+    | with
     |--------------------------------------------------------------------------
     */
     public function with(string|array $relations): self

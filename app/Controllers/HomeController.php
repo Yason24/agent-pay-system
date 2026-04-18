@@ -15,8 +15,10 @@ class HomeController extends Controller
 
     public function index(): void
     {
-        $agent = Agent::first();
+        $agents = Agent::get();
 
-        dd($agent->user);
+        foreach ($agents as $a) {
+            $a->user;
+        }
     }
 }

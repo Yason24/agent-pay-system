@@ -31,4 +31,14 @@ class HasMany extends Relation
             $this->parent->{$this->localKey}
         )->get();
     }
+
+    public function getForeignKey()
+    {
+        return $this->foreignKey;
+    }
+
+    public function getLocalKey()
+    {
+        return $this->localKey;
+    }
 }

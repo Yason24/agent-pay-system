@@ -6,6 +6,8 @@ use PDO;
 
 use Yason\WebsiteTemplate\Core\Relations\BelongsTo;
 
+use Yason\WebsiteTemplate\Core\Collection;
+
 abstract class Model
 {
     protected static string $table;
@@ -13,6 +15,8 @@ abstract class Model
     protected array $attributes = [];
 
     protected array $relations = [];
+
+    protected static array $sortable = [];
 
     protected PDO $db;
 
@@ -36,7 +40,7 @@ abstract class Model
         }
 
         // relation cache
-        if (isset($this->relations[$key])) {
+        if (array_key_exists($key, $this->relations)) {
             return $this->relations[$key];
         }
 
@@ -250,6 +254,17 @@ abstract class Model
             fn($row) => new static($row),
             $stmt->fetchAll(\PDO::FETCH_ASSOC)
         );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET
+    |--------------------------------------------------------------------------
+    */
+
+    public static function get(): Collection
+    {
+        return static::query()->get();
     }
 
     public function setRelation(string $key, $value): void
