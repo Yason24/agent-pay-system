@@ -1,196 +1,171 @@
-# ARCHITECTURE — Agent Pay System
-
-## Architecture Style
-
-Layered MVC Architecture with Dependency Injection.
-
-Framework separated from Business Logic.
+# Agent Pay System — Framework Architecture
 
 ---
 
-## High Level Flow
+## Overview
 
-HTTP Request
-→ public/index.php
-→ Router
-→ Container (Dependency Injection)
-→ Controller
-→ Service / Model
-→ Database (PDO PostgreSQL)
-→ View Response
+Agent Pay System is a custom PHP framework inspired by Laravel architecture.
+
+The project is NOT a simple website -- it is a full application framework.
 
 ---
 
-## Application Layers
+## Request Lifecycle
 
-### 1. Public Layer
+Browser Request
 
-Location: `/public`
+-> public/index.php
 
-Entry point of application.
+-> Application Container
 
-Responsibilities:
+-> HTTP Kernel
 
-* bootstrap system
-* load Composer
-* load ENV
-* start Router
+-> Global Middleware Pipeline
 
-Rules:
+-> Router
 
-* no business logic allowed
+-> Route Middleware
 
----
+-> Controller
 
-### 2. Routing Layer
+-> View Engine
 
-Location: `/routes`
+-> Response
 
-Defines URL → Controller mapping.
-
-Rules:
-
-* routing only
-* no database logic
+-> Browser
 
 ---
 
-### 3. Controller Layer
+## Core Components
 
-Location: `/app/Controllers`
+### Application
 
-Responsibilities:
+-  Service Container
 
-* receive request
-* validate input
-* call services
-* return response
+-  Dependency Injection
 
-Rules:
+-  Base bindings
 
-* controllers must stay thin
-* no SQL queries inside controllers
+-  Framework bootstrap
 
----
+### HTTP Kernel
 
-### 4. Service Layer (planned)
+-  Main entry point
 
-Location: `/app/Services`
+-  Runs global middleware
 
-Responsibilities:
+-  Loads routes
 
-* business logic
-* workflows
-* calculations
+-  Dispatches requests
 
----
+### Router
 
-### 5. Model Layer (planned)
+-  Route registration
 
-Location: `/app/Models`
+-  Route groups
 
-Responsibilities:
+-  Middleware support
 
-* database interaction
-* entity representation
+-  Controller resolution
 
-Rules:
+### Middleware System
 
-* models do not render views
+-  Global middleware
 
----
+-  Middleware aliases
 
-### 6. Core Layer
+-  Middleware groups (Laravel-style)
 
-Location: `/app/Core`
+-  Pipeline execution
 
-Contains framework components:
+### Container
 
-* Router
-* Container
-* Controller base class
-* Database connection
-* Env loader
+-  Singleton bindings
 
-Rules:
+-  Instance bindings
 
-* product logic MUST NOT be placed here
+-  Auto dependency resolution
 
----
+-  Reflection-based injection
 
-### 7. Database Layer
+### View Engine
 
-Engine: PostgreSQL
-Access: PDO
+-  PHP view rendering
 
-Rules:
+-  Layout support (planned)
 
-* migrations only
-* no manual schema editing
+-  Blade-like features (planned)
 
 ---
 
-## Dependency Injection
+## Current Implemented Features
 
-Container automatically resolves class dependencies.
+✅ Service Container
 
-Controllers must receive services via constructor.
+✅ Dependency Injection
 
-Example:
+✅ HTTP Kernel
 
-```php
-class AgentController {
-    public function __construct(Database $db) {}
-}
-```
+✅ Request Lifecycle
 
----
+✅ Global Middleware
 
-## Configuration System
+✅ Middleware Registry
 
-Environment variables stored in `.env`.
+✅ Route Groups
 
-Never commit `.env`.
+✅ Middleware Aliases
 
----
+✅ Router Dispatching
 
-## Logging Principle
+✅ Response System
 
-Every financial action must be logged.
-
-Nothing happens without audit trail.
+✅ View Factory
 
 ---
 
-## Scaling Strategy (Future)
+## Planned Features
 
-* Service classes
-* Queue workers
-* API layer
-* External integrations
-* Multi-company isolation
+### Phase 2 -- Application Layer
+
+-  Layout system
+
+-  Blade-like templates
+
+-  Controllers expansion
+
+-  Validation
+
+-  Session handling
+
+### Phase 3 -- Platform Features
+
+-  Database layer (ORM)
+
+-  Authentication
+
+-  User dashboard
+
+-  Payment system modules
+
+### Phase 4 -- Production
+
+-  CLI tooling
+
+-  Queue system
+
+-  Events & Listeners
+
+-  Caching
+
+-  Deployment pipeline
 
 ---
 
-## Development Rules
+## Philosophy
 
-DO:
+Build a stable framework FIRST.
 
-* keep layers separated
-* use migrations
-* write reusable services
+Build business logic SECOND.
 
-DO NOT:
-
-* write SQL in views
-* place logic in routes
-* modify Core for business logic
-
----
-
-## Project Philosophy
-
-Framework = Engine
-Product = Business Logic
-
-Never mix them.
+Architecture > Speed.
