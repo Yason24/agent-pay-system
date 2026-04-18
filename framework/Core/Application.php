@@ -24,25 +24,11 @@ class Application extends Container
 
         $this->basePath = $basePath;
 
-        /*
-        |-----------------------------------
-        | Bind Core
-        |-----------------------------------
-        */
         $this->registerBaseBindings();
 
-        /*
-        |-----------------------------------
-        | Facade container
-        |-----------------------------------
-        */
-        Facade::setFacadeApplication($this);
+        \Framework\Core\Support\Facades\Facade
+            ::setFacadeApplication($this);
 
-        /*
-        |-----------------------------------
-        | Providers
-        |-----------------------------------
-        */
         $this->registerConfiguredProviders();
         $this->bootProviders();
     }
@@ -65,11 +51,15 @@ class Application extends Container
         $this->instance('app', $this);
 
         // Router
-        $this->singleton(Router::class, function ($app) {
-            return new Router($app);
-        });
+        $this->singleton(
+            \Framework\Core\Router::class,
+            fn($app) => new \Framework\Core\Router($app)
+        );
 
-        $this->alias(Router::class, 'router');
+        $this->alias(
+            \Framework\Core\Router::class,
+            'router'
+        );
 
         // Kernel
         $this->singleton(Kernel::class, fn($app) => new Kernel($app));

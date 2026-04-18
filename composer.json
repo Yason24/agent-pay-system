@@ -6,7 +6,7 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
-            "Yason\\WebsiteTemplate\\": "framework/",
+            "Framework\\": "framework/",
             "Seeders\\": "seeders/"
         },
         "files": [

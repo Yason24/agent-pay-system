@@ -2,21 +2,17 @@
 
 define('ROOT', dirname(__DIR__));
 
-require __DIR__.'/../vendor/autoload.php';
+require ROOT.'/vendor/autoload.php';
 
 use Framework\Core\Application;
 use Framework\Core\Request;
 use Framework\Core\Http\Kernel;
 
-$app = new Application(
-    dirname(__DIR__)
-);
+$app = new Application(ROOT);
 
-$request = $app->make(Request::class);
+$request = Request::capture();
 
-$kernel = $app->make(
-    \Framework\Core\Http\Kernel::class
-);
+$kernel = $app->make(Kernel::class);
 
 $response = $kernel->handle($request);
 
