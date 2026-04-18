@@ -26,7 +26,17 @@ abstract class Model
 
     public function __get($key)
     {
-        return $this->attributes[$key] ?? null;
+        // attribute
+        if (array_key_exists($key, $this->attributes)) {
+            return $this->attributes[$key];
+        }
+
+        // relation
+        if (method_exists($this, $key)) {
+            return $this->$key();
+        }
+
+        return null;
     }
 
     public function __set($key, $value)
@@ -183,5 +193,37 @@ abstract class Model
     public static function first()
     {
         return static::query()->first(static::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | BELONGS TO
+    |--------------------------------------------------------------------------
+    */
+
+    public function belongsTo(string $related, string $foreignKey)
+    {
+        $relatedModel = new $related();
+
+        return $related::where(
+            'id',
+            '=',
+            $this->$foreignKey
+        )->first();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | HAS MANY
+    |--------------------------------------------------------------------------
+    */
+
+    public function hasMany(string $related, string $foreignKey)
+    {
+        return $related::where(
+            $foreignKey,
+            '=',
+            $this->id
+        )->get();
     }
 }

@@ -15,11 +15,8 @@ class HomeController extends Controller
 
     public function index(): void
     {
-        $agent = Agent::where('id','>',0)
-            ->orderBy('id','DESC')
-            ->limit(1)
-            ->first();
+        $agent = Agent::first();
 
-        dd($agent);
+        dd($agent->user);
     }
 }
