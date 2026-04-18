@@ -3,33 +3,42 @@
 namespace Yason\WebsiteTemplate\Core;
 
 use PDO;
+use PDOException;
 
 class Database
 {
-    private PDO $pdo;
+    private static ?PDO $connection = null;
 
-    public function __construct()
+    public static function getConnection(): PDO
     {
-        $dsn = sprintf(
-            "%s:host=%s;port=%s;dbname=%s",
-            Env::get('DB_DRIVER'),
-            Env::get('DB_HOST'),
-            Env::get('DB_PORT'),
-            Env::get('DB_DATABASE')
-        );
+        if (self::$connection === null) {
 
-        $this->pdo = new PDO(
-            $dsn,
-            Env::get('DB_USERNAME'),
-            Env::get('DB_PASSWORD'),
-            [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-            ]
-        );
-    }
+            Env::load(ROOT . '/.env');
 
-    public function pdo(): PDO
-    {
-        return $this->pdo;
+            $driver = Env::get('DB_DRIVER');
+            $host   = Env::get('DB_HOST');
+            $port   = Env::get('DB_PORT');
+            $db     = Env::get('DB_DATABASE');
+            $user   = Env::get('DB_USERNAME');
+            $pass   = Env::get('DB_PASSWORD');
+
+            $dsn = "$driver:host=$host;port=$port;dbname=$db";
+
+            try {
+                self::$connection = new PDO(
+                    $dsn,
+                    $user,
+                    $pass,
+                    [
+                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    ]
+                );
+            } catch (PDOException $e) {
+                die("Database connection failed: " . $e->getMessage());
+            }
+        }
+
+        return self::$connection;
     }
 }

@@ -1,7 +1,5 @@
 <?php
 
-use PDO;
-
 return function(PDO $db) {
 
     $db->exec("

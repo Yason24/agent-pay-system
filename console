@@ -6,8 +6,10 @@ define('ROOT', __DIR__);
 require ROOT . '/vendor/autoload.php';
 
 use Yason\WebsiteTemplate\Core\MigrationRunner;
+use Yason\WebsiteTemplate\Core\MigrationCreator;
 
 $command = $argv[1] ?? null;
+$name    = $argv[2] ?? null;
 
 switch ($command) {
 
@@ -15,7 +17,17 @@ switch ($command) {
         (new MigrationRunner())->run();
         break;
 
+    case 'make:migration':
+        if (!$name) {
+            echo "Provide migration name\n";
+            exit;
+        }
+
+        (new MigrationCreator())->create($name);
+        break;
+
     default:
         echo "Available commands:\n";
         echo "php console migrate\n";
+        echo "php console make:migration NAME\n";
 }
