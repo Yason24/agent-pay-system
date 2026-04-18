@@ -1,13 +1,14 @@
 <?php
 
 use Framework\Core\Support\Facades\Route;
-use Yason\WebsiteTemplate\Controllers\HomeController;
+use App\Controllers\HomeController;
 
-Route::middleware('web')->group(function ($router) {
+/*Route::middleware('web')->group(function ($router) {
 
-    $router->get('/', [
-        HomeController::class,
-        'index'
-    ]);
+    $router->get('/', 'App\Controllers\HomeController@index');
 
+});*/
+
+Route::get('/', function () {
+    return 'HOME PAGE WORKS 🔥';
 });

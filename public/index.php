@@ -1,20 +1,15 @@
 <?php
 
+use Framework\Core\Application;
+use Framework\Core\Request;
+use Framework\Core\Kernel;
+
 define('ROOT', dirname(__DIR__));
+define('BASE_PATH', ROOT);
 
 require ROOT.'/vendor/autoload.php';
 
-use Framework\Core\Application;
-use Framework\Core\Request;
-use Framework\Core\Http\Kernel;
-
-$app = new Application(ROOT);
-
-$app = new Framework\Core\Application(
-    dirname(__DIR__)
-);
-
-$app->boot();
+$app = new Application(BASE_PATH);
 
 $request = Request::capture();
 

@@ -2,6 +2,10 @@
 
 namespace Framework\Core;
 
+use Framework\Core\Container;
+use Framework\Core\Request;
+use Framework\Core\Pipeline;
+
 class Router
 {
     private array $routes = [];
@@ -114,5 +118,6 @@ class Router
                     $method
                 );
             });
+
     }
 }

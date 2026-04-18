@@ -18,7 +18,7 @@ class Application extends Container
     protected array $booted = [];
     protected string $basePath;
 
-    public function __construct($basePath)
+    public function __construct(string $basePath)
     {
         $this->basePath = $basePath;
 
@@ -35,8 +35,8 @@ class Application extends Container
 
     protected function registerBaseServices()
     {
-        $this->singleton('router', function () {
-            return new \Framework\Core\Router();
+        $this->singleton(Router::class, function ($app) {
+            return new Router($app);
         });
 
         $this->singleton('view', function () {

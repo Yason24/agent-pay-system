@@ -2,19 +2,15 @@
 
 namespace Framework\Core;
 
+use App\Middleware\LoggerMiddleware;
+
 class Kernel
 {
     protected Container $container;
     protected Router $router;
 
-    /*
-    |--------------------------------------------------------------------------
-    | Global Middleware
-    |--------------------------------------------------------------------------
-    */
-
     protected array $middleware = [
-        App\Middleware\LoggerMiddleware::class,
+        LoggerMiddleware::class,
     ];
 
     public function __construct(Container $container, Router $router)
