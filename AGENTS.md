@@ -82,3 +82,14 @@
 - `framework/Core/Model.php`: ORM с relations и CRUD
 - `framework/Core/View/ViewFactory.php`: Рендеринг представлений
 - `console`: CLI команды для миграций и сидов
+
+---
+
+## Framework Development Rules
+
+1. Never introduce global functions unless justified.
+2. All features must be container-resolvable.
+3. No static dependencies outside Facades.
+4. Core must remain framework-agnostic.
+5. Application code MUST NOT depend on framework internals.
+6. New subsystems must integrate through Service Providers.

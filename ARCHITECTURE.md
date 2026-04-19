@@ -169,3 +169,17 @@ Build a stable framework FIRST.
 Build business logic SECOND.
 
 Architecture > Speed.
+
+---
+
+## Bootstrap Layer
+
+bootstrap/app.php
+
+Responsible for:
+- creating Application instance
+- registering providers
+- loading configuration
+- preparing runtime environment
+
+---

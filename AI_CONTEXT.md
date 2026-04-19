@@ -83,3 +83,19 @@ The author is building a long-term scalable system,
 not a quick website.
 
 Treat project as a framework-first architecture.
+
+---
+
+## Project Modes
+
+Framework Mode:
+
+-  building core infrastructure
+
+Application Mode:
+
+-  building business features
+
+Template Mode:
+
+-  preparing reusable starter project

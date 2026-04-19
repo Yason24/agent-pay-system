@@ -8,13 +8,12 @@ define('BASE_PATH', dirname(__DIR__));
 
 require BASE_PATH.'/vendor/autoload.php';
 
-/*$app = new Application(BASE_PATH);*/
-$app = new Application(BASE_PATH);
+$app = require BASE_PATH.'/bootstrap/app.php';
 
-$request = Request::capture();
+$request = Framework\Core\Request::capture();
 
-$kernel = $app->make(Kernel::class);
-
-$response = $kernel->handle($request);
+$response = $app
+    ->make(Framework\Core\Http\Kernel::class)
+    ->handle($request);
 
 $response->send();

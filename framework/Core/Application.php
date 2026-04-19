@@ -178,4 +178,14 @@ class Application extends Container
     {
         return $this->basePath . ($path ? '/' . $path : '');
     }
+
+    public function bootstrap(): void
+    {
+        $this->registerBaseBindings();
+
+        $this->registerConfiguredProviders();
+
+        $this->loadRoutes();
+    }
+
 }
