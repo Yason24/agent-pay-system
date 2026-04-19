@@ -10,5 +10,5 @@ use App\Controllers\HomeController;
 });*/
 
 Route::get('/', function () {
-    return 'HOME PAGE WORKS 🔥';
+    echo 'WORKS';
 });

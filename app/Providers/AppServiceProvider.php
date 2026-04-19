@@ -8,11 +8,11 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        echo "APP PROVIDER REGISTERED!";
+        // register bindings only
     }
 
     public function boot(): void
     {
-        echo "APP PROVIDER BOOTED!";
+        // boot logic only
     }
 }

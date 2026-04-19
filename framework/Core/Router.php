@@ -3,8 +3,11 @@
 namespace Framework\Core;
 
 use Framework\Core\Container;
-use Framework\Core\Request;
 use Framework\Core\Pipeline;
+use Framework\Core\Request;
+use Framework\Core\Http\Response;
+use Closure;
+use Exception;
 
 class Router
 {
@@ -18,34 +21,14 @@ class Router
         $this->container = $container;
     }
 
-    public function get(string $uri, array $action, array $middleware = []): void
+    public function get(string $uri, $action)
     {
-        $prefix = '';
-        $middlewareStack = [];
+        $this->addRoute('GET', $uri, $action);
+    }
 
-        foreach ($this->groupStack as $group) {
-
-            $prefix .= $group['prefix'] ?? '';
-
-            if (isset($group['middleware'])) {
-
-                $groupMiddleware = $group['middleware'];
-
-                if (!is_array($groupMiddleware)) {
-                    $groupMiddleware = [$groupMiddleware];
-                }
-
-                $middlewareStack = array_merge(
-                    $middlewareStack,
-                    $groupMiddleware
-                );
-            }
-        }
-
-        $this->routes[$prefix . $uri] = [
-            'action' => $action,
-            'middleware' => $middlewareStack,
-        ];
+    protected function addRoute(string $method, string $uri, $action): void
+    {
+        $this->routes[$method][$uri] = $action;
     }
 
     public function middleware(string|array $middleware): self
@@ -83,15 +66,20 @@ class Router
         return $this;
     }
 
-    public function dispatch(string $uri)
+    /*public function dispatch(string $uri)
     {
         if (!isset($this->routes[$uri])) {
             throw new \Exception('Route not found');
         }
 
         $route = $this->routes[$uri];
+        $action = $route['action'];
 
-        [$controller, $method] = $route['action'];
+        if ($action instanceof \Closure) {
+            return $action();
+        }
+
+        [$controller, $method] = $action;
 
         $request = $this->container->make(Request::class);
 
@@ -108,7 +96,7 @@ class Router
         return $pipeline
             ->send($request)
             ->through($middleware)
-            ->then(function ($request) use ($controller, $method) {
+            ->then(function () use ($controller, $method) {
 
                 $controllerInstance =
                     $this->container->make($controller);
@@ -118,6 +106,35 @@ class Router
                     $method
                 );
             });
+    }*/
 
+    public function dispatch(string $method, string $uri)
+    {
+        $action = $this->routes[$method][$uri] ?? null;
+
+        if (!$action) {
+            throw new Exception('Route not found');
+        }
+
+        // Closure route
+        if ($action instanceof Closure) {
+
+            $result = $action();
+
+            return new Response($result);
+        }
+
+        // Controller route
+        if (is_array($action)) {
+
+            [$controller, $method] = $action;
+
+            $controller = $this->container->make($controller);
+
+            $result = $controller->$method();
+
+            return new Response($result);
+        }
     }
+
 }

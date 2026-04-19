@@ -31,6 +31,8 @@ class Application extends Container
         $this->registerBaseServices();
 
         $this->registerConfiguredProviders();
+
+        $this->loadRoutes();
     }
 
     protected function registerBaseServices()
@@ -152,6 +154,11 @@ class Application extends Container
         foreach ($providers as $provider) {
             $this->register(new $provider($this));
         }
+    }
+
+    protected function loadRoutes(): void
+    {
+        require ROOT.'/routes/web.php';
     }
 
     public function boot()

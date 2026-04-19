@@ -26,6 +26,7 @@ class Kernel
         return $pipeline
             ->send($request)
             ->through($this->middleware)
-            ->then(fn () => $this->router->dispatch($request->uri()));
+            /*->then(fn () => $this->router->dispatch($request->uri()));*/
+            ->then(fn () => $this->router->dispatch($request->method(),$request->uri()));
     }
 }

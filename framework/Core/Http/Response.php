@@ -4,6 +4,7 @@ namespace Framework\Core\Http;
 
 class Response
 {
+
     public function __construct(
         protected mixed $content = '',
         protected int $status = 200,
@@ -12,10 +13,12 @@ class Response
 
     public function send(): void
     {
-        http_response_code($this->status);
+        if (!headers_sent()) {
+            http_response_code($this->status);
 
-        foreach ($this->headers as $key => $value) {
-            header("$key: $value");
+            foreach ($this->headers as $key => $value) {
+                header("$key: $value");
+            }
         }
 
         echo $this->content;

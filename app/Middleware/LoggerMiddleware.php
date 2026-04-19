@@ -6,15 +6,23 @@ use Closure;
 use Framework\Core\Request;
 use Framework\Core\Middleware\Middleware;
 
-class LoggerMiddleware implements Middleware
+class LoggerMiddleware
 {
-    public function handle(Request $request, Closure $next)
+    public function handle($request, $next)
     {
-        echo "BEFORE<br>";
+        file_put_contents(
+            ROOT.'/storage/log.txt',
+            "BEFORE\n",
+            FILE_APPEND
+        );
 
         $response = $next($request);
 
-        echo "AFTER<br>";
+        file_put_contents(
+            ROOT.'/storage/log.txt',
+            "AFTER\n",
+            FILE_APPEND
+        );
 
         return $response;
     }
