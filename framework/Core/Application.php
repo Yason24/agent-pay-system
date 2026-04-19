@@ -129,21 +129,21 @@ class Application extends Container
     {
         $provider->register();
 
-        $this->serviceProviders[] = $provider;
+        $this->providers[] = $provider;
     }
 
     public function bootProviders(): void
     {
         foreach ($this->providers as $provider) {
-            $provider->boot();
+            if (method_exists($provider, 'boot')) {
+                $provider->boot();
+            }
         }
     }
 
-    public function registerProvider(string $providerClass): void
+    public function boot()
     {
-        $provider = new $providerClass($this);
-
-        $this->register($provider);
+        $this->bootProviders();
     }
 
     protected function registerConfiguredProviders(): void
@@ -165,14 +165,6 @@ class Application extends Container
         require $this->basePath('routes/web.php');
     }
 
-    public function boot()
-    {
-        foreach ($this->serviceProviders as $provider) {
-            if (method_exists($provider, 'boot')) {
-                $provider->boot();
-            }
-        }
-    }
 
     public function basePath(string $path = ''): string
     {

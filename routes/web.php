@@ -1,14 +1,6 @@
 <?php
 
-use Framework\Core\Support\Facades\Route;
 use App\Controllers\HomeController;
+use Framework\Core\Support\Facades\Route;
 
-/*Route::middleware('web')->group(function ($router) {
-
-    $router->get('/', 'App\Controllers\HomeController@index');
-
-});*/
-
-Route::get('/', function () {
-    echo 'WORKS';
-});
+Route::get('/', [HomeController::class, 'index']);

@@ -2,10 +2,14 @@
 
 namespace App\Controllers;
 
-class HomeController
+use Framework\Core\Controller;
+
+class HomeController extends Controller
 {
-    public function index()
+    public function index(): string
     {
-        echo "HOME OK";
+        return $this->view('home', [
+            'message' => 'Framework works',
+        ]);
     }
 }

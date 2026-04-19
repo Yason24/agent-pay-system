@@ -1,6 +1,6 @@
 {
-    "name": "yason/website-template",
-    "description": "Simple PHP MVC framework",
+    "name": "yason24/agent-pay-system",
+    "description": "Laravel-inspired PHP framework for the Agent Pay System platform",
     "type": "project",
     "license": "MIT",
     "autoload": {

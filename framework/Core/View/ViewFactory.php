@@ -11,44 +11,53 @@ class ViewFactory
     {
         $this->viewsPath = $viewsPath;
 
+        if (!is_dir($cachePath)) {
+            mkdir($cachePath, 0777, true);
+        }
+
         $this->compiler = new BladeCompiler($cachePath);
     }
 
     public function make(string $view, array $data = [])
     {
-        $path = $this->viewsPath.'/'.str_replace('.', '/', $view).'.php';
+        $path = $this->viewsPath . '/' . str_replace('.', '/', $view) . '.php';
 
         if (!file_exists($path)) {
             throw new \Exception("View [$view] not found");
         }
 
         $compiled = $this->compiler->compile($path);
-
         $viewInstance = new View();
+        $content = $this->renderCompiled($compiled, $viewInstance, $data);
 
-        extract($data);
+        if ($layout = $viewInstance->getLayout()) {
+            $layoutPath = $this->viewsPath . '/' . str_replace('.', '/', $layout) . '.php';
 
-        ob_start();
-        include $compiled;
-        $content = ob_get_clean();
-
-        if ($viewInstance->getLayout()) {
-
-            $layoutPath =
-                $this->viewsPath.'/'.str_replace(
-                    '.',
-                    '/',
-                    $viewInstance->getLayout()
-                ).'.php';
+            if (!file_exists($layoutPath)) {
+                throw new \Exception("Layout [$layout] not found");
+            }
 
             $compiledLayout = $this->compiler->compile($layoutPath);
 
-            ob_start();
-            include $compiledLayout;
-
-            return ob_get_clean();
+            return $this->renderCompiled(
+                $compiledLayout,
+                $viewInstance,
+                array_merge($data, ['content' => $content])
+            );
         }
 
         return $content;
+    }
+
+    protected function renderCompiled(string $compiledPath, View $viewInstance, array $data = []): string
+    {
+        ob_start();
+
+        (function () use ($compiledPath, $data) {
+            extract($data, EXTR_SKIP);
+            include $compiledPath;
+        })->call($viewInstance);
+
+        return ob_get_clean();
     }
 }

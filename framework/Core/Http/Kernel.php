@@ -48,9 +48,10 @@ class Kernel
         $response = $this->pipeline()
             ->send($request)
             ->through($this->middleware)
-            ->then(fn ($request) =>
-            $this->router->dispatch($request->uri())
-            );
+            ->then(fn (Request $request) => $this->router->dispatch(
+                $request->method(),
+                $request->uri()
+            ));
 
         return $this->prepareResponse($response);
     }
@@ -86,22 +87,11 @@ class Kernel
 
     protected function registerMiddleware(): void
     {
-        /*
-        |--------------------------------------------------------------------------
-        | Aliases
-        |--------------------------------------------------------------------------
-        */
-
         $this->registry->alias(
             'trust',
             \Framework\Core\Http\Middleware\TrustProxies::class
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Groups
-        |--------------------------------------------------------------------------
-        */
 
         $this->registry->group('web', [
             'trust',

@@ -28,16 +28,20 @@ class Router
 
     protected function addRoute(string $method, string $uri, $action): void
     {
-        // Применяем префиксы из группы к URI
         if (!empty($this->groupStack)) {
             $prefix = '';
+
             foreach ($this->groupStack as $group) {
                 if (isset($group['prefix'])) {
                     $prefix .= '/' . trim($group['prefix'], '/');
                 }
             }
+
             $uri = $prefix . '/' . ltrim($uri, '/');
         }
+
+        $method = strtoupper($method);
+        $uri = $this->normalizeUri($uri);
 
         $this->routes[$method][$uri] = $action;
     }
@@ -58,7 +62,7 @@ class Router
 
     public function group($attributes, ?callable $callback = null): self
     {
-        if ($attributes instanceof \Closure) {
+        if ($attributes instanceof Closure) {
             $callback = $attributes;
             $attributes = [];
         }
@@ -79,32 +83,32 @@ class Router
 
     public function dispatch(string $method, string $uri)
     {
+        $method = strtoupper($method);
+        $uri = $this->normalizeUri($uri);
         $action = $this->routes[$method][$uri] ?? null;
 
         if (!$action) {
             throw new Exception('Route not found');
         }
 
-        // Closure route
         if ($action instanceof Closure) {
-
-            $result = $action();
-
-            return new Response($result);
+            return new Response($action());
         }
 
-        // Controller route
         if (is_array($action)) {
-
             [$controller, $methodName] = $action;
-
             $controller = $this->container->make($controller);
 
-            $result = $controller->$methodName();
-
-            return new Response($result);
+            return new Response($controller->$methodName());
         }
 
         throw new Exception('Invalid route action');
+    }
+
+    protected function normalizeUri(string $uri): string
+    {
+        $normalized = '/' . trim($uri, '/');
+
+        return $normalized === '//' ? '/' : $normalized;
     }
 }
