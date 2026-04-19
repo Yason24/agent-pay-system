@@ -9,7 +9,8 @@ define('BASE_PATH', ROOT);
 
 require ROOT.'/vendor/autoload.php';
 
-$app = new Application(BASE_PATH);
+/*$app = new Application(BASE_PATH);*/
+$app = new Application(ROOT);
 
 $request = Request::capture();
 

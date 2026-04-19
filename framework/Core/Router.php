@@ -11,10 +11,10 @@ use Exception;
 
 class Router
 {
-    private array $routes = [];
+    protected array $routes = [];
     protected array $groupStack = [];
     protected array $groupMiddleware = [];
-    private Container $container;
+    protected Container $container;
 
     public function __construct(Container $container)
     {
@@ -65,48 +65,6 @@ class Router
 
         return $this;
     }
-
-    /*public function dispatch(string $uri)
-    {
-        if (!isset($this->routes[$uri])) {
-            throw new \Exception('Route not found');
-        }
-
-        $route = $this->routes[$uri];
-        $action = $route['action'];
-
-        if ($action instanceof \Closure) {
-            return $action();
-        }
-
-        [$controller, $method] = $action;
-
-        $request = $this->container->make(Request::class);
-
-        $pipeline = new Pipeline($this->container);
-
-        $kernel = $this->container->make(
-            \Framework\Core\Http\Kernel::class
-        );
-
-        $middleware = $kernel->resolveMiddleware(
-            $route['middleware']
-        );
-
-        return $pipeline
-            ->send($request)
-            ->through($middleware)
-            ->then(function () use ($controller, $method) {
-
-                $controllerInstance =
-                    $this->container->make($controller);
-
-                return $this->container->call(
-                    $controllerInstance,
-                    $method
-                );
-            });
-    }*/
 
     public function dispatch(string $method, string $uri)
     {
