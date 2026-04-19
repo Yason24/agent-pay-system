@@ -26,22 +26,40 @@ class Request
 
     public function input(string $key, $default = null)
     {
-        return $_REQUEST[$key] ?? $default;
+        return $this->request[$key]
+            ?? $this->query[$key]
+            ?? $default;
     }
 
     public function all(): array
     {
-        return $_REQUEST;
+        return array_merge($this->query, $this->request);
+    }
+
+    public function only(array $keys): array
+    {
+        $data = [];
+
+        foreach ($keys as $key) {
+            $data[$key] = $this->input($key);
+        }
+
+        return $data;
     }
 
     public function method(): string
     {
-        return $_SERVER['REQUEST_METHOD'];
+        return strtoupper($this->server['REQUEST_METHOD'] ?? 'GET');
+    }
+
+    public function isMethod(string $method): bool
+    {
+        return $this->method() === strtoupper($method);
     }
 
     public function uri(): string
     {
-        return parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        return parse_url($this->server['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
     }
 
     public static function capture(): static

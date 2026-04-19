@@ -3,11 +3,10 @@
 namespace Framework\Core\Http;
 
 use Framework\Core\Application;
-use Framework\Core\Request;
-use Framework\Core\Pipeline;
-use Framework\Core\Router;
 use Framework\Core\Http\MiddlewareRegistry;
-
+use Framework\Core\Pipeline;
+use Framework\Core\Request;
+use Framework\Core\Router;
 
 class Kernel
 {
@@ -18,14 +17,13 @@ class Kernel
     protected array $middleware = [
         \Framework\Core\Http\Middleware\TrustProxies::class,
         \Framework\Core\Http\Middleware\TrimStrings::class,
+        \Framework\Core\Http\Middleware\StartSession::class,
     ];
 
     public function __construct($app)
     {
         $this->app = $app;
-
         $this->router = $app->make(Router::class);
-
         $this->registry = new MiddlewareRegistry();
 
         $this->registerMiddleware();
@@ -37,17 +35,21 @@ class Kernel
         return new Pipeline($this->app);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Handle HTTP Request
-    |--------------------------------------------------------------------------
-    */
-
     public function handle(Request $request)
     {
+        $route = $this->router->match(
+            $request->method(),
+            $request->uri()
+        );
+
+        $middleware = array_merge(
+            $this->middleware,
+            $this->resolveMiddleware($route['middleware'] ?? [])
+        );
+
         $response = $this->pipeline()
             ->send($request)
-            ->through($this->middleware)
+            ->through($middleware)
             ->then(fn (Request $request) => $this->router->dispatch(
                 $request->method(),
                 $request->uri()
@@ -92,9 +94,24 @@ class Kernel
             \Framework\Core\Http\Middleware\TrustProxies::class
         );
 
+        $this->registry->alias(
+            'web',
+            \Framework\Core\Http\Middleware\WebMiddleware::class
+        );
+
+        $this->registry->alias(
+            'auth',
+            \App\Middleware\AuthMiddleware::class
+        );
+
+        $this->registry->alias(
+            'guest',
+            \App\Middleware\GuestMiddleware::class
+        );
 
         $this->registry->group('web', [
             'trust',
+            \Framework\Core\Http\Middleware\WebMiddleware::class,
         ]);
     }
 }

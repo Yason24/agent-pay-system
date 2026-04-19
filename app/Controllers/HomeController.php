@@ -9,7 +9,7 @@ class HomeController extends Controller
     public function index(): string
     {
         return $this->view('home', [
-            'message' => 'Framework works',
+            'message' => 'Agent Pay System foundation is ready for Level 3.',
         ]);
     }
 }

@@ -2,7 +2,6 @@
 
 namespace Framework\Core;
 
-use ReflectionClass;
 use ReflectionMethod;
 
 class Container
@@ -21,56 +20,26 @@ class Container
         $this->instances[$abstract] = $instance;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | singleton
-    |--------------------------------------------------------------------------
-    */
-
     public function singleton(string $abstract, callable $factory): void
     {
         $this->singletons[$abstract] = $factory;
     }
-    /*
-    |--------------------------------------------------------------------------
-    | MAKE CLASS
-    |--------------------------------------------------------------------------
-    */
+
     public function make(string $abstract)
     {
         if (isset($this->aliases[$abstract])) {
             $abstract = $this->aliases[$abstract];
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Existing instance
-        |--------------------------------------------------------------------------
-        */
-
         if (isset($this->instances[$abstract])) {
             return $this->instances[$abstract];
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Singleton
-        |--------------------------------------------------------------------------
-        */
-
         if (isset($this->singletons[$abstract])) {
-
-            $this->instances[$abstract] =
-                ($this->singletons[$abstract])($this);
+            $this->instances[$abstract] = ($this->singletons[$abstract])($this);
 
             return $this->instances[$abstract];
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Auto resolve
-        |--------------------------------------------------------------------------
-        */
 
         $reflection = new \ReflectionClass($abstract);
 
@@ -87,46 +56,37 @@ class Container
         $dependencies = [];
 
         foreach ($constructor->getParameters() as $parameter) {
-
             $type = $parameter->getType();
 
             if ($type && !$type->isBuiltin()) {
                 $dependencies[] = $this->make($type->getName());
             } else {
-                $dependencies[] = null;
+                $dependencies[] = $parameter->isDefaultValueAvailable()
+                    ? $parameter->getDefaultValue()
+                    : null;
             }
         }
 
         return $reflection->newInstanceArgs($dependencies);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | CALL METHOD WITH AUTO DI
-    |--------------------------------------------------------------------------
-    */
     public function call(object $instance, string $method)
     {
         $reflection = new ReflectionMethod($instance, $method);
-
         $dependencies = [];
 
         foreach ($reflection->getParameters() as $parameter) {
-
             $type = $parameter->getType();
 
             if ($type && !$type->isBuiltin()) {
-                $dependencies[] = $this->make(
-                    $type->getName()
-                );
+                $dependencies[] = $this->make($type->getName());
             } else {
-                $dependencies[] = null;
+                $dependencies[] = $parameter->isDefaultValueAvailable()
+                    ? $parameter->getDefaultValue()
+                    : null;
             }
         }
 
-        return $reflection->invokeArgs(
-            $instance,
-            $dependencies
-        );
+        return $reflection->invokeArgs($instance, $dependencies);
     }
 }

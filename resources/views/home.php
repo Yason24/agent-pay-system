@@ -2,7 +2,8 @@
 @extends('layouts.app')
 
 @section('content')
-
-<h1>{{ $message }}</h1>
-
+<section>
+    <h1>{{ $message }}</h1>
+    <p><a href="/login">Open login</a></p>
+</section>
 @endsection

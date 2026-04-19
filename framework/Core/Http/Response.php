@@ -4,12 +4,18 @@ namespace Framework\Core\Http;
 
 class Response
 {
-
     public function __construct(
         protected mixed $content = '',
         protected int $status = 200,
         protected array $headers = []
     ) {}
+
+    public static function redirect(string $location, int $status = 302): self
+    {
+        return new self('', $status, [
+            'Location' => $location,
+        ]);
+    }
 
     public function send(): void
     {
