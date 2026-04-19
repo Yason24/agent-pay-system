@@ -11,7 +11,7 @@ class LoggerMiddleware
     public function handle($request, $next)
     {
         file_put_contents(
-            ROOT.'/storage/log.txt',
+            app()->basePath('storage/log.txt'),
             "BEFORE\n",
             FILE_APPEND
         );
@@ -19,7 +19,7 @@ class LoggerMiddleware
         $response = $next($request);
 
         file_put_contents(
-            ROOT.'/storage/log.txt',
+            app()->basePath('storage/log.txt'),
             "AFTER\n",
             FILE_APPEND
         );

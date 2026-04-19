@@ -28,12 +28,23 @@ class Router
 
     protected function addRoute(string $method, string $uri, $action): void
     {
+        // Применяем префиксы из группы к URI
+        if (!empty($this->groupStack)) {
+            $prefix = '';
+            foreach ($this->groupStack as $group) {
+                if (isset($group['prefix'])) {
+                    $prefix .= '/' . trim($group['prefix'], '/');
+                }
+            }
+            $uri = $prefix . '/' . ltrim($uri, '/');
+        }
+
         $this->routes[$method][$uri] = $action;
     }
 
     public function middleware(string|array $middleware): self
     {
-        $this->currentMiddleware = (array) $middleware;
+        $this->groupMiddleware = (array) $middleware;
 
         return $this;
     }
@@ -45,7 +56,7 @@ class Router
         ], fn () => $this);
     }
 
-    public function group($attributes, callable $callback = null): self
+    public function group($attributes, ?callable $callback = null): self
     {
         if ($attributes instanceof \Closure) {
             $callback = $attributes;
@@ -85,14 +96,15 @@ class Router
         // Controller route
         if (is_array($action)) {
 
-            [$controller, $method] = $action;
+            [$controller, $methodName] = $action;
 
             $controller = $this->container->make($controller);
 
-            $result = $controller->$method();
+            $result = $controller->$methodName();
 
             return new Response($result);
         }
-    }
 
+        throw new Exception('Invalid route action');
+    }
 }

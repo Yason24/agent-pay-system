@@ -41,8 +41,11 @@ class Application extends Container
             return new Router($app);
         });
 
-        $this->singleton('view', function () {
-            return new \Framework\Core\View\ViewFactory();
+        $this->singleton('view', function ($app) {
+            return new \Framework\Core\View\ViewFactory(
+                $app->basePath('resources/views'),
+                $app->basePath('storage/cache/views')
+            );
         });
     }
 
@@ -78,11 +81,12 @@ class Application extends Container
         $this->singleton(Kernel::class, fn($app) => new Kernel($app));
 
         // Request
-        $this->singleton(Request::class, fn() => new Request());
+//        $this->singleton(Request::class, fn() => new Request());
 
         $this->singleton(ViewFactory::class, function ($app) {
             return new ViewFactory(
-                $app->basePath('resources/views')
+                $app->basePath('resources/views'),
+                $app->basePath('storage/cache/views')
             );
         });
 
@@ -158,7 +162,7 @@ class Application extends Container
 
     protected function loadRoutes(): void
     {
-        require ROOT.'/routes/web.php';
+        require $this->basePath('routes/web.php');
     }
 
     public function boot()

@@ -7,13 +7,11 @@ class ViewFactory
     protected string $viewsPath;
     protected BladeCompiler $compiler;
 
-    public function __construct(string $viewsPath)
+    public function __construct(string $viewsPath, string $cachePath)
     {
         $this->viewsPath = $viewsPath;
 
-        $this->compiler = new BladeCompiler(
-            ROOT.'/storage/cache/views'
-        );
+        $this->compiler = new BladeCompiler($cachePath);
     }
 
     public function make(string $view, array $data = [])

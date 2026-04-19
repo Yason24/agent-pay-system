@@ -4,13 +4,12 @@ use Framework\Core\Application;
 use Framework\Core\Request;
 use Framework\Core\Kernel;
 
-define('ROOT', dirname(__DIR__));
-define('BASE_PATH', ROOT);
+define('BASE_PATH', dirname(__DIR__));
 
-require ROOT.'/vendor/autoload.php';
+require BASE_PATH.'/vendor/autoload.php';
 
 /*$app = new Application(BASE_PATH);*/
-$app = new Application(ROOT);
+$app = new Application(BASE_PATH);
 
 $request = Request::capture();
 
