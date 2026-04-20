@@ -8,7 +8,7 @@ Do not rebuild the framework from scratch. Continue the existing structure.
 
 ## Current Runtime
 
-Request flow:
+Request   flow:
 
 ```text
 public/index.php -> bootstrap/app.php -> Application -> HTTP Kernel -> Middleware -> Router -> Controller -> View/Response

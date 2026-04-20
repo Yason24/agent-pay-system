@@ -10,7 +10,7 @@ Use this file as short project orientation for coding agents.
 - Framework core: `framework/`.
 - Application code: `app/`.
 - Views: `resources/views/`.
-- Routes: `routes/web.php`.
+- Routes:  `routes/web.php`.
 - Database target: PostgreSQL.
 
 ## Current Request Flow

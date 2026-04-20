@@ -2,7 +2,7 @@
 
 Agent Pay System is a custom PHP MVC framework inspired by Laravel.
 
-## Request Lifecycle
+## Request   Lifecycle
 
 ```text
 public/index.php
