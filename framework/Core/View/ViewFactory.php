@@ -11,8 +11,8 @@ class ViewFactory
     {
         $this->viewsPath = $viewsPath;
 
-        if (!is_dir($cachePath)) {
-            mkdir($cachePath, 0777, true);
+        if (!is_dir($cachePath) && !mkdir($cachePath, 0777, true) && !is_dir($cachePath)) {
+            throw new \RuntimeException("Unable to create cache directory: {$cachePath}");
         }
 
         $this->compiler = new BladeCompiler($cachePath);
