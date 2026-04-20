@@ -30,10 +30,10 @@ class AuthController extends Controller
 
     public function login(Request $request, AuthService $auth): Response
     {
-        $email = trim((string) $request->input('email'));
+        $login = trim((string) $request->input('login'));
         $password = (string) $request->input('password');
 
-        if ($auth->attempt($email, $password)) {
+        if ($auth->attempt($login, $password)) {
             unset($_SESSION['auth_error']);
             unset($_SESSION['auth_success']);
 
@@ -96,4 +96,3 @@ class AuthController extends Controller
         return Response::redirect('/login');
     }
 }
-

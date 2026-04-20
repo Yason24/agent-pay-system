@@ -12,8 +12,11 @@ class Database
     public static function getConnection(): PDO
     {
         if (self::$connection === null) {
+            $basePath = defined('BASE_PATH')
+                ? BASE_PATH
+                : dirname(__DIR__, 2);
 
-            Env::load(ROOT . '/.env');
+            Env::load($basePath . '/.env');
 
             $driver = Env::get('DB_DRIVER');
             $host   = Env::get('DB_HOST');

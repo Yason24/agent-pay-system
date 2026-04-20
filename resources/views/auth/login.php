@@ -16,18 +16,15 @@
         <?php unset($_SESSION['auth_success']); ?>
     <?php endif; ?>
 
-    <form method="POST" action="/login">
-        <div>
-            <label for="login_email">Email</label>
-            <input id="login_email" type="email" name="email" required>
-        </div>
-
-        <div>
-            <label for="login_password">Password</label>
-            <input id="login_password" type="password" name="password" required>
-        </div>
-
-        <button type="submit">Sign in</button>
+    <form action="/login" method="post">
+        <label for="login_input">Логин: <input id="login_input" type="text" name="login" /></label>
+        <br>
+        <label for="password_input">Пароль: <input id="password_input" type="password" name="password" /></label>
+        <br>
+        <button type="submit">Ок</button>
+        <button type="button" onclick="window.history.back();">Отмена</button>
+        <br>
+        <a href="/forgot-password">Забыли пароль?</a>
     </form>
 
     <p style="margin-top:12px;">
