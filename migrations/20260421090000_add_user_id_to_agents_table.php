@@ -3,7 +3,16 @@
 return [
 
     'up' => function (PDO $db) {
+        // 1. add nullable first so existing rows don't fail immediately
         $db->exec('ALTER TABLE agents ADD COLUMN IF NOT EXISTS user_id INT');
+
+        // 2. remove orphan rows that cannot be assigned to any owner
+        $db->exec('DELETE FROM agents WHERE user_id IS NULL');
+
+        // 3. enforce NOT NULL now that no orphan rows remain
+        $db->exec('ALTER TABLE agents ALTER COLUMN user_id SET NOT NULL');
+
+        // 4. index + FK
         $db->exec('CREATE INDEX IF NOT EXISTS idx_agents_user_id ON agents(user_id)');
         $db->exec('ALTER TABLE agents ADD CONSTRAINT agents_user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE');
     },
@@ -15,5 +24,6 @@ return [
     },
 
 ];
+
 
 

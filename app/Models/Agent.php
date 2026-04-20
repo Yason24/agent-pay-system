@@ -10,6 +10,8 @@ class Agent extends Model
 {
     protected static string $table = 'agents';
 
+    public static array $sortable = ['id', 'name'];
+
     public static function forUser(int $userId): Collection
     {
         return static::where('user_id', '=', $userId)

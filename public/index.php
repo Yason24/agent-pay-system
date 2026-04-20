@@ -1,6 +1,7 @@
 <?php
 
 use Framework\Core\Application;
+use Framework\Core\Kernel;
 use Framework\Core\Http\Response;
 
 define('BASE_PATH', dirname(__DIR__));
@@ -13,7 +14,7 @@ try {
     $request = Framework\Core\Request::capture();
 
     $response = $app
-        ->make(Framework\Core\Http\Kernel::class)
+        ->make(Kernel::class)
         ->handle($request);
 } catch (Throwable $e) {
     error_log((string) $e);
