@@ -6,6 +6,7 @@
     <h1>Dashboard</h1>
     <p>Welcome, {{ $user?->name ?? 'Agent' }}</p>
     <p>You are now inside the protected application area.</p>
+    <p><a href="/agents">Manage agents</a></p>
 
     <form method="POST" action="/logout">
         <button type="submit">Logout</button>

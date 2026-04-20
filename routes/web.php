@@ -1,6 +1,7 @@
 <?php
 
 use App\Controllers\AuthController;
+use App\Controllers\AgentController;
 use App\Controllers\DashboardController;
 use App\Controllers\HomeController;
 use Framework\Support\Facades\Route;
@@ -17,5 +18,12 @@ Route::middleware('guest')->group(function ($router) {
 
 Route::middleware('auth')->group(function ($router) {
     $router->get('/dashboard', [DashboardController::class, 'index']);
+    $router->get('/agents', [AgentController::class, 'index']);
+    $router->get('/agents/create', [AgentController::class, 'create']);
+    $router->post('/agents', [AgentController::class, 'store']);
+    $router->get('/agents/show', [AgentController::class, 'show']);
+    $router->get('/agents/edit', [AgentController::class, 'edit']);
+    $router->post('/agents/update', [AgentController::class, 'update']);
+    $router->post('/agents/delete', [AgentController::class, 'destroy']);
     $router->post('/logout', [AuthController::class, 'logout']);
 });
