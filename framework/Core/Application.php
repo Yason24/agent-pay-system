@@ -4,7 +4,6 @@ namespace Framework\Core;
 
 use Framework\Core\Config\ConfigLoader;
 use Framework\Core\Http\Kernel;
-use Framework\Core\Support\ServiceProvider;
 use Framework\Core\View\ViewFactory;
 use Framework\Support\Facades\Facade;
 
@@ -154,18 +153,8 @@ class Application extends Container
         $providers = $composer['extra']['providers'] ?? [];
 
         foreach ($providers as $providerClass) {
-
             $provider = new $providerClass($this);
-
             $this->register($provider);
-
-            $this->providers[] = $provider;
-        }
-
-        foreach ($this->providers as $provider) {
-            if (method_exists($provider, 'boot')) {
-                $provider->boot();
-            }
         }
     }
 
