@@ -25,6 +25,13 @@ class Database
             $user   = Env::get('DB_USERNAME');
             $pass   = Env::get('DB_PASSWORD');
 
+            $availableDrivers = PDO::getAvailableDrivers();
+
+            if (!in_array($driver, $availableDrivers, true)) {
+                $drivers = implode(', ', $availableDrivers);
+                die("Database driver [{$driver}] is not installed. Available PDO drivers: {$drivers}");
+            }
+
             $dsn = "$driver:host=$host;port=$port;dbname=$db";
 
             try {
