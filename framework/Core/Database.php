@@ -4,6 +4,7 @@ namespace Framework\Core;
 
 use PDO;
 use PDOException;
+use RuntimeException;
 
 class Database
 {
@@ -28,8 +29,7 @@ class Database
             $availableDrivers = PDO::getAvailableDrivers();
 
             if (!in_array($driver, $availableDrivers, true)) {
-                $drivers = implode(', ', $availableDrivers);
-                die("Database driver [{$driver}] is not installed. Available PDO drivers: {$drivers}");
+                throw new RuntimeException('Configured database driver is not available.');
             }
 
             $dsn = "$driver:host=$host;port=$port;dbname=$db";
@@ -45,7 +45,7 @@ class Database
                     ]
                 );
             } catch (PDOException $e) {
-                die("Database connection failed: " . $e->getMessage());
+                throw new RuntimeException('Database connection failed.', 0, $e);
             }
         }
 

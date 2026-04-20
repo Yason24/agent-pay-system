@@ -1,101 +1,55 @@
-# AI_CONTEXT — Agent Pay System
+# AI Context - Agent Pay System
 
-## Project Type
+## Project
 
-Custom PHP Framework (Laravel-inspired)
+Agent Pay System is a custom Laravel-inspired PHP MVC framework and application foundation.
 
-## Current Development Stage
+Do not rebuild the framework from scratch. Continue the existing structure.
 
-Framework Core Completed (Stage 1)
+## Current Runtime
 
-The project already HAS:
+Request flow:
 
--  Application Container
+```text
+public/index.php -> bootstrap/app.php -> Application -> HTTP Kernel -> Middleware -> Router -> Controller -> View/Response
+```
 
--  HTTP Kernel
+Implemented areas:
 
--  Middleware Pipeline
+- PSR-4 Composer autoloading
+- `Framework\Core\Application` container
+- HTTP kernel and middleware pipeline
+- Route facade and route groups
+- Controllers and dependency injection
+- Blade-like PHP views with layouts and sections
+- PostgreSQL PDO connection through `.env`
+- Models, query builder, migrations, and seeders
+- Basic auth screens and protected dashboard route
 
--  Router System
+## Current Routes
 
--  Middleware Groups & Aliases
+- `/`
+- `/login`
+- `/register`
+- `/forgot-password`
+- `/dashboard`
+- `/logout`
 
--  Dependency Injection
+## Environment
 
--  Response Handling
+PostgreSQL is the current database target. Use `.env.example` as the local setup template.
 
--  Basic View Engine
+Required DB keys:
 
-Framework boot message:
+- `DB_DRIVER=pgsql`
+- `DB_HOST`
+- `DB_PORT`
+- `DB_DATABASE`
+- `DB_USERNAME`
+- `DB_PASSWORD`
 
-"Framework works 🚀"
+## Documentation Rules
 
----
-
-## IMPORTANT
-
-DO NOT rebuild architecture.
-
-The framework foundation EXISTS.
-
-Future work must CONTINUE development,
-
-NOT restart infrastructure.
-
----
-
-## Current Goal
-
-Move from Framework Development -> Application Development.
-
-Next priorities:
-
-1. Blade-level View Engine
-
-2. Layouts & Sections
-
-3. Database Layer
-
-4. Authentication System
-
-5. Admin Dashboard
-
-6. Payment Logic
-
----
-
-## Coding Style
-
--  Laravel-like structure
-
--  Clean architecture
-
--  Service-oriented design
-
--  Dependency Injection everywhere
-
----
-
-## Repository Owner Intention
-
-The author is building a long-term scalable system,
-
-not a quick website.
-
-Treat project as a framework-first architecture.
-
----
-
-## Project Modes
-
-Framework Mode:
-
--  building core infrastructure
-
-Application Mode:
-
--  building business features
-
-Template Mode:
-
--  preparing reusable starter project
+- Keep `README.md` as the single source of truth for first run instructions.
+- Keep architecture docs short and tied to current code.
+- Do not add duplicate roadmap or planning docs.

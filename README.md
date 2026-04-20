@@ -1,159 +1,99 @@
-# Website Template
+# Agent Pay System
 
-Lightweight PHP MVC framework created for fast development of web applications.
+Custom Laravel-inspired PHP MVC framework and application foundation.
 
----
+## Requirements
 
-## 🚀 Features
+- PHP 8.1+
+- Composer
+- PostgreSQL
+- PHP extension `pdo_pgsql`
+- Web server with document root set to `public/`
 
-* MVC Architecture
-* Dependency Injection Container
-* Custom Router
-* Environment configuration (.env)
-* PDO Database connection
-* Composer autoloading
-* Clean project structure
+## First Run
 
----
+Install dependencies:
 
-## 📁 Project Structure
-
-```
-app/
- ├── Controllers/
- ├── Core/
- │   ├── Container.php
- │   ├── Controller.php
- │   ├── Database.php
- │   ├── Env.php
- │   └── Router.php
- └── Views/
-
-public/
- └── index.php
-
-routes/
- └── web.php
-```
-
----
-
-## ⚙️ Requirements
-
-* PHP 8.1+
-* Composer
-* PostgreSQL
-* PDO pgsql extension enabled (`pdo_pgsql`)
-* OSPanel / XAMPP / Docker
-
----
-
-## 🔧 Installation
-
-### 1. Clone repository
-
-```
-git clone https://github.com/YOUR_USERNAME/website-template.git
-```
-
-### 2. Install dependencies
-
-```
+```bash
 composer install
 ```
 
-### 3. Create `.env` from `.env.example`
+Create local environment file:
+
+```bash
+cp .env.example .env
+```
+
+On Windows PowerShell:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Then set DB values in `.env`:
+Edit `.env` if your PostgreSQL credentials differ from the example values.
 
-```dotenv
-DB_DRIVER=pgsql
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=agent_pay_system
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
-```
+Create the PostgreSQL database named in `DB_DATABASE`, then run migrations:
 
-### 4. Set document root to `public/`
-
-For OSPanel, make sure project `.osp/project.ini` has:
-
-```ini
-web_root    = {base_dir}\public
-```
-
-### 5. Create PostgreSQL database
-
-Create DB manually (example name): `agent_pay_system`.
-
-### 6. Run migrations
-
-```powershell
+```bash
 php console migrate
 ```
 
-### 7. Start server
+Start the app with PHP built-in server:
 
-Open browser:
-
-```
-http://agent-pay-system/
+```bash
+php -S 127.0.0.1:8000 -t public
 ```
 
----
+For OSPanel, Apache, nginx, or Docker, point the site document root to:
 
-## 🧠 Architecture
+```text
+public/
+```
 
-This project follows MVC pattern:
+## Local Checks
 
-* **Models** — Database logic
-* **Views** — Templates
-* **Controllers** — Application logic
-
-Routing handled via custom Router class.
-
----
-
-## 📦 Next Steps
-
-* Migration System
-* ORM Layer
-* Auth System
-* API Support
-* CLI commands
-
----
-
-## 📄 License
-
-MIT
-
----
-
-## 🛡 Stability Checks (OSPanel)
-
-Run a full stability check:
-
-```powershell
+```bash
+composer stability:smoke
+composer stability:preflight
 composer stability:check
 ```
 
-Run only environment checks:
+`stability:preflight` and `stability:check` are OSPanel-oriented checks for PHP/PostgreSQL extension setup.
 
-```powershell
-composer stability:preflight
+## Routes
+
+- `GET /`
+- `GET /login`
+- `POST /login`
+- `GET /register`
+- `POST /register`
+- `GET /forgot-password`
+- `GET /dashboard`
+- `POST /logout`
+
+## Project Structure
+
+```text
+app/                 Application controllers, middleware, models, services, providers
+bootstrap/app.php    Application bootstrap
+config/              Framework config files
+framework/           Custom framework core
+migrations/          Database migrations
+public/index.php     Front controller
+resources/views/     PHP/Blade-like views
+routes/web.php       Web routes
+scripts/             Local stability checks
+seeders/             Database seeders
 ```
 
-Run app/bootstrap smoke checks:
+## Runtime Flow
 
-```powershell
-composer stability:smoke
+```text
+public/index.php -> bootstrap/app.php -> Application -> HTTP Kernel -> Middleware -> Router -> Controller -> View/Response
 ```
 
-Detailed runbook: `OPS_STABILITY.md`
+## Notes
 
+- PostgreSQL is the current database target.
+- `.env` is local-only and must not be committed.
+- Migration files should use the format expected by `MigrationRunner`: an array with `up` and `down` callbacks.

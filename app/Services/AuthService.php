@@ -45,6 +45,10 @@ class AuthService
             return false;
         }
 
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
+        }
+
         $_SESSION[$this->sessionKey] = (int) $user->id;
 
         return true;
@@ -53,5 +57,25 @@ class AuthService
     public function logout(): void
     {
         unset($_SESSION[$this->sessionKey]);
+
+        $_SESSION = [];
+
+        if (session_status() === PHP_SESSION_ACTIVE && ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+
+            setcookie(
+                session_name(),
+                '',
+                time() - 42000,
+                $params['path'] ?? '/',
+                $params['domain'] ?? '',
+                (bool) ($params['secure'] ?? false),
+                (bool) ($params['httponly'] ?? false)
+            );
+        }
+
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
+        }
     }
 }
