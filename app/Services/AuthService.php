@@ -8,6 +8,10 @@ class AuthService
 {
     protected string $sessionKey = 'auth_user_id';
 
+    public function __construct(
+        private HashService $hash
+    ) {}
+
     public function user(): ?User
     {
         $userId = $_SESSION[$this->sessionKey] ?? null;
@@ -37,7 +41,7 @@ class AuthService
             return false;
         }
 
-        if (!password_verify($password, $user->password)) {
+        if (!$this->hash->verify($password, $user->password)) {
             return false;
         }
 

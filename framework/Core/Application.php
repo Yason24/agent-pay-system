@@ -155,8 +155,19 @@ class Application extends Container
 
         $providers = $composer['extra']['providers'] ?? [];
 
-        foreach ($providers as $provider) {
-            $this->register(new $provider($this));
+        foreach ($providers as $providerClass) {
+
+            $provider = new $providerClass($this);
+
+            $this->register($provider);
+
+            $this->providers[] = $provider;
+        }
+
+        foreach ($this->providers as $provider) {
+            if (method_exists($provider, 'boot')) {
+                $provider->boot();
+            }
         }
     }
 

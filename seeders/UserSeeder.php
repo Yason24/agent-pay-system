@@ -2,15 +2,21 @@
 
 namespace Seeders;
 
+use App\Services\HashService;
+use App\Models\User;
 use PDO;
 
 class UserSeeder
 {
     public function run(PDO $db)
     {
-        $db->exec("
-            INSERT INTO users (name,email,password,role)
-            VALUES ('Admin','admin@test.com','123','admin')
-        ");
+        $hash = new HashService();
+
+        User::create([
+            'name' => 'Admin',
+            'email' => 'admin@test.com',
+            'password' => $hash->make('12345'),
+            'role' => 'admin'
+        ]);
     }
 }

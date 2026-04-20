@@ -1,32 +1,22 @@
 <?php
 
-namespace Framework\Core\Support;
+namespace Framework\Support;
 
-use Framework\Core\Container;
+use Framework\Core\Application;
 
 abstract class ServiceProvider
 {
-    protected Container $app;
+    protected Application $app;
 
-    public function __construct(Container $app)
+    public function __construct(Application $app)
     {
         $this->app = $app;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Register bindings
-    |--------------------------------------------------------------------------
-    */
     public function register(): void
     {
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Boot after all providers registered
-    |--------------------------------------------------------------------------
-    */
     public function boot(): void
     {
     }

@@ -6,6 +6,8 @@ use App\Services\AuthService;
 use Framework\Core\Controller;
 use Framework\Core\Http\Response;
 use Framework\Core\Request;
+use App\Services\HashService;
+use App\Models\User;
 
 class AuthController extends Controller
 {
@@ -38,5 +40,15 @@ class AuthController extends Controller
         $auth->logout();
 
         return Response::redirect('/login');
+    }
+
+    public function register(HashService $hash)
+    {
+        $password = $hash->make($_POST['password']);
+
+        User::create([
+            'email' => $_POST['email'],
+            'password' => $password,
+        ]);
     }
 }

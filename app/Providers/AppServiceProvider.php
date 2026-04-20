@@ -2,17 +2,18 @@
 
 namespace App\Providers;
 
-use Framework\Core\Support\ServiceProvider;
+use Framework\Support\ServiceProvider;
+use App\Services\HashService;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // register bindings only
+        $this->app->singleton(HashService::class, fn() => new HashService());
     }
 
     public function boot(): void
     {
-        // boot logic only
+        //
     }
 }
