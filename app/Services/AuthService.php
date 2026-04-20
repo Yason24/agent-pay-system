@@ -33,9 +33,9 @@ class AuthService
         return !$this->check();
     }
 
-    public function attempt(string $email, string $password): bool
+    public function attempt(string $login, string $password): bool
     {
-        $user = User::findByEmail($email);
+        $user = User::findByLogin($login);
 
         if (!$user) {
             return false;

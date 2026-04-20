@@ -106,3 +106,28 @@ Routing handled via custom Router class.
 ## 📄 License
 
 MIT
+
+---
+
+## 🛡 Stability Checks (OSPanel)
+
+Run a full stability check:
+
+```powershell
+composer stability:check
+```
+
+Run only environment checks:
+
+```powershell
+composer stability:preflight
+```
+
+Run app/bootstrap smoke checks:
+
+```powershell
+composer stability:smoke
+```
+
+Detailed runbook: `OPS_STABILITY.md`
+

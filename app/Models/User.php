@@ -13,6 +13,19 @@ class User extends Model
         return static::where('email', '=', $email)->first();
     }
 
+    public static function findByLogin(string $login): ?self
+    {
+        $db = \Framework\Core\Database::getConnection();
+        $stmt = $db->prepare(
+            'SELECT * FROM users WHERE LOWER(email) = LOWER(:login) OR LOWER(name) = LOWER(:login) LIMIT 1'
+        );
+        $stmt->execute(['login' => $login]);
+
+        $data = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        return $data ? new static($data) : null;
+    }
+
     public function agents()
     {
         return $this->hasMany(Agent::class, 'user_id');

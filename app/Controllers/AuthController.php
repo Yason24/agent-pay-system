@@ -28,6 +28,13 @@ class AuthController extends Controller
         ]);
     }
 
+    public function showForgotPassword(): string
+    {
+        return $this->view('auth.forgot-password', [
+            'title' => 'Forgot password',
+        ]);
+    }
+
     public function login(Request $request, AuthService $auth): Response
     {
         $login = trim((string) $request->input('login'));

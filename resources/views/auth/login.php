@@ -17,12 +17,12 @@
     <?php endif; ?>
 
     <form action="/login" method="post">
-        <label for="login_input">Логин: <input id="login_input" type="text" name="login" /></label>
+        <label for="login_input">Логин (имя или email): <input id="login_input" type="text" name="login" /></label>
         <br>
         <label for="password_input">Пароль: <input id="password_input" type="password" name="password" /></label>
         <br>
         <button type="submit">Ок</button>
-        <button type="button" onclick="window.history.back();">Отмена</button>
+        <button type="button" onclick="window.location.href='/';">Отмена</button>
         <br>
         <a href="/forgot-password">Забыли пароль?</a>
     </form>

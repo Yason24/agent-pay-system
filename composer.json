@@ -23,6 +23,11 @@
     "require": {
         "ext-pdo": "*"
     },
+    "scripts": {
+        "stability:preflight": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/preflight.ps1",
+        "stability:smoke": "@php scripts/smoke.php",
+        "stability:check": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stability-check.ps1"
+    },
     "extra": {
         "providers": [
             "App\\Providers\\AppServiceProvider"

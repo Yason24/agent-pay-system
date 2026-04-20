@@ -117,14 +117,21 @@ class Router
         $action = $route['action'];
 
         if ($action instanceof Closure) {
-            return new Response($action());
+            $result = $action();
+
+            return $result instanceof Response
+                ? $result
+                : new Response($result);
         }
 
         if (is_array($action)) {
             [$controller, $methodName] = $action;
             $controller = $this->container->make($controller);
+            $result = $this->container->call($controller, $methodName);
 
-            return new Response($this->container->call($controller, $methodName));
+            return $result instanceof Response
+                ? $result
+                : new Response($result);
         }
 
         throw new Exception('Invalid route action');

@@ -10,6 +10,9 @@ Route::get('/', [HomeController::class, 'index']);
 Route::middleware('guest')->group(function ($router) {
     $router->get('/login', [AuthController::class, 'showLogin']);
     $router->post('/login', [AuthController::class, 'login']);
+    $router->get('/register', [AuthController::class, 'showRegister']);
+    $router->post('/register', [AuthController::class, 'register']);
+    $router->get('/forgot-password', [AuthController::class, 'showForgotPassword']);
 });
 
 Route::middleware('auth')->group(function ($router) {
