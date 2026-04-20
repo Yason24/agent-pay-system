@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use Framework\Support\ServiceProvider;
 use App\Services\HashService;
+use Framework\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {

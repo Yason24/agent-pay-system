@@ -2,13 +2,11 @@
 
 namespace Framework\Core;
 
-use Framework\Core\Support\ServiceProvider;
 use Framework\Core\Config\ConfigLoader;
 use Framework\Core\Http\Kernel;
-use Framework\Core\Router;
-use Framework\Core\Request;
+use Framework\Core\Support\ServiceProvider;
 use Framework\Core\View\ViewFactory;
-use Framework\Core\Support\Facades\Facade;
+use Framework\Support\Facades\Facade;
 
 
 class Application extends Container

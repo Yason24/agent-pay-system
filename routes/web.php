@@ -3,7 +3,7 @@
 use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
 use App\Controllers\HomeController;
-use Framework\Core\Support\Facades\Route;
+use Framework\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index']);
 
