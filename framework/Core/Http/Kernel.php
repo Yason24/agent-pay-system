@@ -27,7 +27,6 @@ class Kernel
         $this->registry = new MiddlewareRegistry();
 
         $this->registerMiddleware();
-        $this->loadRoutes();
     }
 
     protected function pipeline(): Pipeline
@@ -75,12 +74,6 @@ class Kernel
         return new Response((string) $response);
     }
 
-    protected function loadRoutes(): void
-    {
-        $router = $this->app->make(\Framework\Core\Router::class);
-
-        require $this->app->basePath('routes/web.php');
-    }
 
     public function resolveMiddleware(array $middleware): array
     {
