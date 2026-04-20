@@ -13,16 +13,22 @@ class MigrationCreator
         $template = <<<PHP
 <?php
 
-return function(PDO \$db) {
+return [
 
-    \$db->exec("
-        -- write SQL here
-    ");
+    'up' => function (PDO \$db) {
+        \$db->exec("
+            -- write SQL here
+        ");
+    },
 
-};
+    'down' => function (PDO \$db) {
+        // rollback SQL here
+    },
+
+];
 PHP;
 
-        file_put_contents($filename, $template);
+        file_put_contents($filename, $template, LOCK_EX);
 
         echo "Migration created: {$timestamp}_{$name}.php\n";
     }

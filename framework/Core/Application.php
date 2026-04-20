@@ -21,6 +21,10 @@ class Application extends Container
 
         static::$instance = $this;
 
+        $this->loadEnvironment();
+
+        $this->loadConfig();
+
         $this->registerBaseBindings();
 
         Facade::setFacadeApplication($this);
@@ -150,9 +154,7 @@ class Application extends Container
             true
         );
 
-        $providers = $composer['extra']['providers'] ?? [];
-
-        foreach ($providers as $providerClass) {
+        foreach (($composer['extra']['providers'] ?? []) as $providerClass) {
             $provider = new $providerClass($this);
             $this->register($provider);
         }

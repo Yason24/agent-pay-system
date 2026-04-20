@@ -42,7 +42,8 @@ routes/
 
 * PHP 8.1+
 * Composer
-* MySQL
+* PostgreSQL
+* PDO pgsql extension enabled (`pdo_pgsql`)
 * OSPanel / XAMPP / Docker
 
 ---
@@ -61,22 +62,47 @@ git clone https://github.com/YOUR_USERNAME/website-template.git
 composer install
 ```
 
-### 3. Create .env file
+### 3. Create `.env` from `.env.example`
 
-```
-DB_HOST=localhost
-DB_PORT=3306
-DB_DATABASE=test
-DB_USERNAME=root
-DB_PASSWORD=
+```powershell
+Copy-Item .env.example .env
 ```
 
-### 4. Start server
+Then set DB values in `.env`:
+
+```dotenv
+DB_DRIVER=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=agent_pay_system
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+```
+
+### 4. Set document root to `public/`
+
+For OSPanel, make sure project `.osp/project.ini` has:
+
+```ini
+web_root    = {base_dir}\public
+```
+
+### 5. Create PostgreSQL database
+
+Create DB manually (example name): `agent_pay_system`.
+
+### 6. Run migrations
+
+```powershell
+php console migrate
+```
+
+### 7. Start server
 
 Open browser:
 
 ```
-http://website-template/
+http://agent-pay-system/
 ```
 
 ---

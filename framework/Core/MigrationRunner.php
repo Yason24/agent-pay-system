@@ -36,7 +36,7 @@ class MigrationRunner
 
             $this->db->beginTransaction();
 
-            $files = glob(ROOT.'/migrations/*.php');
+            $files = glob(ROOT.'/migrations/*.php', 0);
 
             $executed = $this->db
                 ->query("SELECT migration FROM migrations")
@@ -57,6 +57,10 @@ class MigrationRunner
                 echo "Running $name...\n";
 
                 $migration = require $file;
+
+                if (!is_array($migration) || !isset($migration['up']) || !is_callable($migration['up'])) {
+                    throw new \RuntimeException("Migration [$name] must return ['up' => callable, 'down' => callable].");
+                }
 
                 $migration['up']($this->db);
 
@@ -111,6 +115,10 @@ class MigrationRunner
 
             $migration = require ROOT."/migrations/$file";
 
+            if (!is_array($migration) || !isset($migration['down']) || !is_callable($migration['down'])) {
+                throw new \RuntimeException("Migration [$file] does not have callable down().");
+            }
+
             $migration['down']($this->db);
 
             $del = $this->db->prepare(
@@ -129,7 +137,7 @@ class MigrationRunner
 
     public function status()
     {
-        $files = glob(ROOT.'/migrations/*.php');
+        $files = glob(ROOT.'/migrations/*.php', 0);
 
         $executed = $this->db
             ->query("SELECT migration FROM migrations")
