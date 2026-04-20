@@ -13,7 +13,7 @@ public/index.php
 -> Framework\Core\Router
 -> route middleware
 -> controller
--> view or response
+-> view or   response
 ```
 
 ## Main Layers
