@@ -10,9 +10,6 @@ use Framework\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index']);
 
-Route::get('/register', [AuthController::class, 'showRegister']);
-Route::post('/register', [AuthController::class, 'register']);
-
 Route::middleware('guest')->group(function ($router) {
     $router->get('/login', [AuthController::class, 'showLogin']);
     $router->post('/login', [AuthController::class, 'login']);
@@ -21,6 +18,9 @@ Route::middleware('guest')->group(function ($router) {
 
 Route::middleware('auth')->group(function ($router) {
     $router->get('/dashboard', [DashboardController::class, 'index']);
+    $router->get('/register', [AuthController::class, 'showRegister']);
+    $router->post('/register', [AuthController::class, 'register']);
+
     $router->get('/agents', [AgentController::class, 'index']);
     $router->get('/agents/create', [AgentController::class, 'create']);
     $router->post('/agents', [AgentController::class, 'store']);
