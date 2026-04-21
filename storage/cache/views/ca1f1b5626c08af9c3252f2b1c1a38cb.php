@@ -1,13 +1,13 @@
-@extends('layouts.app')
+<?php $this->extend('layouts.app'); ?>
 
-@section('content')
+<?php $this->startSection('content'); ?>
 <section>
-    <h1>Восстановление пароля</h1>
+    <h1>Forgot Password</h1>
     <p class="muted">Функция восстановления пароля будет добавлена в следующем этапе.</p>
 
     <div class="page-actions">
-        <a class="btn" href="/login">Назад ко входу</a>
+        <a class="btn" href="/login">Back to login</a>
     </div>
 </section>
-@endsection
+<?php $this->endSection(); ?>
 

@@ -1,9 +1,9 @@
 <?php /** @var string $message */ ?>
-@extends('layouts.app')
+<?php $this->extend('layouts.app'); ?>
 
-@section('content')
+<?php $this->startSection('content'); ?>
 <section>
-    <h1>{{ $message }}</h1>
+    <h1><?= htmlspecialchars($message) ?></h1>
     <p class="muted">Публичная главная страница. Войдите в аккаунт, чтобы управлять агентами.</p>
 
     <div class="card">
@@ -13,4 +13,4 @@
         </div>
     </div>
 </section>
-@endsection
+<?php $this->endSection(); ?>

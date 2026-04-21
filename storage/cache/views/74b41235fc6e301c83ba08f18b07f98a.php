@@ -1,11 +1,11 @@
 <?php /** @var \App\Models\User|null $user */ ?>
-@extends('layouts.app')
+<?php $this->extend('layouts.app'); ?>
 
-@section('content')
+<?php $this->startSection('content'); ?>
 <section>
     <?php $isAdmin = $user !== null && (string) $user->role === 'admin'; ?>
     <h1>Кабинет</h1>
-    <p class="muted">Добро пожаловать, {{ $user?->name ?? 'Пользователь' }}</p>
+    <p class="muted">Добро пожаловать, <?= htmlspecialchars($user?->name ?? 'Пользователь') ?></p>
     <p class="muted">Вы находитесь в защищенной части приложения.</p>
 
     <div class="page-actions">
@@ -20,4 +20,4 @@
         <button class="btn" type="submit">Выйти</button>
     </form>
 </section>
-@endsection
+<?php $this->endSection(); ?>

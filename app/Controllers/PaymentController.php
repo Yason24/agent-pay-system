@@ -27,7 +27,7 @@ class PaymentController extends Controller
         $agent = $this->resolveAgentFromRequest($request, (int) $user->id);
 
         if ($agent === null) {
-            $_SESSION['agents_error'] = 'Agent not found.';
+            $_SESSION['agents_error'] = 'Агент не найден.';
 
             return Response::redirect('/agents');
         }
@@ -38,7 +38,7 @@ class PaymentController extends Controller
         unset($_SESSION['payments_success'], $_SESSION['payments_error']);
 
         return $this->view('payments.index', [
-            'title' => 'Payments',
+            'title' => 'Платежи',
             'agent' => $agent,
             'payments' => Payment::forAgentAndUser((int) $agent->id, (int) $user->id),
             'success' => $success,
@@ -61,7 +61,7 @@ class PaymentController extends Controller
         $agent = $this->resolveAgentFromRequest($request, (int) $user->id);
 
         if ($agent === null) {
-            $_SESSION['agents_error'] = 'Agent not found.';
+            $_SESSION['agents_error'] = 'Агент не найден.';
 
             return Response::redirect('/agents');
         }
@@ -72,7 +72,7 @@ class PaymentController extends Controller
         unset($_SESSION['payments_create_errors'], $_SESSION['payments_create_old']);
 
         return $this->view('payments.create', [
-            'title' => 'Create Payment',
+            'title' => 'Создать платеж',
             'agent' => $agent,
             'errors' => $errors,
             'old' => $old,
@@ -95,7 +95,7 @@ class PaymentController extends Controller
         $agent = Agent::findForUser($agentId, (int) $user->id);
 
         if ($agent === null) {
-            $_SESSION['agents_error'] = 'Agent not found.';
+            $_SESSION['agents_error'] = 'Агент не найден.';
 
             return Response::redirect('/agents');
         }
@@ -120,7 +120,7 @@ class PaymentController extends Controller
             ]);
         } catch (\Throwable) {
             $_SESSION['payments_create_errors'] = [
-                '_form' => 'Не удалось сохранить платеж. Проверьте введенные данные и попробуйте снова.',
+                '_form' => 'Не удалось сохранить платеж. Проверьте введённые данные и попробуйте снова.',
             ];
             $_SESSION['payments_create_old'] = $payload;
 
@@ -128,7 +128,7 @@ class PaymentController extends Controller
         }
 
         unset($_SESSION['payments_create_errors'], $_SESSION['payments_create_old']);
-        $_SESSION['payments_success'] = 'Payment created successfully.';
+        $_SESSION['payments_success'] = 'Платеж успешно создан.';
 
         return Response::redirect('/payments?agent_id=' . $agentId);
     }
@@ -154,7 +154,7 @@ class PaymentController extends Controller
         $agent = Agent::find((int) $payment->agent_id);
 
         return $this->view('payments.show', [
-            'title' => 'Payment',
+            'title' => 'Платеж',
             'payment' => $payment,
             'agent' => $agent,
             'success' => $_SESSION['payments_success'] ?? null,
@@ -187,7 +187,7 @@ class PaymentController extends Controller
         unset($_SESSION['payments_edit_errors'], $_SESSION['payments_edit_old']);
 
         return $this->view('payments.edit', [
-            'title' => 'Edit Payment',
+            'title' => 'Изменить платеж',
             'payment' => $payment,
             'agent' => $agent,
             'errors' => $errors,
@@ -231,7 +231,7 @@ class PaymentController extends Controller
             $payment->save();
         } catch (\Throwable) {
             $_SESSION['payments_edit_errors'] = [
-                '_form' => 'Не удалось обновить платеж. Проверьте введенные данные и попробуйте снова.',
+                '_form' => 'Не удалось обновить платеж. Проверьте введённые данные и попробуйте снова.',
             ];
             $_SESSION['payments_edit_old'] = $payload;
 
@@ -239,7 +239,7 @@ class PaymentController extends Controller
         }
 
         unset($_SESSION['payments_edit_errors'], $_SESSION['payments_edit_old']);
-        $_SESSION['payments_success'] = 'Payment updated successfully.';
+        $_SESSION['payments_success'] = 'Платеж успешно обновлён.';
 
         return Response::redirect('/payments/show?id=' . (int) $payment->id);
     }
@@ -265,7 +265,7 @@ class PaymentController extends Controller
         $agentId = (int) $payment->agent_id;
         $payment->delete();
 
-        $_SESSION['payments_success'] = 'Payment deleted successfully.';
+        $_SESSION['payments_success'] = 'Платеж успешно удалён.';
 
         return Response::redirect('/payments?agent_id=' . $agentId);
     }
@@ -296,33 +296,33 @@ class PaymentController extends Controller
         $amount = $this->normalizeAmount($amountRaw);
 
         if ($amountRaw === '') {
-            $errors['amount'] = 'Amount is required.';
+            $errors['amount'] = 'Сумма обязательна.';
         } elseif (!preg_match('/^\d{1,10}([.,]\d{1,2})?$/', $amountRaw)) {
-            $errors['amount'] = 'Amount format: up to 10 digits and optional 1-2 decimals.';
+            $errors['amount'] = 'Формат суммы: до 10 цифр и при необходимости 1-2 знака после разделителя.';
         } elseif ((float) $amount <= 0) {
-            $errors['amount'] = 'Amount must be greater than zero.';
+            $errors['amount'] = 'Сумма должна быть больше нуля.';
         }
 
         if ($payload['payment_date'] === '') {
-            $errors['payment_date'] = 'Payment date is required.';
+            $errors['payment_date'] = 'Дата платежа обязательна.';
         } else {
             $date = \DateTime::createFromFormat('Y-m-d', $payload['payment_date']);
 
             if (!$date || $date->format('Y-m-d') !== $payload['payment_date']) {
-                $errors['payment_date'] = 'Payment date must be in YYYY-MM-DD format.';
+                $errors['payment_date'] = 'Дата платежа должна быть в формате ГГГГ-ММ-ДД.';
             }
         }
 
         $allowedStatuses = ['pending', 'paid', 'failed'];
 
         if ($payload['status'] === '') {
-            $errors['status'] = 'Status is required.';
+            $errors['status'] = 'Статус обязателен.';
         } elseif (!in_array($payload['status'], $allowedStatuses, true)) {
-            $errors['status'] = 'Status must be one of: pending, paid, failed.';
+            $errors['status'] = 'Выберите корректный статус.';
         }
 
         if (strlen($payload['note']) > 1000) {
-            $errors['note'] = 'Note must not exceed 1000 characters.';
+            $errors['note'] = 'Примечание не должно превышать 1000 символов.';
         }
 
         return $errors;

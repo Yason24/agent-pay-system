@@ -11,8 +11,12 @@ class DashboardController extends Controller
     {
         $user = app(AuthService::class)->user();
 
+        if ($user === null) {
+            return \Framework\Core\Http\Response::redirect('/login');
+        }
+
         return $this->view('dashboard.index', [
-            'title' => 'Dashboard',
+            'title' => 'Кабинет',
             'user' => $user,
         ]);
     }

@@ -8,6 +8,31 @@ class User extends Model
 {
     protected static string $table = 'users';
 
+    public static array $sortable = ['id', 'name', 'email', 'role', 'created_at'];
+
+    public static function roles(): array
+    {
+        return [
+            'admin' => 'Админ',
+            'accountant' => 'Бухгалтер',
+            'agent' => 'Агент',
+            'dispatcher' => 'Диспетчер',
+        ];
+    }
+
+    public static function roleLabel(?string $role): string
+    {
+        if ($role === null || $role === '') {
+            return 'Гость';
+        }
+
+        if ($role === 'user') {
+            return 'Агент';
+        }
+
+        return static::roles()[$role] ?? $role;
+    }
+
     public static function findByEmail(string $email): ?self
     {
         return static::where('email', '=', $email)->first();

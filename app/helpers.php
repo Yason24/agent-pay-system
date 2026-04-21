@@ -27,3 +27,14 @@ function csrf_field(): string
 
     return '<input type="hidden" name="_token" value="' . $token . '">';
 }
+
+function payment_status_label(string $status): string
+{
+    return match ($status) {
+        'paid' => 'Оплачено',
+        'pending' => 'В ожидании',
+        'failed' => 'Неуспешно',
+        default => $status,
+    };
+}
+

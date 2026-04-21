@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\Agent;
+use App\Models\Payment;
 use App\Services\AuthService;
 use Framework\Core\Controller;
 use Framework\Core\Http\Response;
@@ -26,7 +27,7 @@ class AgentController extends Controller
         $agents = Agent::forUser((int) $user->id);
 
         return $this->view('agents.index', [
-            'title' => 'My Agents',
+            'title' => 'Мои агенты',
             'agents' => $agents,
             'success' => $success,
             'error' => $error,
@@ -45,7 +46,7 @@ class AgentController extends Controller
         unset($_SESSION['agents_create_errors'], $_SESSION['agents_create_old']);
 
         return $this->view('agents.create', [
-            'title' => 'Create Agent',
+            'title' => 'Создать агента',
             'errors' => $errors,
             'old' => $old,
         ]);
@@ -75,7 +76,7 @@ class AgentController extends Controller
         ]);
 
         unset($_SESSION['agents_create_errors'], $_SESSION['agents_create_old']);
-        $_SESSION['agents_success'] = 'Agent created successfully.';
+        $_SESSION['agents_success'] = 'Агент успешно создан.';
 
         return Response::redirect('/agents');
     }
@@ -92,14 +93,19 @@ class AgentController extends Controller
         $agent = Agent::findForUser($id, (int) $user->id);
 
         if ($agent === null) {
-            $_SESSION['agents_error'] = 'Agent not found.';
+            $_SESSION['agents_error'] = 'Агент не найден.';
 
             return Response::redirect('/agents');
         }
 
+        $paymentSummary = Payment::summaryForAgentAndUser((int) $agent->id, (int) $user->id);
+        $latestPayments = Payment::latestForAgentAndUser((int) $agent->id, (int) $user->id, 5);
+
         return $this->view('agents.show', [
-            'title' => 'Agent Card',
+            'title' => 'Кабинет агента',
             'agent' => $agent,
+            'paymentSummary' => $paymentSummary,
+            'latestPayments' => $latestPayments,
         ]);
     }
 
@@ -115,7 +121,7 @@ class AgentController extends Controller
         $agent = Agent::findForUser($id, (int) $user->id);
 
         if ($agent === null) {
-            $_SESSION['agents_error'] = 'Agent not found.';
+            $_SESSION['agents_error'] = 'Агент не найден.';
 
             return Response::redirect('/agents');
         }
@@ -126,7 +132,7 @@ class AgentController extends Controller
         unset($_SESSION['agents_edit_errors'], $_SESSION['agents_edit_old']);
 
         return $this->view('agents.edit', [
-            'title' => 'Edit Agent',
+            'title' => 'Изменить агента',
             'agent' => $agent,
             'errors' => $errors,
             'old' => $old,
@@ -145,7 +151,7 @@ class AgentController extends Controller
         $agent = Agent::findForUser($id, (int) $user->id);
 
         if ($agent === null) {
-            $_SESSION['agents_error'] = 'Agent not found.';
+            $_SESSION['agents_error'] = 'Агент не найден.';
 
             return Response::redirect('/agents');
         }
@@ -164,7 +170,7 @@ class AgentController extends Controller
         $agent->save();
 
         unset($_SESSION['agents_edit_errors'], $_SESSION['agents_edit_old']);
-        $_SESSION['agents_success'] = 'Agent updated successfully.';
+        $_SESSION['agents_success'] = 'Агент успешно обновлён.';
 
         return Response::redirect('/agents/show?id=' . $agent->id);
     }
@@ -181,13 +187,13 @@ class AgentController extends Controller
         $agent = Agent::findForUser($id, (int) $user->id);
 
         if ($agent === null) {
-            $_SESSION['agents_error'] = 'Agent not found.';
+            $_SESSION['agents_error'] = 'Агент не найден.';
 
             return Response::redirect('/agents');
         }
 
         $agent->delete();
-        $_SESSION['agents_success'] = 'Agent deleted successfully.';
+        $_SESSION['agents_success'] = 'Агент успешно удалён.';
 
         return Response::redirect('/agents');
     }
@@ -197,17 +203,17 @@ class AgentController extends Controller
         $errors = [];
 
         if ($name === '') {
-            $errors['name'] = 'Name is required.';
+            $errors['name'] = 'Имя обязательно.';
 
             return $errors;
         }
 
         if (strlen($name) < 2) {
-            $errors['name'] = 'Name must be at least 2 characters.';
+            $errors['name'] = 'Имя должно быть не короче 2 символов.';
         }
 
         if (strlen($name) > 255) {
-            $errors['name'] = 'Name must not exceed 255 characters.';
+            $errors['name'] = 'Имя не должно превышать 255 символов.';
         }
 
         return $errors;

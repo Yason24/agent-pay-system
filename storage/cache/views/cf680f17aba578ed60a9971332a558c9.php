@@ -1,8 +1,8 @@
 <?php /** @var string|null $error */ ?>
 <?php /** @var string|null $success */ ?>
-@extends('layouts.app')
+<?php $this->extend('layouts.app'); ?>
 
-@section('content')
+<?php $this->startSection('content'); ?>
 <section>
     <h1>Войти</h1>
 
@@ -34,4 +34,4 @@
     </form>
     <p class="muted">Доступ в систему выдаёт администратор.</p>
 </section>
-@endsection
+<?php $this->endSection(); ?>

@@ -86,6 +86,15 @@ try {
 
     $storePaymentRoute = $router->match('POST', '/payments');
     $assert(isset($storePaymentRoute['action']), 'POST /payments route is registered');
+
+    $adminUsersRoute = $router->match('GET', '/admin/users');
+    $assert(isset($adminUsersRoute['action']), 'GET /admin/users route is registered');
+
+    $createAdminUserRoute = $router->match('GET', '/admin/users/create');
+    $assert(isset($createAdminUserRoute['action']), 'GET /admin/users/create route is registered');
+
+    $storeAdminUserRoute = $router->match('POST', '/admin/users');
+    $assert(isset($storeAdminUserRoute['action']), 'POST /admin/users route is registered');
 } catch (Throwable $e) {
     $assert(false, 'Application/router check failed: ' . $e->getMessage());
 }

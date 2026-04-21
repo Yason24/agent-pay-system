@@ -2,11 +2,11 @@
 <?php /** @var \Framework\Core\Collection $payments */ ?>
 <?php /** @var string|null $success */ ?>
 <?php /** @var string|null $error */ ?>
-@extends('layouts.app')
+<?php $this->extend('layouts.app'); ?>
 
-@section('content')
+<?php $this->startSection('content'); ?>
 <section>
-    <h1>Платежи: {{ $agent->name }}</h1>
+    <h1>Платежи: <?= htmlspecialchars($agent->name) ?></h1>
 
     <div class="page-actions">
         <a class="btn" href="/agents">К агентам</a>
@@ -42,7 +42,7 @@
                         <td><?= (int) $payment->id ?></td>
                         <td><?= htmlspecialchars(number_format((float) $payment->amount, 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) $payment->payment_date, ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= htmlspecialchars(payment_status_label((string) $payment->status), ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= htmlspecialchars((string) $payment->status, ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) ($payment->note ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                         <td>
                             <div class="actions-inline">
@@ -61,6 +61,6 @@
         </table>
     <?php endif; ?>
 </section>
-@endsection
+<?php $this->endSection(); ?>
 
 

@@ -214,7 +214,7 @@ $roleLabel = $currentRole === 'guest'
         <?php unset($_SESSION['app_error']); ?>
     <?php endif; ?>
 
-    @yield('content')
+    <?= $this->yieldSection('content'); ?>
 </main>
 
 <footer>
