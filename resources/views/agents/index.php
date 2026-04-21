@@ -1,5 +1,5 @@
 <?php /** @var \Framework\Core\Collection $agents */ ?>
-<?php /** @var \Framework\Core\Collection $agentUsers */ ?>
+<?php /** @var array<int, array<string, mixed>> $staffAgents */ ?>
 <?php /** @var bool $staffAgentsListMode */ ?>
 <?php /** @var string|null $success */ ?>
 <?php /** @var string|null $error */ ?>
@@ -25,7 +25,7 @@
     <?php endif; ?>
 
     <?php if (!empty($staffAgentsListMode)): ?>
-        <?php if ($agentUsers->count() === 0): ?>
+        <?php if (empty($staffAgents)): ?>
             <p class="muted">Пользователи с ролью "Агент" не найдены.</p>
         <?php else: ?>
             <table class="table">
@@ -35,15 +35,27 @@
                     <th>Имя</th>
                     <th>Email</th>
                     <th>Роль</th>
+                    <th>Действия</th>
                 </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($agentUsers as $agentUser): ?>
+                <?php foreach ($staffAgents as $staffAgent): ?>
                     <tr>
-                        <td><?= (int) $agentUser->id ?></td>
-                        <td><?= htmlspecialchars((string) $agentUser->name, ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= htmlspecialchars((string) $agentUser->email, ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= htmlspecialchars(\App\Models\User::roleLabel((string) $agentUser->role), ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= (int) $staffAgent['user_id'] ?></td>
+                        <td><?= htmlspecialchars((string) $staffAgent['name'], ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= htmlspecialchars((string) $staffAgent['email'], ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= htmlspecialchars(\App\Models\User::roleLabel((string) $staffAgent['role']), ENT_QUOTES, 'UTF-8') ?></td>
+                        <td>
+                            <?php if (!empty($staffAgent['legacy_agent_id'])): ?>
+                                <div class="actions-inline">
+                                    <a class="btn" href="/payments?agent_id=<?= (int) $staffAgent['legacy_agent_id'] ?>">Платежи</a>
+                                    <a class="btn" href="/agents/show?id=<?= (int) $staffAgent['legacy_agent_id'] ?>">Открыть</a>
+                                    <a class="btn" href="/agents/edit?id=<?= (int) $staffAgent['legacy_agent_id'] ?>">Изменить</a>
+                                </div>
+                            <?php else: ?>
+                                <span class="muted">Нет legacy-записи</span>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

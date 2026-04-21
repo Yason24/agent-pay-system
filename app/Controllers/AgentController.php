@@ -32,9 +32,25 @@ class AgentController extends Controller
                 ->orderBy('id', 'DESC')
                 ->get();
 
+            $staffAgents = [];
+
+            foreach ($agentUsers as $agentUser) {
+                $legacyAgent = Agent::where('user_id', '=', (int) $agentUser->id)
+                    ->orderBy('id', 'DESC')
+                    ->first();
+
+                $staffAgents[] = [
+                    'user_id' => (int) $agentUser->id,
+                    'name' => (string) $agentUser->name,
+                    'email' => (string) $agentUser->email,
+                    'role' => (string) $agentUser->role,
+                    'legacy_agent_id' => $legacyAgent !== null ? (int) $legacyAgent->id : null,
+                ];
+            }
+
             return $this->view('agents.index', [
                 'title' => 'Агенты',
-                'agentUsers' => $agentUsers,
+                'staffAgents' => $staffAgents,
                 'staffAgentsListMode' => true,
                 'success' => $success,
                 'error' => $error,
