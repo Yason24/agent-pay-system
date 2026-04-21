@@ -9,6 +9,7 @@
 
     <div class="page-actions">
         <a class="btn" href="/cabinet">Назад в кабинет</a>
+        <a class="btn" href="/my/requests">Мои заявки</a>
     </div>
 
     <?php if (!empty($success)): ?>
@@ -22,11 +23,18 @@
     <form class="form-stack" method="post" action="/requests/store">
         <?= csrf_field() ?>
 
-        <label class="form-label" for="request_subject">Тема</label>
-        <input class="form-input" id="request_subject" type="text" name="subject" value="<?= htmlspecialchars((string) ($old['subject'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" required>
+        <label class="form-label" for="req_amount">Сумма <span style="color:var(--danger)">*</span></label>
+        <input class="form-input" id="req_amount" type="text" name="amount"
+               value="<?= htmlspecialchars((string) ($old['amount'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+               placeholder="Например: 1500.00" required>
 
-        <label class="form-label" for="request_comment">Комментарий</label>
-        <textarea class="form-input" id="request_comment" name="comment" rows="5"><?= htmlspecialchars((string) ($old['comment'] ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
+        <label class="form-label" for="req_payment_link">Ссылка на оплату</label>
+        <input class="form-input" id="req_payment_link" type="url" name="payment_link"
+               value="<?= htmlspecialchars((string) ($old['payment_link'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+               placeholder="https://...">
+
+        <label class="form-label" for="req_comment">Комментарий</label>
+        <textarea class="form-input" id="req_comment" name="comment" rows="4"><?= htmlspecialchars((string) ($old['comment'] ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
 
         <button class="btn btn-primary" type="submit">Отправить заявку</button>
     </form>

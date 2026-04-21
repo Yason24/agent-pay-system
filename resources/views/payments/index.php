@@ -19,12 +19,15 @@
     <div class="page-actions">
         <?php if ($isAdminMode): ?>
             <a class="btn" href="/agents">Назад к агентам</a>
+            <a class="btn" href="/requests?agent_user_id=<?= (int) $agentUserId ?>">Заявки</a>
+            <a class="btn" href="/history?agent_user_id=<?= (int) $agentUserId ?>">Баланс / история</a>
             <?php if (!$isReadOnly): ?>
                 <a class="btn btn-primary" href="/payments/create?agent_user_id=<?= (int) $agentUserId ?>">Создать платеж</a>
             <?php endif; ?>
         <?php else: ?>
             <a class="btn" href="/cabinet">Назад в кабинет</a>
-            <a class="btn" href="/my/history">Моя история</a>
+            <a class="btn" href="/my/requests">Мои заявки</a>
+            <a class="btn" href="/my/balance">Баланс / история</a>
         <?php endif; ?>
     </div>
 

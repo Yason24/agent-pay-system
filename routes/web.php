@@ -5,8 +5,10 @@ use App\Controllers\AuthController;
 use App\Controllers\AdminUserController;
 use App\Controllers\AgentController;
 use App\Controllers\DashboardController;
+use App\Controllers\HistoryController;
 use App\Controllers\HomeController;
 use App\Controllers\PaymentController;
+use App\Controllers\RequestController;
 use Framework\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index']);
@@ -35,6 +37,9 @@ Route::middleware('auth')->group(function ($router) {
         $router->get('/agents', [AdminAgentController::class, 'index']);
         $router->get('/agents/show', [AdminAgentController::class, 'show']);
 
+        $router->get('/history', [HistoryController::class, 'index']);
+        $router->get('/requests', [RequestController::class, 'index']);
+
         $router->get('/payments', [PaymentController::class, 'index']);
         $router->get('/payments/create', [PaymentController::class, 'create']);
         $router->post('/payments', [PaymentController::class, 'store']);
@@ -46,10 +51,11 @@ Route::middleware('auth')->group(function ($router) {
 
     $router->middleware('role:agent')->group(function ($router) {
         $router->get('/cabinet', [AgentController::class, 'index']);
+        $router->get('/my/balance', [HistoryController::class, 'myIndex']);
+        $router->get('/my/requests', [RequestController::class, 'myIndex']);
         $router->get('/my/payments', [PaymentController::class, 'myIndex']);
-        $router->get('/my/history', ['App\\Controllers\\HistoryController', 'myIndex']);
-        $router->get('/requests/create', ['App\\Controllers\\RequestController', 'create']);
-        $router->post('/requests/store', ['App\\Controllers\\RequestController', 'store']);
+        $router->get('/requests/create', [RequestController::class, 'create']);
+        $router->post('/requests/store', [RequestController::class, 'store']);
     });
 
     $router->post('/logout', [AuthController::class, 'logout']);
