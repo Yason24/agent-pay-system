@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\Agent;
 use App\Models\Payment;
+use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\AuthService;
 use App\Support\AuditAction;
@@ -26,11 +27,26 @@ class AgentController extends Controller
 
         unset($_SESSION['agents_success'], $_SESSION['agents_error']);
 
+        if ($auth->hasAnyRole(['admin', 'accountant'])) {
+            $agentUsers = User::where('role', '=', 'agent')
+                ->orderBy('id', 'DESC')
+                ->get();
+
+            return $this->view('agents.index', [
+                'title' => 'Агенты',
+                'agentUsers' => $agentUsers,
+                'staffAgentsListMode' => true,
+                'success' => $success,
+                'error' => $error,
+            ]);
+        }
+
         $agents = Agent::forUser((int) $user->id);
 
         return $this->view('agents.index', [
             'title' => 'Мои агенты',
             'agents' => $agents,
+            'staffAgentsListMode' => false,
             'success' => $success,
             'error' => $error,
         ]);
