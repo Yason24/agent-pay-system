@@ -2,12 +2,12 @@
 <?php /** @var \App\Models\Agent|null $agent */ ?>
 <?php /** @var array<string, string> $errors */ ?>
 <?php /** @var array<string, mixed> $old */ ?>
-@extends('layouts.app')
+<?php $this->extend('layouts.app'); ?>
 
-@section('content')
+<?php $this->startSection('content'); ?>
 <section>
     <h1>Редактирование платежа</h1>
-    <p class="muted">Агент: {{ $agent !== null ? $agent->name : ('#' . $payment->agent_id) }}</p>
+    <p class="muted">Агент: <?= htmlspecialchars($agent !== null ? $agent->name : ('#' . $payment->agent_id)) ?></p>
 
     <div class="page-actions">
         <a class="btn" href="/payments?agent_id=<?= (int) $payment->agent_id ?>">Назад к платежам</a>
@@ -38,9 +38,9 @@
 
         <label class="form-label" for="payment_status">Статус</label>
         <select class="form-input" id="payment_status" name="status" required>
-            <option value="pending" <?= $currentStatus === 'pending' ? 'selected' : '' ?>>В ожидании</option>
-            <option value="paid" <?= $currentStatus === 'paid' ? 'selected' : '' ?>>Оплачено</option>
-            <option value="failed" <?= $currentStatus === 'failed' ? 'selected' : '' ?>>Неуспешно</option>
+            <option value="pending" <?= $currentStatus === 'pending' ? 'selected' : '' ?>>pending</option>
+            <option value="paid" <?= $currentStatus === 'paid' ? 'selected' : '' ?>>paid</option>
+            <option value="failed" <?= $currentStatus === 'failed' ? 'selected' : '' ?>>failed</option>
         </select>
         <?php if (!empty($errors['status'])): ?>
             <p class="form-error"><?= htmlspecialchars($errors['status'], ENT_QUOTES, 'UTF-8') ?></p>
@@ -56,6 +56,6 @@
         <button class="btn btn-primary" type="submit">Сохранить</button>
     </form>
 </section>
-@endsection
+<?php $this->endSection(); ?>
 
 

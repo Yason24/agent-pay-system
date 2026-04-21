@@ -1,10 +1,10 @@
 <?php /** @var string|null $error */ ?>
 <?php /** @var string|null $success */ ?>
-@extends('layouts.app')
+<?php $this->extend('layouts.app'); ?>
 
-@section('content')
+<?php $this->startSection('content'); ?>
 <section>
-    <h1>Войти</h1>
+    <h1>Login</h1>
 
     <?php if (!empty($error)): ?>
         <p class="flash flash-error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
@@ -19,7 +19,7 @@
     <form class="form-stack" action="/login" method="post">
         <?= csrf_field() ?>
 
-        <label class="form-label" for="login_input">Логин (имя или эл. почта)</label>
+        <label class="form-label" for="login_input">Логин (имя или email)</label>
         <input class="form-input" id="login_input" type="text" name="login" required>
 
         <label class="form-label" for="password_input">Пароль</label>
@@ -32,6 +32,9 @@
 
         <p><a href="/forgot-password">Забыли пароль?</a></p>
     </form>
-    <p class="muted">Доступ в систему выдаёт администратор.</p>
+
+    <p class="muted">
+        No account? <a href="/register">Create one</a>
+    </p>
 </section>
-@endsection
+<?php $this->endSection(); ?>

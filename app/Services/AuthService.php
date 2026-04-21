@@ -33,6 +33,28 @@ class AuthService
         return !$this->check();
     }
 
+    public function hasRole(string $role): bool
+    {
+        $user = $this->user();
+
+        if ($user === null) {
+            return false;
+        }
+
+        return (string) $user->role === $role;
+    }
+
+    public function hasAnyRole(array $roles): bool
+    {
+        $user = $this->user();
+
+        if ($user === null) {
+            return false;
+        }
+
+        return in_array((string) $user->role, $roles, true);
+    }
+
     public function attempt(string $login, string $password): bool
     {
         $user = User::findByLogin($login);

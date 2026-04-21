@@ -2,12 +2,17 @@
 <?php
 $currentUser = app(\App\Services\AuthService::class)->user();
 $currentRole = $currentUser !== null ? (string) $currentUser->role : 'guest';
-$roleLabel = $currentRole === 'guest'
-    ? 'Гость'
-    : \App\Models\User::roleLabel($currentRole);
+$roleLabels = [
+    'admin' => 'Админ',
+    'manager' => 'Менеджер',
+    'agent' => 'Агент',
+    'user' => 'Пользователь',
+    'guest' => 'Гость',
+];
+$roleLabel = $roleLabels[$currentRole] ?? ('Роль: ' . $currentRole);
 ?>
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -103,11 +108,6 @@ $roleLabel = $currentRole === 'guest'
             border: 1px solid var(--border);
             border-radius: 8px;
             font-size: 15px;
-        }
-
-        textarea.form-input,
-        select.form-input {
-            font-family: inherit;
         }
 
         .form-error {
@@ -209,16 +209,11 @@ $roleLabel = $currentRole === 'guest'
         <?php unset($_SESSION['csrf_error']); ?>
     <?php endif; ?>
 
-    <?php if (!empty($_SESSION['app_error'])): ?>
-        <p class="flash flash-error"><?= htmlspecialchars((string) $_SESSION['app_error'], ENT_QUOTES, 'UTF-8') ?></p>
-        <?php unset($_SESSION['app_error']); ?>
-    <?php endif; ?>
-
-    @yield('content')
+    <?= $this->yieldSection('content'); ?>
 </main>
 
 <footer>
-    Текущий продуктовый этап
+    Laravel DNA Phase
 </footer>
 </body>
 </html>
