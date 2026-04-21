@@ -140,6 +140,10 @@ class AdminUserController extends Controller
             $errors['role'] = 'Выберите корректную роль.';
         }
 
+        if ($this->isLastAdminRoleDowngrade($user, $role)) {
+            $errors['role'] = 'Нельзя изменить роль последнего администратора.';
+        }
+
         if ($errors !== []) {
             $_SESSION['users_edit_errors'] = $errors;
             $_SESSION['users_edit_old'] = ['role' => $role];
@@ -171,6 +175,24 @@ class AdminUserController extends Controller
         return null;
     }
 
+    private function isLastAdminRoleDowngrade(User $user, string $newRole): bool
+    {
+        // если пользователь не админ — ничего не проверяем
+        if ((string) $user->role !== 'admin') {
+            return false;
+        }
+
+        // если роль остаётся admin — ок
+        if ($newRole === 'admin') {
+            return false;
+        }
+
+        // считаем админов напрямую (без get())
+        $adminsCount = User::where('role', '=', 'admin')->count();
+
+        return $adminsCount <= 1;
+    }
+
     private function validateCreatePayload(array $payload): array
     {
         $errors = [];
@@ -196,4 +218,5 @@ class AdminUserController extends Controller
         return $errors;
     }
 }
+
 

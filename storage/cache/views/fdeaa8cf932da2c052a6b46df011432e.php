@@ -10,7 +10,6 @@
         <p class="muted">Доступные действия:</p>
         <div class="page-actions">
             <a class="btn btn-primary" href="/login">Войти</a>
-            <a class="btn" href="/register">Регистрация</a>
         </div>
     </div>
 </section>
