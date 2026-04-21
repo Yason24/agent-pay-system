@@ -1,4 +1,4 @@
-<?php /** @var \App\Models\Agent $agent */ ?>
+<?php /** @var \App\Models\User $agent */ ?>
 <?php /** @var array<string, mixed> $paymentSummary */ ?>
 <?php /** @var \Framework\Core\Collection $latestPayments */ ?>
 @extends('layouts.app')
@@ -14,9 +14,8 @@
 
     <div class="page-actions">
         <a class="btn" href="/agents">Назад к списку</a>
-        <a class="btn btn-primary" href="/payments/create?agent_id=<?= (int) $agent->id ?>">Добавить платеж</a>
-        <a class="btn" href="/payments?agent_id=<?= (int) $agent->id ?>">Все платежи</a>
-        <a class="btn" href="/agents/edit?id=<?= (int) $agent->id ?>">Изменить</a>
+        <a class="btn btn-primary" href="/payments/create">Добавить платеж</a>
+        <a class="btn" href="/payments">Все платежи</a>
     </div>
 
     <div class="card">

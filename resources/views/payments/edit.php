@@ -13,6 +13,7 @@
 
     <div class="page-actions">
         <?php if ($isAdminMode): ?>
+            <a class="btn" href="/admin/agents">Назад к агентам</a>
             <a class="btn" href="/admin/agents/payments?agent_user_id=<?= (int) $agentUserId ?>">Назад к платежам</a>
             <a class="btn" href="/payments/show?id=<?= (int) $payment->id ?>&agent_user_id=<?= (int) $agentUserId ?>">Карточка платежа</a>
         <?php else: ?>

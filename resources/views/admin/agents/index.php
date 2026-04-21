@@ -1,6 +1,7 @@
 <?php /** @var \Framework\Core\Collection $agents */ ?>
 <?php /** @var string|null $success */ ?>
 <?php /** @var string|null $error */ ?>
+<?php /** @var bool $canManageUsers */ ?>
 @extends('layouts.app')
 
 @section('content')
@@ -10,8 +11,10 @@
 
 	<div class="page-actions">
 		<a class="btn" href="/dashboard">Назад в кабинет</a>
-		<a class="btn" href="/admin/users">Все пользователи</a>
-		<a class="btn btn-primary" href="/admin/users/create">Создать пользователя</a>
+		<?php if (!empty($canManageUsers)): ?>
+			<a class="btn" href="/admin/users">Все пользователи</a>
+			<a class="btn btn-primary" href="/admin/users/create">Создать пользователя</a>
+		<?php endif; ?>
 	</div>
 
 	<?php if (!empty($success)): ?>
@@ -47,8 +50,10 @@
 					<td>
 						<div class="table-actions">
 							<a class="btn" href="/admin/agents/payments?agent_user_id=<?= (int) $agent->id ?>">Платежи</a>
-							<a class="btn" href="/admin/users/edit?id=<?= (int) $agent->id ?>">Просмотр</a>
-							<a class="btn" href="/admin/users/edit?id=<?= (int) $agent->id ?>">Редактировать</a>
+							<a class="btn" href="/admin/agents/show?agent_user_id=<?= (int) $agent->id ?>">Просмотр</a>
+							<?php if (!empty($canManageUsers)): ?>
+								<a class="btn" href="/admin/users/edit?id=<?= (int) $agent->id ?>">Редактировать</a>
+							<?php endif; ?>
 						</div>
 					</td>
 				</tr>
@@ -58,4 +63,5 @@
 	<?php endif; ?>
 </section>
 @endsection
+
 

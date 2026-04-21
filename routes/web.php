@@ -3,6 +3,7 @@
 use App\Controllers\AdminAgentController;
 use App\Controllers\AuthController;
 use App\Controllers\AdminUserController;
+use App\Controllers\AgentController;
 use App\Controllers\DashboardController;
 use App\Controllers\HomeController;
 use App\Controllers\PaymentController;
@@ -21,6 +22,9 @@ Route::middleware('auth')->group(function ($router) {
     $router->get('/register', [AuthController::class, 'showRegister']);
     $router->post('/register', [AuthController::class, 'register']);
 
+    // Кабинет агента (self-flow)
+    $router->get('/agents', [AgentController::class, 'index']);
+
     $router->get('/payments', [PaymentController::class, 'index']);
     $router->get('/payments/create', [PaymentController::class, 'create']);
     $router->post('/payments', [PaymentController::class, 'store']);
@@ -37,6 +41,7 @@ Route::middleware('auth')->group(function ($router) {
 
     $router->get('/admin/agents', [AdminAgentController::class, 'index']);
     $router->get('/admin/agents/payments', [AdminAgentController::class, 'payments']);
+    $router->get('/admin/agents/show', [AdminAgentController::class, 'show']);
 
     $router->post('/logout', [AuthController::class, 'logout']);
 });

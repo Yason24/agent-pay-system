@@ -1,55 +1,68 @@
-# AI Context - Agent Pay System
+# AI Context — Agent Pay System
 
 ## Project
 
-Agent Pay System is a custom Laravel-inspired PHP MVC framework and application foundation.
+Agent Pay System — веб-система учета задолженности компании перед агентами, заявок на оплату и фактических оплат.
 
-Do not rebuild the framework from scratch. Continue the existing structure.
+Это не шаблон сайта и не абстрактный framework demo. Это бизнес-приложение со строгими ролями, финансовой логикой и ограничениями доступа.
 
-## Current Runtime
+## Core Business Rule
 
-Request flow:
+Агент = пользователь с ролью `agent`.
 
-```text
-public/index.php -> bootstrap/app.php -> Application -> HTTP Kernel -> Middleware -> Router -> Controller -> View/Response
-```
+Это обязательное архитектурное правило проекта.
 
-Implemented areas:
+- агент входит в систему под своим логином и паролем
+- агент видит только свои данные
+- все агентские сущности должны быть привязаны к `users.id`
+- не использовать `agents` как отдельную основную бизнес-сущность
 
-- PSR-4 Composer autoloading
-- `Framework\Core\Application` container
-- HTTP kernel and middleware pipeline
-- Route facade and route groups
-- Controllers and dependency injection
-- Blade-like PHP views with layouts and sections
-- PostgreSQL PDO connection through `.env`
-- Models, query builder, migrations, and seeders
-- Basic auth screens and protected dashboard route
+## Roles
 
-## Current Routes
+- `admin`
+- `accountant`
+- `dispatcher`
+- `agent`
 
-- `/`
-- `/login`
-- `/register`
-- `/forgot-password`
-- `/dashboard`
-- `/logout`
+## Main Business Domains
 
-## Environment
+- Users and roles
+- Legal entities
+- Agent balances by legal entity
+- Payment requests
+- Payments
+- Debt operations
+- Audit log
+- Notifications
 
-PostgreSQL is the current database target. Use `.env.example` as the local setup template.
+## Financial Rules
 
-Required DB keys:
+- Баланс агента ведётся по каждому юрлицу
+- Доступный баланс = total - reserved
+- Баланс не должен изменяться вручную без финансовой операции
+- Для конкурентных действий использовать транзакции
+- Нельзя допускать двойную обработку заявки
 
-- `DB_DRIVER=pgsql`
-- `DB_HOST`
-- `DB_PORT`
-- `DB_DATABASE`
-- `DB_USERNAME`
-- `DB_PASSWORD`
+## Access Rules
+
+- `agent` sees only own balances, requests, payments, history
+- `dispatcher` works with requests in operational flow
+- `accountant` manages accruals and corrections
+- `admin` manages users, roles, legal entities, logs and settings
+
+## Technical Context
+
+- Custom Laravel-inspired PHP MVC framework
+- PostgreSQL
+- Entry point: `public/index.php`
+- Bootstrap: `bootstrap/app.php`
+- Routes: `routes/web.php`
+- App code: `app/`
+- Views: `resources/views/`
 
 ## Documentation Rules
 
-- Keep `README.md` as the single source of truth for first run instructions.
-- Keep architecture docs short and tied to current code.
-- Do not add duplicate roadmap or planning docs.
+- `README.md` is the source of truth for setup
+- `ARCHITECTURE.md` is the source of truth for architecture decisions
+- Keep docs aligned with current code
+- Do not reintroduce `agent` as a separate primary business entity

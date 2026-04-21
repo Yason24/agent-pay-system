@@ -18,7 +18,7 @@ class AgentController extends Controller
             return Response::redirect('/login');
         }
 
-        if ($auth->hasRole('admin')) {
+        if ($auth->hasAnyRole(['admin', 'accountant'])) {
             return Response::redirect('/admin/agents');
         }
 
@@ -28,40 +28,31 @@ class AgentController extends Controller
             return Response::redirect('/dashboard');
         }
 
-        $payments = Payment::forAgentUser((int) $user->id);
-        $totalAmount = 0.0;
-        $paidAmount = 0.0;
-        $pendingAmount = 0.0;
-        $failedAmount = 0.0;
+        try {
+            $paymentSummary = Payment::summaryForAgentUser((int) $user->id);
+            $latestPayments = Payment::latestForAgentUser((int) $user->id, 5);
+        } catch (\Throwable) {
+            $_SESSION['app_error'] = 'Раздел платежей временно недоступен. Выполните миграции базы данных.';
 
-        foreach ($payments as $payment) {
-            $amount = (float) ($payment->amount ?? 0);
-            $totalAmount += $amount;
-
-            $status = (string) ($payment->status ?? '');
-
-            if ($status === 'paid') {
-                $paidAmount += $amount;
-            } elseif ($status === 'pending') {
-                $pendingAmount += $amount;
-            } elseif ($status === 'failed') {
-                $failedAmount += $amount;
-            }
+            return $this->view('agents.show', [
+                'title' => 'Кабинет агента',
+                'agent' => $user,
+                'paymentSummary' => [
+                    'total_amount' => 0.0,
+                    'paid_amount' => 0.0,
+                    'pending_amount' => 0.0,
+                    'failed_amount' => 0.0,
+                    'payments_count' => 0,
+                ],
+                'latestPayments' => new \Framework\Core\Collection([]),
+            ]);
         }
-
-        $paymentSummary = [
-            'total_amount' => $totalAmount,
-            'paid_amount' => $paidAmount,
-            'pending_amount' => $pendingAmount,
-            'failed_amount' => $failedAmount,
-            'payments_count' => $payments->count(),
-        ];
 
         return $this->view('agents.show', [
             'title' => 'Кабинет агента',
             'agent' => $user,
             'paymentSummary' => $paymentSummary,
-            'latestPayments' => $payments,
+            'latestPayments' => $latestPayments,
         ]);
     }
 

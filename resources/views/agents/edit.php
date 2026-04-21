@@ -9,7 +9,6 @@
 
     <div class="page-actions">
         <a class="btn" href="/agents">Назад к списку</a>
-        <a class="btn" href="/agents/show?id=<?= (int) $agent->id ?>">Карточка</a>
     </div>
 
     <form class="form-stack" action="/agents/update" method="post">

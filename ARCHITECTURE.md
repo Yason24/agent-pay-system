@@ -37,3 +37,44 @@ public/index.php
 ## Database
 
 The current database target is PostgreSQL. Runtime DB values come from `.env`; `.env.example` documents the expected keys.
+
+## Domain Architecture
+
+### Core Rule
+
+Agent = user with role `agent`.
+
+The system must not treat `agent` as a separate primary domain entity.
+
+### Main Domains
+
+- Users
+- Legal entities
+- Agent balances
+- Payment requests
+- Payments
+- Debt operations
+- Audit logs
+- Notifications
+
+### Ownership Model
+
+All agent-owned data must be linked to `users.id`.
+
+Examples:
+- balances -> `agent_user_id`
+- payment requests -> `agent_user_id`
+- debt operations -> `agent_user_id`
+- reports/filters -> based on agent user account
+
+### Access Model
+
+- `agent` can access only own data
+- `dispatcher` can process operational requests
+- `accountant` can manage accruals and corrections
+- `admin` can manage users, roles, legal entities and logs
+
+### Financial Integrity
+
+Balance must not be edited as free-form state.
+Financial changes must be derived from operations history and protected by transactions where needed.

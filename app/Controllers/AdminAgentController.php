@@ -13,7 +13,7 @@ class AdminAgentController extends Controller
 {
 	public function index(AuthService $auth): string|Response
 	{
-		if ($response = $this->ensureAdmin($auth)) {
+		if ($response = $this->ensureStaff($auth)) {
 			return $response;
 		}
 
@@ -27,12 +27,13 @@ class AdminAgentController extends Controller
 			'agents' => User::agents()->orderBy('id', 'DESC')->get(),
 			'success' => $success,
 			'error' => $error,
+			'canManageUsers' => $auth->hasRole('admin'),
 		]);
 	}
 
 	public function payments(Request $request, AuthService $auth): string|Response
 	{
-		if ($response = $this->ensureAdmin($auth)) {
+		if ($response = $this->ensureStaff($auth)) {
 			return $response;
 		}
 
@@ -61,14 +62,38 @@ class AdminAgentController extends Controller
 		]);
 	}
 
-	private function ensureAdmin(AuthService $auth): ?Response
+	public function show(Request $request, AuthService $auth): Response
+	{
+		if ($response = $this->ensureStaff($auth)) {
+			return $response;
+		}
+
+		$agentUserId = (int) $request->input('agent_user_id', 0);
+		$agent = User::findAgentById($agentUserId);
+
+		if ($agent === null) {
+			$_SESSION['agents_error'] = 'Агент не найден.';
+
+			return Response::redirect('/admin/agents');
+		}
+
+		if (!$auth->hasRole('admin')) {
+			$_SESSION['app_error'] = 'Просмотр профиля агента доступен только администратору.';
+
+			return Response::redirect('/admin/agents');
+		}
+
+		return Response::redirect('/admin/users/edit?id=' . (int) $agent->id);
+	}
+
+	private function ensureStaff(AuthService $auth): ?Response
 	{
 		if ($auth->guest()) {
 			return Response::redirect('/login');
 		}
 
-		if (!$auth->hasRole('admin')) {
-			$_SESSION['app_error'] = 'Доступ к разделу агентов есть только у администратора.';
+		if (!$auth->hasAnyRole(['admin', 'accountant'])) {
+			$_SESSION['app_error'] = 'Доступ к разделу агентов есть только у администратора и бухгалтера.';
 
 			return Response::redirect('/dashboard');
 		}
@@ -76,4 +101,5 @@ class AdminAgentController extends Controller
 		return null;
 	}
 }
+
 

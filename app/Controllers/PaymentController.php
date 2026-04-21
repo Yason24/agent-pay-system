@@ -87,7 +87,7 @@ class PaymentController extends Controller
             return $this->redirectStorageError($auth);
         }
 
-        $context = $this->resolveContext($request, $auth, true);
+        $context = $this->resolveContext($request, $auth);
 
         if ($context === null) {
             return $this->redirectAgentNotFound($auth);
@@ -201,7 +201,7 @@ class PaymentController extends Controller
             return $this->redirectStorageError($auth);
         }
 
-        $context = $this->resolveContext($request, $auth, true);
+        $context = $this->resolveContext($request, $auth);
         $payment = $this->resolvePayment($request, $auth, $context);
 
         if ($payment === null) {
@@ -249,7 +249,7 @@ class PaymentController extends Controller
             return $this->redirectStorageError($auth);
         }
 
-        $context = $this->resolveContext($request, $auth, true);
+        $context = $this->resolveContext($request, $auth);
         $payment = $this->resolvePayment($request, $auth, $context);
 
         if ($payment === null) {
@@ -263,7 +263,7 @@ class PaymentController extends Controller
         return Response::redirect($this->paymentsIndexUrl($context));
     }
 
-    private function resolveContext(Request $request, AuthService $auth, bool $fromPost = false): ?array
+    private function resolveContext(Request $request, AuthService $auth): ?array
     {
         $user = $auth->user();
 
@@ -271,10 +271,14 @@ class PaymentController extends Controller
             return null;
         }
 
-        $isAdmin = $auth->hasRole('admin');
+        $isStaff = $auth->hasAnyRole(['admin', 'accountant']);
         $agentUserId = (int) $request->input('agent_user_id', 0);
 
-        if ($isAdmin && $agentUserId > 0) {
+        if ($isStaff) {
+            if ($agentUserId <= 0) {
+                return null;
+            }
+
             $agent = User::findAgentById($agentUserId);
 
             if ($agent === null) {
@@ -322,8 +326,8 @@ class PaymentController extends Controller
         return Payment::findAccessible(
             $paymentId,
             (int) $user->id,
-            $context['is_admin_mode'],
-            $context['agent_user_id']
+            (bool) ($context['is_admin_mode'] ?? false),
+            isset($context['agent_user_id']) ? (int) $context['agent_user_id'] : null
         );
     }
 
@@ -389,7 +393,21 @@ class PaymentController extends Controller
             $db = Database::getConnection();
             $tableName = $db->query("SELECT to_regclass('payments')")->fetchColumn();
 
-            return $tableName !== false && $tableName !== null && $tableName !== '';
+            if ($tableName === false || $tableName === null || $tableName === '') {
+                return false;
+            }
+
+            $columnExists = $db->query(
+                "SELECT CASE WHEN EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                      AND table_name = 'payments'
+                      AND column_name = 'agent_user_id'
+                ) THEN 1 ELSE 0 END"
+            )->fetchColumn();
+
+            return (int) $columnExists === 1;
         } catch (\Throwable) {
             return false;
         }
@@ -399,7 +417,7 @@ class PaymentController extends Controller
     {
         $_SESSION['payments_error'] = 'Раздел платежей недоступен. Выполните миграции базы данных.';
 
-        if ($auth->hasRole('admin')) {
+        if ($auth->hasAnyRole(['admin', 'accountant'])) {
             return Response::redirect('/admin/agents');
         }
 
@@ -410,7 +428,7 @@ class PaymentController extends Controller
     {
         $_SESSION['agents_error'] = 'Агент не найден.';
 
-        if ($auth->hasRole('admin')) {
+        if ($auth->hasAnyRole(['admin', 'accountant'])) {
             return Response::redirect('/admin/agents');
         }
 
@@ -425,7 +443,7 @@ class PaymentController extends Controller
             return Response::redirect($this->paymentsIndexUrl($context));
         }
 
-        if ($auth->hasRole('admin')) {
+        if ($auth->hasAnyRole(['admin', 'accountant'])) {
             return Response::redirect('/admin/agents');
         }
 

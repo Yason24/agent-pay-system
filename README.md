@@ -1,99 +1,53 @@
 # Agent Pay System
 
-Custom Laravel-inspired PHP MVC framework and application foundation.
+Веб-система для учета задолженности компании перед агентами и погашения этой задолженности через оплату товаров/услуг по ссылкам, предоставленным агентами.
 
-## Requirements
+## Основная бизнес-модель
+
+- Агент — это пользователь системы с ролью `agent`
+- Агент входит в систему под своим логином и паролем
+- Агент видит только свои данные
+- Администратор, бухгалтер и диспетчер работают в рамках своих ролей
+- Все агентские сущности должны быть привязаны к `users.id`
+- Не использовать `agents` как отдельную основную бизнес-сущность
+
+## Роли
+
+- `admin`
+- `accountant`
+- `dispatcher`
+- `agent`
+
+## Ключевые модули
+
+- Пользователи и роли
+- Юрлица
+- Балансы агентов по юрлицам
+- Заявки на оплату
+- Фактические оплаты
+- DebtOperations как финансовый источник истины
+- Audit log
+
+## Архитектурные правила
+
+- Баланс не изменяется напрямую без финансовых операций
+- Все изменения денег должны проходить через финансовые операции
+- Все чувствительные действия должны логироваться в audit log
+- Агент не может видеть чужие данные
+- Все выборки данных агента строятся от `auth()->id()`
+
+## Tech Stack
 
 - PHP 8.1+
 - Composer
 - PostgreSQL
-- PHP extension `pdo_pgsql`
-- Web server with document root set to `public/`
+- PDO PgSQL
+- Custom Laravel-inspired MVC framework
 
 ## First Run
 
-Install dependencies:
-
 ```bash
 composer install
-```
-
-Create local environment file:
-
-```bash
 cp .env.example .env
-```
-
-On Windows PowerShell:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Edit `.env` if your PostgreSQL credentials differ from the example values.
-
-Create the PostgreSQL database named in `DB_DATABASE`, then run migrations:
-
-```bash
 php console migrate
-```
-
-Start the app with PHP built-in server:
-
-```bash
 php -S 127.0.0.1:8000 -t public
-```
-
-For OSPanel, Apache, nginx, or Docker, point the site document root to:
-
-```text
-public/
-```
-
-## Local Checks
-
-```bash
-composer stability:smoke
-composer stability:preflight
-composer stability:check
-```
-
-`stability:preflight` and `stability:check` are OSPanel-oriented checks for PHP/PostgreSQL extension setup.
-
-## Routes
-
-- `GET /`
-- `GET /login`
-- `POST /login`
-- `GET /register`
-- `POST /register`
-- `GET /forgot-password`
-- `GET /dashboard`
-- `POST /logout`
-
-## Project Structure
-
-```text
-app/                 Application controllers, middleware, models, services, providers
-bootstrap/app.php    Application bootstrap
-config/              Framework config files
-framework/           Custom framework core
-migrations/          Database migrations
-public/index.php     Front controller
-resources/views/     PHP/Blade-like views
-routes/web.php       Web routes
-scripts/             Local stability checks
-seeders/             Database seeders
-```
-
-## Runtime Flow
-
-```text
-public/index.php -> bootstrap/app.php -> Application -> HTTP Kernel -> Middleware -> Router -> Controller -> View/Response
-```
-
-## Notes
-
-- PostgreSQL is the current database target.
-- `.env` is local-only and must not be committed.
-- Migration files should use the format expected by `MigrationRunner`: an array with `up` and `down` callbacks.
