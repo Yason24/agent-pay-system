@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Models\User;
 use Framework\Core\Application;
 use Framework\Core\Database;
 use Framework\Core\Env;
+use Framework\Core\QueryBuilder;
 
 $basePath = dirname(__DIR__);
 define('BASE_PATH', $basePath);
@@ -95,6 +97,11 @@ try {
 
     $storeAdminUserRoute = $router->match('POST', '/admin/users');
     $assert(isset($storeAdminUserRoute['action']), 'POST /admin/users route is registered');
+
+    $assert(method_exists(QueryBuilder::class, 'count'), 'QueryBuilder::count method exists');
+
+    $adminsCount = User::where('role', '=', 'admin')->count();
+    $assert(is_int($adminsCount), 'User::where(...)->count() returns int');
 } catch (Throwable $e) {
     $assert(false, 'Application/router check failed: ' . $e->getMessage());
 }
