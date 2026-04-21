@@ -8,7 +8,7 @@ class User extends Model
 {
     protected static string $table = 'users';
 
-    public static array $sortable = ['id', 'name', 'email', 'role', 'created_at'];
+    public static array $sortable = ['id', 'name', 'email', 'role', 'status', 'created_at'];
 
     public static function roles(): array
     {
@@ -33,6 +33,23 @@ class User extends Model
         return static::roles()[$role] ?? $role;
     }
 
+    public static function statuses(): array
+    {
+        return [
+            'active' => 'Активен',
+            'blocked' => 'Заблокирован',
+        ];
+    }
+
+    public static function statusLabel(?string $status): string
+    {
+        if ($status === null || $status === '') {
+            return static::statuses()['active'];
+        }
+
+        return static::statuses()[$status] ?? $status;
+    }
+
     public static function findByEmail(string $email): ?self
     {
         return static::where('email', '=', $email)->first();
@@ -40,8 +57,7 @@ class User extends Model
 
     public static function findByLogin(string $login): ?self
     {
-        $db = \Framework\Core\Database::getConnection();
-        $stmt = $db->prepare(
+        $stmt = \Framework\Core\Database::getConnection()->prepare(
             'SELECT * FROM users WHERE LOWER(email) = LOWER(:login) OR LOWER(name) = LOWER(:login) LIMIT 1'
         );
         $stmt->execute(['login' => $login]);

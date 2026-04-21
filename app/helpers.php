@@ -1,6 +1,18 @@
 <?php
 
+use App\Services\AuthService;
+use Framework\Core\Http\Response;
 use Framework\Core\View\ViewFactory;
+
+function auth(): AuthService
+{
+    return app(AuthService::class);
+}
+
+function redirect(string $location, int $status = 302): Response
+{
+    return Response::redirect($location, $status);
+}
 
 function view(string $view, array $data = [])
 {

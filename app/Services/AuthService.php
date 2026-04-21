@@ -28,6 +28,13 @@ class AuthService
         return $this->user() !== null;
     }
 
+    public function id(): ?int
+    {
+        $user = $this->user();
+
+        return $user ? (int) $user->id : null;
+    }
+
     public function guest(): bool
     {
         return !$this->check();

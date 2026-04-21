@@ -19,16 +19,6 @@ class Agent extends Model
             ->get();
     }
 
-    public static function findForUser(int $id, int $userId): ?self
-    {
-        if ($id <= 0) {
-            return null;
-        }
-
-        return static::where('id', '=', $id)
-            ->where('user_id', '=', $userId)
-            ->first();
-    }
 
     public function user()
     {

@@ -12,7 +12,7 @@ class AuthMiddleware
     public function handle(Request $request, Closure $next)
     {
         if (app(AuthService::class)->guest()) {
-            return Response::redirect('/login');
+            return redirect('/login');
         }
 
         return $next($request);

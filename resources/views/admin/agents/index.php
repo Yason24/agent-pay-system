@@ -18,11 +18,11 @@
 	</div>
 
 	<?php if (!empty($success)): ?>
-		<p class="flash flash-success\"><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?></p>
+		<p class="flash flash-success"><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?></p>
 	<?php endif; ?>
 
 	<?php if (!empty($error)): ?>
-		<p class="flash flash-error\"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
+		<p class="flash flash-error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
 	<?php endif; ?>
 
 	<?php if ($agents->count() === 0): ?>
@@ -49,8 +49,8 @@
 					<td><?= htmlspecialchars((string) $agent->created_at, ENT_QUOTES, 'UTF-8') ?></td>
 					<td>
 						<div class="table-actions">
-							<a class="btn" href="/admin/agents/payments?agent_user_id=<?= (int) $agent->id ?>">Платежи</a>
-							<a class="btn" href="/admin/agents/show?agent_user_id=<?= (int) $agent->id ?>">Просмотр</a>
+										<a class="btn" href="/payments?agent_user_id=<?= (int) $agent->id ?>">Платежи</a>
+										<a class="btn" href="/agents/show?agent_user_id=<?= (int) $agent->id ?>">Просмотр</a>
 							<?php if (!empty($canManageUsers)): ?>
 								<a class="btn" href="/admin/users/edit?id=<?= (int) $agent->id ?>">Редактировать</a>
 							<?php endif; ?>

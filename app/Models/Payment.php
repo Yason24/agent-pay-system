@@ -3,9 +3,7 @@
 namespace App\Models;
 
 use Framework\Core\Collection;
-use Framework\Core\Database;
 use Framework\Core\Model;
-use PDO;
 
 class Payment extends Model
 {
@@ -19,24 +17,9 @@ class Payment extends Model
             return new Collection([]);
         }
 
-        $db = Database::getConnection();
-        $stmt = $db->prepare(
-            'SELECT *
-             FROM payments
-             WHERE agent_user_id = :agent_user_id
-             ORDER BY payment_date DESC, id DESC'
-        );
-
-        $stmt->execute([
-            'agent_user_id' => $agentUserId,
-        ]);
-
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        return new Collection(array_map(
-            fn(array $row) => new static($row),
-            $rows
-        ));
+        return static::where('agent_user_id', '=', $agentUserId)
+            ->orderBy('payment_date', 'DESC')
+            ->get();
     }
 
     public static function findForAgentUser(int $paymentId, int $agentUserId): ?self
@@ -45,22 +28,9 @@ class Payment extends Model
             return null;
         }
 
-        $db = Database::getConnection();
-        $stmt = $db->prepare(
-            'SELECT *
-             FROM payments
-             WHERE id = :id AND agent_user_id = :agent_user_id
-             LIMIT 1'
-        );
-
-        $stmt->execute([
-            'id' => $paymentId,
-            'agent_user_id' => $agentUserId,
-        ]);
-
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $row ? new static($row) : null;
+        return static::where('id', '=', $paymentId)
+            ->where('agent_user_id', '=', $agentUserId)
+            ->first();
     }
 
     public static function summaryForAgentUser(int $agentUserId): array
@@ -75,30 +45,35 @@ class Payment extends Model
             ];
         }
 
-        $db = Database::getConnection();
-        $stmt = $db->prepare(
-            "SELECT
-                COUNT(*)::INT AS payments_count,
-                COALESCE(SUM(amount), 0)::NUMERIC AS total_amount,
-                COALESCE(SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END), 0)::NUMERIC AS paid_amount,
-                COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0)::NUMERIC AS pending_amount,
-                COALESCE(SUM(CASE WHEN status = 'failed' THEN amount ELSE 0 END), 0)::NUMERIC AS failed_amount
-             FROM payments
-             WHERE agent_user_id = :agent_user_id"
-        );
+        $payments = static::forAgentUser($agentUserId);
 
-        $stmt->execute([
-            'agent_user_id' => $agentUserId,
-        ]);
+        $summary = [
+            'total_amount' => 0.0,
+            'paid_amount' => 0.0,
+            'pending_amount' => 0.0,
+            'failed_amount' => 0.0,
+            'payments_count' => $payments->count(),
+        ];
 
-        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        foreach ($payments as $payment) {
+            $amount = (float) $payment->amount;
+            $summary['total_amount'] += $amount;
+
+            if ((string) $payment->status === 'paid') {
+                $summary['paid_amount'] += $amount;
+            } elseif ((string) $payment->status === 'pending') {
+                $summary['pending_amount'] += $amount;
+            } elseif ((string) $payment->status === 'failed') {
+                $summary['failed_amount'] += $amount;
+            }
+        }
 
         return [
-            'total_amount' => (float) ($row['total_amount'] ?? 0),
-            'paid_amount' => (float) ($row['paid_amount'] ?? 0),
-            'pending_amount' => (float) ($row['pending_amount'] ?? 0),
-            'failed_amount' => (float) ($row['failed_amount'] ?? 0),
-            'payments_count' => (int) ($row['payments_count'] ?? 0),
+            'total_amount' => (float) $summary['total_amount'],
+            'paid_amount' => (float) $summary['paid_amount'],
+            'pending_amount' => (float) $summary['pending_amount'],
+            'failed_amount' => (float) $summary['failed_amount'],
+            'payments_count' => (int) $summary['payments_count'],
         ];
     }
 
@@ -108,25 +83,25 @@ class Payment extends Model
             return new Collection([]);
         }
 
-        $db = Database::getConnection();
-        $stmt = $db->prepare(
-            'SELECT *
-             FROM payments
-             WHERE agent_user_id = :agent_user_id
-             ORDER BY payment_date DESC, id DESC
-             LIMIT :limit'
-        );
+        return static::where('agent_user_id', '=', $agentUserId)
+            ->orderBy('payment_date', 'DESC')
+            ->limit($limit)
+            ->get();
+    }
 
-        $stmt->bindValue(':agent_user_id', $agentUserId, PDO::PARAM_INT);
-        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-        $stmt->execute();
+    public static function createForAgentUser(int $agentUserId, array $attributes): ?self
+    {
+        if ($agentUserId <= 0) {
+            return null;
+        }
 
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        return new Collection(array_map(
-            fn(array $row) => new static($row),
-            $rows
-        ));
+        return static::create([
+            'agent_user_id' => $agentUserId,
+            'amount' => $attributes['amount'],
+            'payment_date' => $attributes['payment_date'],
+            'status' => $attributes['status'],
+            'note' => $attributes['note'] ?? null,
+        ]);
     }
 
     public static function findAccessible(

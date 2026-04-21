@@ -12,7 +12,7 @@ class GuestMiddleware
     public function handle(Request $request, Closure $next)
     {
         if (app(AuthService::class)->check()) {
-            return Response::redirect('/dashboard');
+            return redirect('/dashboard');
         }
 
         return $next($request);

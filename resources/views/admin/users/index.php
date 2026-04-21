@@ -10,7 +10,7 @@
 
     <div class="page-actions">
         <a class="btn" href="/dashboard">Назад в кабинет</a>
-        <a class="btn" href="/admin/agents">Агенты</a>
+        <a class="btn" href="/agents">Агенты</a>
         <a class="btn btn-primary" href="/admin/users/create">Создать пользователя</a>
     </div>
 
@@ -32,6 +32,7 @@
                 <th>Имя</th>
                 <th>Эл. почта</th>
                 <th>Роль</th>
+                <th>Статус</th>
                 <th>Дата создания</th>
                 <th>Действия</th>
             </tr>
@@ -43,9 +44,18 @@
                     <td><?= htmlspecialchars((string) $user->name, ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars((string) $user->email, ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars(\App\Models\User::roleLabel((string) $user->role), ENT_QUOTES, 'UTF-8') ?></td>
+                    <td><?= htmlspecialchars(\App\Models\User::statusLabel((string) ($user->status ?? 'active')), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars((string) $user->created_at, ENT_QUOTES, 'UTF-8') ?></td>
                     <td>
-                        <a class="btn" href="/admin/users/edit?id=<?= (int) $user->id ?>">Изменить роль</a>
+                        <div class="actions-inline">
+                            <a class="btn" href="/admin/users/edit?id=<?= (int) $user->id ?>">Редактировать</a>
+                            <form method="post" action="/admin/users/reset-password">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="id" value="<?= (int) $user->id ?>">
+                                <input type="hidden" name="password" value="123456">
+                                <button class="btn" type="submit" onclick="return confirm('Сбросить пароль пользователя на временный?')">Сбросить пароль</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
             <?php endforeach; ?>

@@ -11,6 +11,11 @@ class Router
     protected array $routes = [];
     protected array $groupStack = [];
     protected array $groupMiddleware = [];
+    protected array $middlewareAliases = [
+        'auth' => 'App\\Middleware\\AuthMiddleware',
+        'guest' => 'App\\Middleware\\GuestMiddleware',
+        'role' => 'App\\Middleware\\RoleMiddleware',
+    ];
     protected Container $container;
 
     public function __construct(Container $container)
@@ -115,26 +120,82 @@ class Router
     {
         $route = $this->match($method, $uri);
         $action = $route['action'];
+        $request = $this->container->make(Request::class);
 
-        if ($action instanceof Closure) {
-            $result = $action();
+        $destination = function (Request $request) use ($action) {
+            if ($action instanceof Closure) {
+                $result = $action();
 
-            return $result instanceof Response
-                ? $result
-                : new Response($result);
+                return $result instanceof Response
+                    ? $result
+                    : new Response($result);
+            }
+
+            if (is_array($action)) {
+                [$controller, $methodName] = $action;
+                $controller = $this->container->make($controller);
+                $result = $this->container->call($controller, $methodName);
+
+                return $result instanceof Response
+                    ? $result
+                    : new Response($result);
+            }
+
+            throw new Exception('Invalid route action');
+        };
+
+        $middleware = $this->resolveMiddlewareDefinitions($route['middleware'] ?? []);
+
+        if ($middleware === []) {
+            return $destination($request);
         }
 
-        if (is_array($action)) {
-            [$controller, $methodName] = $action;
-            $controller = $this->container->make($controller);
-            $result = $this->container->call($controller, $methodName);
+        $pipeline = array_reduce(
+            array_reverse($middleware),
+            fn($next, $pipe) => function (Request $request) use ($next, $pipe) {
+                return $this->container->make($pipe['class'])->handle($request, $next, ...$pipe['params']);
+            },
+            $destination
+        );
 
-            return $result instanceof Response
-                ? $result
-                : new Response($result);
+        return $pipeline($request);
+    }
+
+    protected function resolveMiddlewareDefinitions(array $middleware): array
+    {
+        $resolved = [];
+
+        foreach ($middleware as $definition) {
+            $raw = trim((string) $definition);
+
+            if ($raw === '') {
+                continue;
+            }
+
+            [$name, $paramsRaw] = array_pad(explode(':', $raw, 2), 2, null);
+            $name = trim($name);
+            $class = $this->middlewareAliases[$name] ?? $name;
+
+            if (!class_exists($class)) {
+                throw new Exception('Middleware not found: ' . $class);
+            }
+
+            $params = [];
+
+            if ($paramsRaw !== null && trim($paramsRaw) !== '') {
+                $params = array_values(array_filter(array_map(
+                    static fn(string $value): string => trim($value),
+                    explode(',', $paramsRaw)
+                ), static fn(string $value): bool => $value !== ''));
+            }
+
+            $resolved[] = [
+                'class' => $class,
+                'params' => $params,
+            ];
         }
 
-        throw new Exception('Invalid route action');
+        return $resolved;
     }
 
     protected function normalizeUri(string $uri): string

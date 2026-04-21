@@ -4,6 +4,7 @@
 <?php /** @var string|null $error */ ?>
 <?php $isAdminMode = $isAdminMode ?? false; ?>
 <?php $agentUserId = $agentUserId ?? (int) $agent->id; ?>
+<?php $isReadOnly = $isReadOnly ?? false; ?>
 @extends('layouts.app')
 
 @section('content')
@@ -17,11 +18,13 @@
 
     <div class="page-actions">
         <?php if ($isAdminMode): ?>
-            <a class="btn" href="/admin/agents">Назад к агентам</a>
-            <a class="btn btn-primary" href="/payments/create?agent_user_id=<?= (int) $agentUserId ?>">Создать платеж</a>
+            <a class="btn" href="/agents">Назад к агентам</a>
+            <?php if (!$isReadOnly): ?>
+                <a class="btn btn-primary" href="/payments/create?agent_user_id=<?= (int) $agentUserId ?>">Создать платеж</a>
+            <?php endif; ?>
         <?php else: ?>
-            <a class="btn" href="/dashboard">Назад в кабинет</a>
-            <a class="btn btn-primary" href="/payments/create">Создать платеж</a>
+            <a class="btn" href="/cabinet">Назад в кабинет</a>
+            <a class="btn" href="/my/history">Моя история</a>
         <?php endif; ?>
     </div>
 
@@ -67,13 +70,7 @@
                                     <button type="submit" class="btn btn-danger" onclick="return confirm('Удалить платеж?')">Удалить</button>
                                 </form>
                             <?php else: ?>
-                                <a class="btn" href="/payments/show?id=<?= (int) $payment->id ?>">Просмотр</a>
-                                <a class="btn" href="/payments/edit?id=<?= (int) $payment->id ?>">Редактировать</a>
-                                <form method="POST" action="/payments/delete" style="display:inline-block;">
-                                    <?= csrf_field() ?>
-                                    <input type="hidden" name="id" value="<?= (int) $payment->id ?>">
-                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Удалить платеж?')">Удалить</button>
-                                </form>
+                                <span class="muted">Доступно только для просмотра</span>
                             <?php endif; ?>
                         </div>
                     </td>

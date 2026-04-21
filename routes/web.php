@@ -22,26 +22,35 @@ Route::middleware('auth')->group(function ($router) {
     $router->get('/register', [AuthController::class, 'showRegister']);
     $router->post('/register', [AuthController::class, 'register']);
 
-    // Кабинет агента (self-flow)
-    $router->get('/agents', [AgentController::class, 'index']);
+    $router->middleware('role:admin')->group(function ($router) {
+        $router->get('/admin/users', [AdminUserController::class, 'index']);
+        $router->get('/admin/users/create', [AdminUserController::class, 'create']);
+        $router->post('/admin/users', [AdminUserController::class, 'store']);
+        $router->get('/admin/users/edit', [AdminUserController::class, 'edit']);
+        $router->post('/admin/users/update', [AdminUserController::class, 'update']);
+        $router->post('/admin/users/reset-password', [AdminUserController::class, 'resetPassword']);
+    });
 
-    $router->get('/payments', [PaymentController::class, 'index']);
-    $router->get('/payments/create', [PaymentController::class, 'create']);
-    $router->post('/payments', [PaymentController::class, 'store']);
-    $router->get('/payments/show', [PaymentController::class, 'show']);
-    $router->get('/payments/edit', [PaymentController::class, 'edit']);
-    $router->post('/payments/update', [PaymentController::class, 'update']);
-    $router->post('/payments/delete', [PaymentController::class, 'destroy']);
+    $router->middleware('role:dispatcher,accountant,admin')->group(function ($router) {
+        $router->get('/agents', [AdminAgentController::class, 'index']);
+        $router->get('/agents/show', [AdminAgentController::class, 'show']);
 
-    $router->get('/admin/users', [AdminUserController::class, 'index']);
-    $router->get('/admin/users/create', [AdminUserController::class, 'create']);
-    $router->post('/admin/users', [AdminUserController::class, 'store']);
-    $router->get('/admin/users/edit', [AdminUserController::class, 'edit']);
-    $router->post('/admin/users/update', [AdminUserController::class, 'update']);
+        $router->get('/payments', [PaymentController::class, 'index']);
+        $router->get('/payments/create', [PaymentController::class, 'create']);
+        $router->post('/payments', [PaymentController::class, 'store']);
+        $router->get('/payments/show', [PaymentController::class, 'show']);
+        $router->get('/payments/edit', [PaymentController::class, 'edit']);
+        $router->post('/payments/update', [PaymentController::class, 'update']);
+        $router->post('/payments/delete', [PaymentController::class, 'destroy']);
+    });
 
-    $router->get('/admin/agents', [AdminAgentController::class, 'index']);
-    $router->get('/admin/agents/payments', [AdminAgentController::class, 'payments']);
-    $router->get('/admin/agents/show', [AdminAgentController::class, 'show']);
+    $router->middleware('role:agent')->group(function ($router) {
+        $router->get('/cabinet', [AgentController::class, 'index']);
+        $router->get('/my/payments', [PaymentController::class, 'myIndex']);
+        $router->get('/my/history', ['App\\Controllers\\HistoryController', 'myIndex']);
+        $router->get('/requests/create', ['App\\Controllers\\RequestController', 'create']);
+        $router->post('/requests/store', ['App\\Controllers\\RequestController', 'store']);
+    });
 
     $router->post('/logout', [AuthController::class, 'logout']);
 });

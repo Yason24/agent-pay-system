@@ -13,9 +13,10 @@
     <?php endif; ?>
 
     <div class="page-actions">
-        <a class="btn" href="/agents">Назад к списку</a>
-        <a class="btn btn-primary" href="/payments/create">Добавить платеж</a>
-        <a class="btn" href="/payments">Все платежи</a>
+        <a class="btn" href="/dashboard">Назад в кабинет</a>
+        <a class="btn btn-primary" href="/my/payments">Мои платежи</a>
+        <a class="btn" href="/my/history">Моя история</a>
+        <a class="btn" href="/requests/create">Создать заявку</a>
     </div>
 
     <div class="card">
@@ -56,7 +57,7 @@
                         <td><?= htmlspecialchars((string) $payment->payment_date, ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars(payment_status_label((string) $payment->status), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) $payment->note, ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><a class="btn" href="/payments/show?id=<?= (int) $payment->id ?>">Открыть</a></td>
+                        <td><span class="muted">Только просмотр</span></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

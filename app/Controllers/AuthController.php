@@ -24,12 +24,12 @@ class AuthController extends Controller
     public function showRegister(AuthService $auth): Response
     {
         if ($auth->hasRole('admin')) {
-            return Response::redirect('/admin/users/create');
+            return redirect('/admin/users/create');
         }
 
         $_SESSION['auth_error'] = 'Публичная регистрация отключена. Обратитесь к администратору.';
 
-        return Response::redirect('/login');
+        return redirect('/login');
     }
 
     public function showForgotPassword(): string
@@ -55,7 +55,7 @@ class AuthController extends Controller
                 ],
             ]);
 
-            return Response::redirect('/login');
+            return redirect('/login');
         }
 
         $login = trim((string) $request->input('login'));
@@ -73,7 +73,7 @@ class AuthController extends Controller
                 'entity_id' => $user !== null ? (int) $user->id : null,
             ]);
 
-            return Response::redirect('/dashboard');
+            return redirect('/dashboard');
         }
 
         $limiter->hit($ip);
@@ -86,7 +86,7 @@ class AuthController extends Controller
             ],
         ]);
 
-        return Response::redirect('/login');
+        return redirect('/login');
     }
 
     public function logout(Request $request, AuthService $auth, AuditLogger $audit): Response
@@ -104,17 +104,17 @@ class AuthController extends Controller
             'entity_id' => $actorUserId,
         ]);
 
-        return Response::redirect('/login');
+        return redirect('/login');
     }
 
     public function register(AuthService $auth): Response
     {
         if ($auth->hasRole('admin')) {
-            return Response::redirect('/admin/users/create');
+            return redirect('/admin/users/create');
         }
 
         $_SESSION['auth_error'] = 'Публичная регистрация отключена. Обратитесь к администратору.';
 
-        return Response::redirect('/login');
+        return redirect('/login');
     }
 }
