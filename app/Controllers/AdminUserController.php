@@ -177,18 +177,15 @@ class AdminUserController extends Controller
 
     private function isLastAdminRoleDowngrade(User $user, string $newRole): bool
     {
-        // если пользователь не админ — ничего не проверяем
         if ((string) $user->role !== 'admin') {
             return false;
         }
 
-        // если роль остаётся admin — ок
         if ($newRole === 'admin') {
             return false;
         }
 
-        // считаем админов напрямую (без get())
-        $adminsCount = User::where('role', '=', 'admin')->count();
+        $adminsCount = User::where('role', '=', 'admin')->get()->count();
 
         return $adminsCount <= 1;
     }
