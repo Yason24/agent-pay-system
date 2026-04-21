@@ -107,6 +107,17 @@ class QueryBuilder
         return $sql;
     }
 
+    private function buildCountSql(): string
+    {
+        $sql = "SELECT COUNT(*) AS aggregate FROM {$this->table}";
+
+        if ($this->wheres) {
+            $sql .= " WHERE " . implode(' AND ', $this->wheres);
+        }
+
+        return $sql;
+    }
+
     /*
     |--------------------------------------------------------------------------
     | GET
@@ -139,6 +150,16 @@ class QueryBuilder
     public function first()
     {
         return $this->limit(1)->get()->first();
+    }
+
+    public function count(): int
+    {
+        $stmt = $this->db->prepare($this->buildCountSql());
+        $stmt->execute($this->bindings);
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return (int) ($result['aggregate'] ?? 0);
     }
 
     /*
