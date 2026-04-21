@@ -1,8 +1,8 @@
 <?php
 
+use App\Controllers\AdminAgentController;
 use App\Controllers\AuthController;
 use App\Controllers\AdminUserController;
-use App\Controllers\AgentController;
 use App\Controllers\DashboardController;
 use App\Controllers\HomeController;
 use App\Controllers\PaymentController;
@@ -21,14 +21,6 @@ Route::middleware('auth')->group(function ($router) {
     $router->get('/register', [AuthController::class, 'showRegister']);
     $router->post('/register', [AuthController::class, 'register']);
 
-    $router->get('/agents', [AgentController::class, 'index']);
-    $router->get('/agents/create', [AgentController::class, 'create']);
-    $router->post('/agents', [AgentController::class, 'store']);
-    $router->get('/agents/show', [AgentController::class, 'show']);
-    $router->get('/agents/edit', [AgentController::class, 'edit']);
-    $router->post('/agents/update', [AgentController::class, 'update']);
-    $router->post('/agents/delete', [AgentController::class, 'destroy']);
-
     $router->get('/payments', [PaymentController::class, 'index']);
     $router->get('/payments/create', [PaymentController::class, 'create']);
     $router->post('/payments', [PaymentController::class, 'store']);
@@ -42,6 +34,9 @@ Route::middleware('auth')->group(function ($router) {
     $router->post('/admin/users', [AdminUserController::class, 'store']);
     $router->get('/admin/users/edit', [AdminUserController::class, 'edit']);
     $router->post('/admin/users/update', [AdminUserController::class, 'update']);
+
+    $router->get('/admin/agents', [AdminAgentController::class, 'index']);
+    $router->get('/admin/agents/payments', [AdminAgentController::class, 'payments']);
 
     $router->post('/logout', [AuthController::class, 'logout']);
 });

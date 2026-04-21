@@ -10,6 +10,7 @@
 
     <div class="page-actions">
         <a class="btn" href="/dashboard">Назад в кабинет</a>
+        <a class="btn" href="/admin/agents">Агенты</a>
         <a class="btn btn-primary" href="/admin/users/create">Создать пользователя</a>
     </div>
 

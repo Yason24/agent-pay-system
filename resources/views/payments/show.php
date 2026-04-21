@@ -1,15 +1,14 @@
 <?php /** @var \App\Models\Payment $payment */ ?>
-<?php /** @var \App\Models\Agent|null $agent */ ?>
+<?php /** @var \App\Models\User $agent */ ?>
 <?php /** @var string|null $success */ ?>
 <?php /** @var string|null $error */ ?>
+<?php $isAdminMode = $isAdminMode ?? false; ?>
+<?php $agentUserId = $agentUserId ?? (int) $agent->id; ?>
 @extends('layouts.app')
 
 @section('content')
 <section>
     <h1>Платеж #<?= (int) $payment->id ?></h1>
-
-    <?php $agentName = $agent !== null ? (string) $agent->name : ('#' . (int) $payment->agent_id); ?>
-    <?php $paymentNote = (string) $payment->note; ?>
 
     <?php if (!empty($success)): ?>
         <p class="flash flash-success"><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?></p>
@@ -22,17 +21,21 @@
     <?php endif; ?>
 
     <div class="page-actions">
-        <a class="btn" href="/payments?agent_id=<?= (int) $payment->agent_id ?>">Назад к платежам</a>
-        <a class="btn" href="/agents/show?id=<?= (int) $payment->agent_id ?>">Карточка агента</a>
-        <a class="btn" href="/payments/edit?id=<?= (int) $payment->id ?>">Изменить</a>
+        <?php if ($isAdminMode): ?>
+            <a class="btn" href="/admin/agents/payments?agent_user_id=<?= (int) $agentUserId ?>">Назад к платежам</a>
+            <a class="btn" href="/payments/edit?id=<?= (int) $payment->id ?>&agent_user_id=<?= (int) $agentUserId ?>">Изменить</a>
+        <?php else: ?>
+            <a class="btn" href="/payments">Назад к платежам</a>
+            <a class="btn" href="/payments/edit?id=<?= (int) $payment->id ?>">Изменить</a>
+        <?php endif; ?>
     </div>
 
     <div class="card">
-        <p><strong>Агент:</strong> <?= htmlspecialchars($agentName, ENT_QUOTES, 'UTF-8') ?></p>
+        <p><strong>Агент:</strong> <?= htmlspecialchars((string) $agent->name, ENT_QUOTES, 'UTF-8') ?></p>
         <p><strong>Сумма:</strong> <?= htmlspecialchars(number_format((float) $payment->amount, 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?></p>
         <p><strong>Дата:</strong> <?= htmlspecialchars((string) $payment->payment_date, ENT_QUOTES, 'UTF-8') ?></p>
         <p><strong>Статус:</strong> <?= htmlspecialchars(payment_status_label((string) $payment->status), ENT_QUOTES, 'UTF-8') ?></p>
-        <p><strong>Примечание:</strong> <?= htmlspecialchars($paymentNote !== '' ? $paymentNote : '-', ENT_QUOTES, 'UTF-8') ?></p>
+        <p><strong>Примечание:</strong> <?= htmlspecialchars(((string) $payment->note) !== '' ? (string) $payment->note : '-', ENT_QUOTES, 'UTF-8') ?></p>
     </div>
 </section>
 @endsection

@@ -51,8 +51,19 @@ class User extends Model
         return $data ? new static($data) : null;
     }
 
-    public function agents()
+    public static function agents()
     {
-        return $this->hasMany(Agent::class, 'user_id');
+        return static::where('role', '=', 'agent');
+    }
+
+    public static function findAgentById(int $id): ?self
+    {
+        if ($id <= 0) {
+            return null;
+        }
+
+        return static::where('id', '=', $id)
+            ->where('role', '=', 'agent')
+            ->first();
     }
 }

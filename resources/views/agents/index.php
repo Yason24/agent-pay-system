@@ -28,6 +28,9 @@
         <?php if (empty($staffAgents)): ?>
             <p class="muted">Пользователи с ролью "Агент" не найдены.</p>
         <?php else: ?>
+            <pre>staffAgentsListMode: <?= !empty($staffAgentsListMode) ? 'true' : 'false' ?>
+staffAgents count: <?= count($staffAgents) ?></pre>
+
             <table class="table">
                 <thead>
                 <tr>
@@ -40,12 +43,15 @@
                 </thead>
                 <tbody>
                 <?php foreach ($staffAgents as $staffAgent): ?>
+                    <?php $legacyAgentIdDebug = $staffAgent['legacy_agent_id'] ?? null; ?>
                     <tr>
                         <td><?= (int) $staffAgent['user_id'] ?></td>
                         <td><?= htmlspecialchars((string) $staffAgent['name'], ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) $staffAgent['email'], ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars(\App\Models\User::roleLabel((string) $staffAgent['role']), ENT_QUOTES, 'UTF-8') ?></td>
                         <td>
+                            <div class="muted" style="margin-bottom:6px;">debug: user_id=<?= (int) $staffAgent['user_id'] ?>; legacy_agent_id=<?= $legacyAgentIdDebug !== null ? (int) $legacyAgentIdDebug : 'null' ?></div>
+
                             <?php if (!empty($staffAgent['legacy_agent_id'])): ?>
                                 <div class="actions-inline">
                                     <a class="btn" href="/payments?agent_id=<?= (int) $staffAgent['legacy_agent_id'] ?>">Платежи</a>

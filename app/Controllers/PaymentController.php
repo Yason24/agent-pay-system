@@ -2,11 +2,9 @@
 
 namespace App\Controllers;
 
-use App\Models\Agent;
 use App\Models\Payment;
-use App\Services\AuditLogger;
+use App\Models\User;
 use App\Services\AuthService;
-use App\Support\AuditAction;
 use Framework\Core\Controller;
 use Framework\Core\Database;
 use Framework\Core\Http\Response;
@@ -23,15 +21,13 @@ class PaymentController extends Controller
         }
 
         if (!$this->paymentsStorageReady()) {
-            return $this->redirectStorageError();
+            return $this->redirectStorageError($auth);
         }
 
-        $agent = $this->resolveAgentFromRequest($request, (int) $user->id);
+        $context = $this->resolveContext($request, $auth);
 
-        if ($agent === null) {
-            $_SESSION['agents_error'] = 'Агент не найден.';
-
-            return Response::redirect('/agents');
+        if ($context === null) {
+            return $this->redirectAgentNotFound($auth);
         }
 
         $success = $_SESSION['payments_success'] ?? null;
@@ -41,31 +37,29 @@ class PaymentController extends Controller
 
         return $this->view('payments.index', [
             'title' => 'Платежи',
-            'agent' => $agent,
-            'payments' => Payment::forAgentAndUser((int) $agent->id, (int) $user->id),
+            'agent' => $context['agent'],
+            'payments' => Payment::forAgentUser($context['agent_user_id']),
             'success' => $success,
             'error' => $error,
+            'isAdminMode' => $context['is_admin_mode'],
+            'agentUserId' => $context['agent_user_id'],
         ]);
     }
 
     public function create(Request $request, AuthService $auth): string|Response
     {
-        $user = $auth->user();
-
-        if ($user === null) {
+        if ($auth->user() === null) {
             return Response::redirect('/login');
         }
 
         if (!$this->paymentsStorageReady()) {
-            return $this->redirectStorageError();
+            return $this->redirectStorageError($auth);
         }
 
-        $agent = $this->resolveAgentFromRequest($request, (int) $user->id);
+        $context = $this->resolveContext($request, $auth);
 
-        if ($agent === null) {
-            $_SESSION['agents_error'] = 'Агент не найден.';
-
-            return Response::redirect('/agents');
+        if ($context === null) {
+            return $this->redirectAgentNotFound($auth);
         }
 
         $errors = $_SESSION['payments_create_errors'] ?? [];
@@ -75,46 +69,45 @@ class PaymentController extends Controller
 
         return $this->view('payments.create', [
             'title' => 'Создать платеж',
-            'agent' => $agent,
+            'agent' => $context['agent'],
             'errors' => $errors,
             'old' => $old,
+            'isAdminMode' => $context['is_admin_mode'],
+            'agentUserId' => $context['agent_user_id'],
         ]);
     }
 
-    public function store(Request $request, AuthService $auth, AuditLogger $audit): Response
+    public function store(Request $request, AuthService $auth): Response
     {
-        $user = $auth->user();
-
-        if ($user === null) {
+        if ($auth->user() === null) {
             return Response::redirect('/login');
         }
 
         if (!$this->paymentsStorageReady()) {
-            return $this->redirectStorageError();
+            return $this->redirectStorageError($auth);
         }
 
-        $agentId = (int) $request->input('agent_id', 0);
-        $agent = Agent::findForUser($agentId, (int) $user->id);
+        $context = $this->resolveContext($request, $auth, true);
 
-        if ($agent === null) {
-            $_SESSION['agents_error'] = 'Агент не найден.';
-
-            return Response::redirect('/agents');
+        if ($context === null) {
+            return $this->redirectAgentNotFound($auth);
         }
 
-        $payload = $this->payloadFromRequest($request, $agentId);
+        $agentUserId = (int) $context['agent_user_id'];
+
+        $payload = $this->payloadFromRequest($request, $agentUserId);
         $errors = $this->validatePayload($payload);
 
         if ($errors !== []) {
             $_SESSION['payments_create_errors'] = $errors;
             $_SESSION['payments_create_old'] = $payload;
 
-            return Response::redirect('/payments/create?agent_id=' . $agentId);
+            return Response::redirect($this->paymentsCreateUrl($context));
         }
 
         try {
-            $payment = Payment::create([
-                'agent_id' => $agentId,
+            Payment::create([
+                'agent_user_id' => $agentUserId,
                 'amount' => $this->normalizeAmount($payload['amount']),
                 'payment_date' => $payload['payment_date'],
                 'status' => $payload['status'],
@@ -122,25 +115,17 @@ class PaymentController extends Controller
             ]);
         } catch (\Throwable) {
             $_SESSION['payments_create_errors'] = [
-                '_form' => 'Не удалось сохранить платеж. Проверьте введённые данные и попробуйте снова.',
+                '_form' => 'Не удалось сохранить платеж. Проверьте введенные данные и попробуйте снова.',
             ];
             $_SESSION['payments_create_old'] = $payload;
 
-            return Response::redirect('/payments/create?agent_id=' . $agentId);
+            return Response::redirect($this->paymentsCreateUrl($context));
         }
-
-        $audit->log(AuditAction::PAYMENT_CREATE, $request, $auth, [
-            'entity_type' => 'payment',
-            'entity_id' => (int) $payment->id,
-            'meta' => [
-                'snapshot' => $this->paymentSnapshot($payment),
-            ],
-        ]);
 
         unset($_SESSION['payments_create_errors'], $_SESSION['payments_create_old']);
         $_SESSION['payments_success'] = 'Платеж успешно создан.';
 
-        return Response::redirect('/payments?agent_id=' . $agentId);
+        return Response::redirect($this->paymentsIndexUrl($context));
     }
 
     public function show(Request $request, AuthService $auth): string|Response
@@ -152,45 +137,44 @@ class PaymentController extends Controller
         }
 
         if (!$this->paymentsStorageReady()) {
-            return $this->redirectStorageError();
+            return $this->redirectStorageError($auth);
         }
 
-        $payment = Payment::findForUser((int) $request->input('id', 0), (int) $user->id);
+        $context = $this->resolveContext($request, $auth);
+        $payment = $this->resolvePayment($request, $auth, $context);
 
         if ($payment === null) {
-            return $this->redirectPaymentNotFound($request, (int) $user->id);
+            return $this->redirectPaymentNotFound($auth, $context);
         }
-
-        $agent = Agent::find((int) $payment->agent_id);
 
         return $this->view('payments.show', [
             'title' => 'Платеж',
             'payment' => $payment,
-            'agent' => $agent,
+            'agent' => $context['agent'],
             'success' => $_SESSION['payments_success'] ?? null,
             'error' => $_SESSION['payments_error'] ?? null,
+            'isAdminMode' => $context['is_admin_mode'],
+            'agentUserId' => $context['agent_user_id'],
         ]);
     }
 
     public function edit(Request $request, AuthService $auth): string|Response
     {
-        $user = $auth->user();
-
-        if ($user === null) {
+        if ($auth->user() === null) {
             return Response::redirect('/login');
         }
 
         if (!$this->paymentsStorageReady()) {
-            return $this->redirectStorageError();
+            return $this->redirectStorageError($auth);
         }
 
-        $payment = Payment::findForUser((int) $request->input('id', 0), (int) $user->id);
+        $context = $this->resolveContext($request, $auth);
+        $payment = $this->resolvePayment($request, $auth, $context);
 
         if ($payment === null) {
-            return $this->redirectPaymentNotFound($request, (int) $user->id);
+            return $this->redirectPaymentNotFound($auth, $context);
         }
 
-        $agent = Agent::find((int) $payment->agent_id);
         $errors = $_SESSION['payments_edit_errors'] ?? [];
         $old = $_SESSION['payments_edit_old'] ?? [];
 
@@ -199,41 +183,40 @@ class PaymentController extends Controller
         return $this->view('payments.edit', [
             'title' => 'Изменить платеж',
             'payment' => $payment,
-            'agent' => $agent,
+            'agent' => $context['agent'],
             'errors' => $errors,
             'old' => $old,
+            'isAdminMode' => $context['is_admin_mode'],
+            'agentUserId' => $context['agent_user_id'],
         ]);
     }
 
-    public function update(Request $request, AuthService $auth, AuditLogger $audit): Response
+    public function update(Request $request, AuthService $auth): Response
     {
-        $user = $auth->user();
-
-        if ($user === null) {
+        if ($auth->user() === null) {
             return Response::redirect('/login');
         }
 
         if (!$this->paymentsStorageReady()) {
-            return $this->redirectStorageError();
+            return $this->redirectStorageError($auth);
         }
 
-        $payment = Payment::findForUser((int) $request->input('id', 0), (int) $user->id);
+        $context = $this->resolveContext($request, $auth, true);
+        $payment = $this->resolvePayment($request, $auth, $context);
 
         if ($payment === null) {
-            return $this->redirectPaymentNotFound($request, (int) $user->id);
+            return $this->redirectPaymentNotFound($auth, $context);
         }
 
-        $payload = $this->payloadFromRequest($request, (int) $payment->agent_id);
+        $payload = $this->payloadFromRequest($request, $context['agent_user_id']);
         $errors = $this->validatePayload($payload);
 
         if ($errors !== []) {
             $_SESSION['payments_edit_errors'] = $errors;
             $_SESSION['payments_edit_old'] = $payload;
 
-            return Response::redirect('/payments/edit?id=' . (int) $payment->id);
+            return Response::redirect($this->paymentsEditUrl((int) $payment->id, $context));
         }
-
-        $before = $this->paymentSnapshot($payment);
 
         try {
             $payment->amount = $this->normalizeAmount($payload['amount']);
@@ -243,74 +226,111 @@ class PaymentController extends Controller
             $payment->save();
         } catch (\Throwable) {
             $_SESSION['payments_edit_errors'] = [
-                '_form' => 'Не удалось обновить платеж. Проверьте введённые данные и попробуйте снова.',
+                '_form' => 'Не удалось обновить платеж. Проверьте введенные данные и попробуйте снова.',
             ];
             $_SESSION['payments_edit_old'] = $payload;
 
-            return Response::redirect('/payments/edit?id=' . (int) $payment->id);
+            return Response::redirect($this->paymentsEditUrl((int) $payment->id, $context));
         }
 
-        $after = $this->paymentSnapshot($payment);
-
-        $audit->log(AuditAction::PAYMENT_UPDATE, $request, $auth, [
-            'entity_type' => 'payment',
-            'entity_id' => (int) $payment->id,
-            'meta' => $audit->diff($before, $after),
-        ]);
-
         unset($_SESSION['payments_edit_errors'], $_SESSION['payments_edit_old']);
-        $_SESSION['payments_success'] = 'Платеж успешно обновлён.';
+        $_SESSION['payments_success'] = 'Платеж успешно обновлен.';
 
-        return Response::redirect('/payments/show?id=' . (int) $payment->id);
+        return Response::redirect($this->paymentsShowUrl((int) $payment->id, $context));
     }
 
-    public function destroy(Request $request, AuthService $auth, AuditLogger $audit): Response
+    public function destroy(Request $request, AuthService $auth): Response
     {
-        $user = $auth->user();
-
-        if ($user === null) {
+        if ($auth->user() === null) {
             return Response::redirect('/login');
         }
 
         if (!$this->paymentsStorageReady()) {
-            return $this->redirectStorageError();
+            return $this->redirectStorageError($auth);
         }
 
-        $payment = Payment::findForUser((int) $request->input('id', 0), (int) $user->id);
+        $context = $this->resolveContext($request, $auth, true);
+        $payment = $this->resolvePayment($request, $auth, $context);
 
         if ($payment === null) {
-            return $this->redirectPaymentNotFound($request, (int) $user->id);
+            return $this->redirectPaymentNotFound($auth, $context);
         }
-
-        $snapshot = $this->paymentSnapshot($payment);
-        $agentId = (int) $payment->agent_id;
 
         $payment->delete();
 
-        $audit->log(AuditAction::PAYMENT_DELETE, $request, $auth, [
-            'entity_type' => 'payment',
-            'entity_id' => (int) $snapshot['id'],
-            'meta' => [
-                'snapshot' => $snapshot,
-            ],
-        ]);
+        $_SESSION['payments_success'] = 'Платеж успешно удален.';
 
-        $_SESSION['payments_success'] = 'Платеж успешно удалён.';
-
-        return Response::redirect('/payments?agent_id=' . $agentId);
+        return Response::redirect($this->paymentsIndexUrl($context));
     }
 
-    private function resolveAgentFromRequest(Request $request, int $userId): ?Agent
+    private function resolveContext(Request $request, AuthService $auth, bool $fromPost = false): ?array
     {
-        $agentId = (int) $request->input('agent_id', 0);
+        $user = $auth->user();
 
-        return Agent::findForUser($agentId, $userId);
+        if ($user === null) {
+            return null;
+        }
+
+        $isAdmin = $auth->hasRole('admin');
+        $agentUserId = (int) $request->input('agent_user_id', 0);
+
+        if ($isAdmin && $agentUserId > 0) {
+            $agent = User::findAgentById($agentUserId);
+
+            if ($agent === null) {
+                return null;
+            }
+
+            return [
+                'is_admin_mode' => true,
+                'agent_user_id' => (int) $agent->id,
+                'agent' => $agent,
+            ];
+        }
+
+        if ((string) $user->role !== 'agent') {
+            return null;
+        }
+
+        $agent = User::findAgentById((int) $user->id);
+
+        if ($agent === null) {
+            return null;
+        }
+
+        return [
+            'is_admin_mode' => false,
+            'agent_user_id' => (int) $user->id,
+            'agent' => $agent,
+        ];
     }
 
-    private function payloadFromRequest(Request $request, int $agentId): array
+    private function resolvePayment(Request $request, AuthService $auth, ?array $context): ?Payment
+    {
+        if ($context === null) {
+            return null;
+        }
+
+        $user = $auth->user();
+
+        if ($user === null) {
+            return null;
+        }
+
+        $paymentId = (int) $request->input('id', 0);
+
+        return Payment::findAccessible(
+            $paymentId,
+            (int) $user->id,
+            $context['is_admin_mode'],
+            $context['agent_user_id']
+        );
+    }
+
+    private function payloadFromRequest(Request $request, int $agentUserId): array
     {
         return [
-            'agent_id' => $agentId,
+            'agent_user_id' => $agentUserId,
             'amount' => trim((string) $request->input('amount', '')),
             'payment_date' => trim((string) $request->input('payment_date', '')),
             'status' => trim((string) $request->input('status', 'pending')),
@@ -375,39 +395,76 @@ class PaymentController extends Controller
         }
     }
 
-    private function redirectStorageError(): Response
+    private function redirectStorageError(AuthService $auth): Response
     {
-        $_SESSION['agents_error'] = 'Раздел платежей недоступен. Выполните миграции базы данных.';
+        $_SESSION['payments_error'] = 'Раздел платежей недоступен. Выполните миграции базы данных.';
 
-        return Response::redirect('/agents');
-    }
-
-    private function redirectPaymentNotFound(Request $request, int $userId): Response
-    {
-        $agentId = (int) $request->input('agent_id', 0);
-
-        if ($agentId > 0 && Agent::findForUser($agentId, $userId) !== null) {
-            $_SESSION['payments_error'] = 'Платеж не найден.';
-
-            return Response::redirect('/payments?agent_id=' . $agentId);
+        if ($auth->hasRole('admin')) {
+            return Response::redirect('/admin/agents');
         }
 
-        $_SESSION['agents_error'] = 'Платеж не найден.';
-
-        return Response::redirect('/agents');
+        return Response::redirect('/dashboard');
     }
 
-    private function paymentSnapshot(Payment $payment): array
+    private function redirectAgentNotFound(AuthService $auth): Response
     {
-        return [
-            'id' => (int) $payment->id,
-            'agent_id' => (int) $payment->agent_id,
-            'amount' => (string) $payment->amount,
-            'payment_date' => (string) $payment->payment_date,
-            'status' => (string) $payment->status,
-            'note' => $payment->note !== null ? (string) $payment->note : null,
-        ];
+        $_SESSION['agents_error'] = 'Агент не найден.';
+
+        if ($auth->hasRole('admin')) {
+            return Response::redirect('/admin/agents');
+        }
+
+        return Response::redirect('/dashboard');
+    }
+
+    private function redirectPaymentNotFound(AuthService $auth, ?array $context): Response
+    {
+        $_SESSION['payments_error'] = 'Платеж не найден.';
+
+        if ($context !== null) {
+            return Response::redirect($this->paymentsIndexUrl($context));
+        }
+
+        if ($auth->hasRole('admin')) {
+            return Response::redirect('/admin/agents');
+        }
+
+        return Response::redirect('/payments');
+    }
+
+    private function paymentsIndexUrl(array $context): string
+    {
+        if ($context['is_admin_mode']) {
+            return '/admin/agents/payments?agent_user_id=' . (int) $context['agent_user_id'];
+        }
+
+        return '/payments';
+    }
+
+    private function paymentsCreateUrl(array $context): string
+    {
+        if ($context['is_admin_mode']) {
+            return '/payments/create?agent_user_id=' . (int) $context['agent_user_id'];
+        }
+
+        return '/payments/create';
+    }
+
+    private function paymentsShowUrl(int $paymentId, array $context): string
+    {
+        if ($context['is_admin_mode']) {
+            return '/payments/show?id=' . $paymentId . '&agent_user_id=' . (int) $context['agent_user_id'];
+        }
+
+        return '/payments/show?id=' . $paymentId;
+    }
+
+    private function paymentsEditUrl(int $paymentId, array $context): string
+    {
+        if ($context['is_admin_mode']) {
+            return '/payments/edit?id=' . $paymentId . '&agent_user_id=' . (int) $context['agent_user_id'];
+        }
+
+        return '/payments/edit?id=' . $paymentId;
     }
 }
-
-
