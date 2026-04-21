@@ -3,6 +3,8 @@
 namespace Framework\Core;
 
 use App\Middleware\LoggerMiddleware;
+use App\Middleware\CsrfMiddleware;
+use Framework\Core\Http\Middleware\StartSession;
 
 class Kernel
 {
@@ -10,6 +12,8 @@ class Kernel
     protected Router $router;
 
     protected array $middleware = [
+        StartSession::class,
+        CsrfMiddleware::class,
         LoggerMiddleware::class,
     ];
 

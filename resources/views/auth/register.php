@@ -6,35 +6,32 @@
     <h1>Register</h1>
 
     <?php if (!empty($error)): ?>
-        <p style="color:red;"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
+        <p class="flash flash-error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
         <?php unset($_SESSION['register_error']); ?>
     <?php endif; ?>
 
-    <form method="POST" action="/register">
-        <div>
-            <label for="register_name">Name</label>
-            <input id="register_name" type="text" name="name" placeholder="Your name">
-        </div>
+    <form class="form-stack" method="POST" action="/register">
+        <?= csrf_field() ?>
 
-        <div>
-            <label for="register_email">Email</label>
-            <input id="register_email" type="email" name="email" required>
-        </div>
+        <label class="form-label" for="register_name">Name</label>
+        <input class="form-input" id="register_name" type="text" name="name" placeholder="Your name">
 
-        <div>
-            <label for="register_password">Password</label>
-            <input id="register_password" type="password" name="password" required>
-        </div>
+        <label class="form-label" for="register_email">Email</label>
+        <input class="form-input" id="register_email" type="email" name="email" required>
 
-        <div>
-            <label for="register_password_confirmation">Confirm password</label>
-            <input id="register_password_confirmation" type="password" name="password_confirmation" required>
-        </div>
+        <label class="form-label" for="register_password">Password</label>
+        <input class="form-input" id="register_password" type="password" name="password" required>
 
-        <button type="submit">Create account</button>
+        <label class="form-label" for="register_password_confirmation">Confirm password</label>
+        <input class="form-input" id="register_password_confirmation" type="password" name="password_confirmation" required>
+
+        <div class="page-actions" style="margin: 4px 0 0;">
+            <button class="btn btn-primary" type="submit">Create account</button>
+            <a class="btn" href="/login">Back to login</a>
+        </div>
     </form>
 
-    <p style="margin-top:12px;">
+    <p class="muted">
         Already have an account? <a href="/login">Sign in</a>
     </p>
 </section>

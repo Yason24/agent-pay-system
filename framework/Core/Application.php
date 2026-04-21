@@ -3,7 +3,7 @@
 namespace Framework\Core;
 
 use Framework\Core\Config\ConfigLoader;
-use Framework\Core\Http\Kernel;
+use Framework\Core\Kernel;
 use Framework\Core\View\ViewFactory;
 use Framework\Support\Facades\Facade;
 
@@ -79,7 +79,7 @@ class Application extends Container
         );
 
         // Kernel
-        $this->singleton(Kernel::class, fn($app) => new Kernel($app));
+        $this->singleton(Kernel::class, fn($app) => new Kernel($app, $app->make(Router::class)));
 
         // Request
 //        $this->singleton(Request::class, fn() => new Request());

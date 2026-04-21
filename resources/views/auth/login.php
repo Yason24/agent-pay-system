@@ -7,27 +7,33 @@
     <h1>Login</h1>
 
     <?php if (!empty($error)): ?>
-        <p style="color:red;"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
+        <p class="flash flash-error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
         <?php unset($_SESSION['auth_error']); ?>
     <?php endif; ?>
 
     <?php if (!empty($success)): ?>
-        <p style="color:green;"><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?></p>
+        <p class="flash flash-success"><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?></p>
         <?php unset($_SESSION['auth_success']); ?>
     <?php endif; ?>
 
-    <form action="/login" method="post">
-        <label for="login_input">Логин (имя или email): <input id="login_input" type="text" name="login" /></label>
-        <br>
-        <label for="password_input">Пароль: <input id="password_input" type="password" name="password" /></label>
-        <br>
-        <button type="submit">Ок</button>
-        <button type="button" onclick="window.location.href='/';">Отмена</button>
-        <br>
-        <a href="/forgot-password">Забыли пароль?</a>
+    <form class="form-stack" action="/login" method="post">
+        <?= csrf_field() ?>
+
+        <label class="form-label" for="login_input">Логин (имя или email)</label>
+        <input class="form-input" id="login_input" type="text" name="login" required>
+
+        <label class="form-label" for="password_input">Пароль</label>
+        <input class="form-input" id="password_input" type="password" name="password" required>
+
+        <div class="page-actions" style="margin: 4px 0 0;">
+            <button class="btn btn-primary" type="submit">Войти</button>
+            <a class="btn" href="/">Отмена</a>
+        </div>
+
+        <p><a href="/forgot-password">Забыли пароль?</a></p>
     </form>
 
-    <p style="margin-top:12px;">
+    <p class="muted">
         No account? <a href="/register">Create one</a>
     </p>
 </section>

@@ -68,6 +68,24 @@ try {
 
     $dashboardRoute = $router->match('GET', '/dashboard');
     $assert(isset($dashboardRoute['action']), 'GET /dashboard route is registered');
+
+    $agentsRoute = $router->match('GET', '/agents');
+    $assert(isset($agentsRoute['action']), 'GET /agents route is registered');
+
+    $createAgentRoute = $router->match('GET', '/agents/create');
+    $assert(isset($createAgentRoute['action']), 'GET /agents/create route is registered');
+
+    $storeAgentRoute = $router->match('POST', '/agents');
+    $assert(isset($storeAgentRoute['action']), 'POST /agents route is registered');
+
+    $paymentsRoute = $router->match('GET', '/payments');
+    $assert(isset($paymentsRoute['action']), 'GET /payments route is registered');
+
+    $createPaymentRoute = $router->match('GET', '/payments/create');
+    $assert(isset($createPaymentRoute['action']), 'GET /payments/create route is registered');
+
+    $storePaymentRoute = $router->match('POST', '/payments');
+    $assert(isset($storePaymentRoute['action']), 'POST /payments route is registered');
 } catch (Throwable $e) {
     $assert(false, 'Application/router check failed: ' . $e->getMessage());
 }

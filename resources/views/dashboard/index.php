@@ -3,12 +3,17 @@
 
 @section('content')
 <section>
-    <h1>Dashboard</h1>
-    <p>Welcome, {{ $user?->name ?? 'Agent' }}</p>
-    <p>You are now inside the protected application area.</p>
+    <h1>Кабинет</h1>
+    <p class="muted">Добро пожаловать, {{ $user?->name ?? 'Пользователь' }}</p>
+    <p class="muted">Вы находитесь в защищенной части приложения.</p>
 
-    <form method="POST" action="/logout">
-        <button type="submit">Logout</button>
+    <div class="page-actions">
+        <a class="btn btn-primary" href="/agents">Управлять агентами</a>
+    </div>
+
+    <form class="form-stack" method="POST" action="/logout">
+        <?= csrf_field() ?>
+        <button class="btn" type="submit">Выйти</button>
     </form>
 </section>
 @endsection
