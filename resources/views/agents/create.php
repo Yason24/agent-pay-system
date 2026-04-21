@@ -4,13 +4,16 @@
 
 @section('content')
 <section>
-    <h1>Create Agent</h1>
+    <h1>Создание агента</h1>
 
-    <p><a href="/agents">Back to list</a></p>
+    <div class="page-actions">
+        <a class="btn" href="/agents">Назад к списку</a>
+    </div>
 
-    <form action="/agents" method="post">
-        <label for="agent_name">Agent name</label>
+    <form class="form-stack" action="/agents" method="post">
+        <label class="form-label" for="agent_name">Имя агента</label>
         <input
+            class="form-input"
             id="agent_name"
             type="text"
             name="name"
@@ -20,10 +23,10 @@
         >
 
         <?php if (!empty($errors['name'])): ?>
-            <p style="color:red; margin:0;"><?= htmlspecialchars($errors['name'], ENT_QUOTES, 'UTF-8') ?></p>
+            <p class="form-error"><?= htmlspecialchars($errors['name'], ENT_QUOTES, 'UTF-8') ?></p>
         <?php endif; ?>
 
-        <button type="submit">Create</button>
+        <button class="btn btn-primary" type="submit">Создать</button>
     </form>
 </section>
 @endsection

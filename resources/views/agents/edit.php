@@ -5,19 +5,19 @@
 
 @section('content')
 <section>
-    <h1>Edit Agent</h1>
+    <h1>Редактирование агента</h1>
 
-    <p>
-        <a href="/agents">Back to list</a>
-        |
-        <a href="/agents/show?id=<?= (int) $agent->id ?>">View card</a>
-    </p>
+    <div class="page-actions">
+        <a class="btn" href="/agents">Назад к списку</a>
+        <a class="btn" href="/agents/show?id=<?= (int) $agent->id ?>">Карточка</a>
+    </div>
 
-    <form action="/agents/update" method="post">
+    <form class="form-stack" action="/agents/update" method="post">
         <input type="hidden" name="id" value="<?= (int) $agent->id ?>">
 
-        <label for="agent_name">Agent name</label>
+        <label class="form-label" for="agent_name">Имя агента</label>
         <input
+            class="form-input"
             id="agent_name"
             type="text"
             name="name"
@@ -27,10 +27,10 @@
         >
 
         <?php if (!empty($errors['name'])): ?>
-            <p style="color:red; margin:0;"><?= htmlspecialchars($errors['name'], ENT_QUOTES, 'UTF-8') ?></p>
+            <p class="form-error"><?= htmlspecialchars($errors['name'], ENT_QUOTES, 'UTF-8') ?></p>
         <?php endif; ?>
 
-        <button type="submit">Save</button>
+        <button class="btn btn-primary" type="submit">Сохранить</button>
     </form>
 </section>
 @endsection
