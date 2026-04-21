@@ -3,8 +3,10 @@
 namespace App\Controllers;
 
 use App\Models\User;
+use App\Services\AuditLogger;
 use App\Services\AuthService;
 use App\Services\HashService;
+use App\Support\AuditAction;
 use Framework\Core\Controller;
 use Framework\Core\Http\Response;
 use Framework\Core\Request;
@@ -51,7 +53,7 @@ class AdminUserController extends Controller
         ]);
     }
 
-    public function store(Request $request, AuthService $auth, HashService $hash): Response
+    public function store(Request $request, AuthService $auth, HashService $hash, AuditLogger $audit): Response
     {
         if ($response = $this->ensureAdmin($auth)) {
             return $response;
@@ -78,11 +80,20 @@ class AdminUserController extends Controller
             return Response::redirect('/admin/users/create');
         }
 
-        User::create([
+        $createdUser = User::create([
             'name' => $payload['name'],
             'email' => $payload['email'],
             'password' => $hash->make($payload['password']),
             'role' => $payload['role'],
+        ]);
+
+        $audit->log(AuditAction::USER_CREATE, $request, $auth, [
+            'entity_type' => 'user',
+            'entity_id' => (int) $createdUser->id,
+            'target_user_id' => (int) $createdUser->id,
+            'meta' => [
+                'snapshot' => $this->userSnapshot($createdUser),
+            ],
         ]);
 
         unset($_SESSION['users_create_errors'], $_SESSION['users_create_old']);
@@ -119,7 +130,7 @@ class AdminUserController extends Controller
         ]);
     }
 
-    public function update(Request $request, AuthService $auth): Response
+    public function update(Request $request, AuthService $auth, AuditLogger $audit): Response
     {
         if ($response = $this->ensureAdmin($auth)) {
             return $response;
@@ -151,8 +162,34 @@ class AdminUserController extends Controller
             return Response::redirect('/admin/users/edit?id=' . (int) $user->id);
         }
 
+        $before = $this->userSnapshot($user);
+        $oldRole = (string) $user->role;
+
         $user->role = $role;
         $user->save();
+
+        $after = $this->userSnapshot($user);
+        $changes = $audit->diff($before, $after);
+
+        $audit->log(AuditAction::USER_UPDATE, $request, $auth, [
+            'entity_type' => 'user',
+            'entity_id' => (int) $user->id,
+            'target_user_id' => (int) $user->id,
+            'meta' => $changes,
+        ]);
+
+        if ($oldRole !== $role) {
+            $audit->log(AuditAction::USER_ROLE_CHANGED, $request, $auth, [
+                'entity_type' => 'user',
+                'entity_id' => (int) $user->id,
+                'target_user_id' => (int) $user->id,
+                'meta' => [
+                    'changed_fields' => ['role'],
+                    'old' => ['role' => $oldRole],
+                    'new' => ['role' => $role],
+                ],
+            ]);
+        }
 
         unset($_SESSION['users_edit_errors'], $_SESSION['users_edit_old']);
         $_SESSION['users_success'] = 'Роль пользователя обновлена.';
@@ -185,7 +222,7 @@ class AdminUserController extends Controller
             return false;
         }
 
-        $adminsCount = User::where('role', '=', 'admin')->get()->count();
+        $adminsCount = User::where('role', '=', 'admin')->count();
 
         return $adminsCount <= 1;
     }
@@ -213,6 +250,16 @@ class AdminUserController extends Controller
         }
 
         return $errors;
+    }
+
+    private function userSnapshot(User $user): array
+    {
+        return [
+            'id' => (int) $user->id,
+            'name' => (string) $user->name,
+            'email' => (string) $user->email,
+            'role' => (string) $user->role,
+        ];
     }
 }
 

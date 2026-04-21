@@ -4,7 +4,9 @@ namespace App\Controllers;
 
 use App\Models\Agent;
 use App\Models\Payment;
+use App\Services\AuditLogger;
 use App\Services\AuthService;
+use App\Support\AuditAction;
 use Framework\Core\Controller;
 use Framework\Core\Http\Response;
 use Framework\Core\Request;
@@ -52,7 +54,7 @@ class AgentController extends Controller
         ]);
     }
 
-    public function store(Request $request, AuthService $auth): Response
+    public function store(Request $request, AuthService $auth, AuditLogger $audit): Response
     {
         $user = $auth->user();
 
@@ -70,9 +72,17 @@ class AgentController extends Controller
             return Response::redirect('/agents/create');
         }
 
-        Agent::create([
+        $agent = Agent::create([
             'name' => $name,
             'user_id' => (int) $user->id,
+        ]);
+
+        $audit->log(AuditAction::AGENT_CREATE, $request, $auth, [
+            'entity_type' => 'agent',
+            'entity_id' => (int) $agent->id,
+            'meta' => [
+                'snapshot' => $this->agentSnapshot($agent),
+            ],
         ]);
 
         unset($_SESSION['agents_create_errors'], $_SESSION['agents_create_old']);
@@ -139,7 +149,7 @@ class AgentController extends Controller
         ]);
     }
 
-    public function update(Request $request, AuthService $auth): Response
+    public function update(Request $request, AuthService $auth, AuditLogger $audit): Response
     {
         $user = $auth->user();
 
@@ -166,8 +176,18 @@ class AgentController extends Controller
             return Response::redirect('/agents/edit?id=' . $agent->id);
         }
 
+        $before = $this->agentSnapshot($agent);
+
         $agent->name = $name;
         $agent->save();
+
+        $after = $this->agentSnapshot($agent);
+
+        $audit->log(AuditAction::AGENT_UPDATE, $request, $auth, [
+            'entity_type' => 'agent',
+            'entity_id' => (int) $agent->id,
+            'meta' => $audit->diff($before, $after),
+        ]);
 
         unset($_SESSION['agents_edit_errors'], $_SESSION['agents_edit_old']);
         $_SESSION['agents_success'] = 'Агент успешно обновлён.';
@@ -175,7 +195,7 @@ class AgentController extends Controller
         return Response::redirect('/agents/show?id=' . $agent->id);
     }
 
-    public function destroy(Request $request, AuthService $auth): Response
+    public function destroy(Request $request, AuthService $auth, AuditLogger $audit): Response
     {
         $user = $auth->user();
 
@@ -192,7 +212,18 @@ class AgentController extends Controller
             return Response::redirect('/agents');
         }
 
+        $snapshot = $this->agentSnapshot($agent);
+
         $agent->delete();
+
+        $audit->log(AuditAction::AGENT_DELETE, $request, $auth, [
+            'entity_type' => 'agent',
+            'entity_id' => (int) $snapshot['id'],
+            'meta' => [
+                'snapshot' => $snapshot,
+            ],
+        ]);
+
         $_SESSION['agents_success'] = 'Агент успешно удалён.';
 
         return Response::redirect('/agents');
@@ -217,6 +248,15 @@ class AgentController extends Controller
         }
 
         return $errors;
+    }
+
+    private function agentSnapshot(Agent $agent): array
+    {
+        return [
+            'id' => (int) $agent->id,
+            'name' => (string) $agent->name,
+            'user_id' => (int) $agent->user_id,
+        ];
     }
 }
 

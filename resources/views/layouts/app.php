@@ -52,6 +52,16 @@ $roleLabel = $currentRole === 'guest'
             gap: 12px;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-logout-form {
+            margin: 0;
+        }
+
         .role-badge {
             display: inline-block;
             padding: 6px 10px;
@@ -199,7 +209,17 @@ $roleLabel = $currentRole === 'guest'
 <header>
     <div class="header-bar">
         <strong>Agent Pay System</strong>
-        <span class="role-badge">Вход: <?= htmlspecialchars($roleLabel, ENT_QUOTES, 'UTF-8') ?></span>
+
+        <div class="header-actions">
+            <span class="role-badge">Вход: <?= htmlspecialchars($roleLabel, ENT_QUOTES, 'UTF-8') ?></span>
+
+            <?php if ($currentUser !== null): ?>
+                <form method="POST" action="/logout" class="header-logout-form">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="btn">Выход</button>
+                </form>
+            <?php endif; ?>
+        </div>
     </div>
 </header>
 

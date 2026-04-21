@@ -4,7 +4,9 @@ namespace App\Controllers;
 
 use App\Models\Agent;
 use App\Models\Payment;
+use App\Services\AuditLogger;
 use App\Services\AuthService;
+use App\Support\AuditAction;
 use Framework\Core\Controller;
 use Framework\Core\Database;
 use Framework\Core\Http\Response;
@@ -79,7 +81,7 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function store(Request $request, AuthService $auth): Response
+    public function store(Request $request, AuthService $auth, AuditLogger $audit): Response
     {
         $user = $auth->user();
 
@@ -111,7 +113,7 @@ class PaymentController extends Controller
         }
 
         try {
-            Payment::create([
+            $payment = Payment::create([
                 'agent_id' => $agentId,
                 'amount' => $this->normalizeAmount($payload['amount']),
                 'payment_date' => $payload['payment_date'],
@@ -126,6 +128,14 @@ class PaymentController extends Controller
 
             return Response::redirect('/payments/create?agent_id=' . $agentId);
         }
+
+        $audit->log(AuditAction::PAYMENT_CREATE, $request, $auth, [
+            'entity_type' => 'payment',
+            'entity_id' => (int) $payment->id,
+            'meta' => [
+                'snapshot' => $this->paymentSnapshot($payment),
+            ],
+        ]);
 
         unset($_SESSION['payments_create_errors'], $_SESSION['payments_create_old']);
         $_SESSION['payments_success'] = 'Платеж успешно создан.';
@@ -195,7 +205,7 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function update(Request $request, AuthService $auth): Response
+    public function update(Request $request, AuthService $auth, AuditLogger $audit): Response
     {
         $user = $auth->user();
 
@@ -223,6 +233,8 @@ class PaymentController extends Controller
             return Response::redirect('/payments/edit?id=' . (int) $payment->id);
         }
 
+        $before = $this->paymentSnapshot($payment);
+
         try {
             $payment->amount = $this->normalizeAmount($payload['amount']);
             $payment->payment_date = $payload['payment_date'];
@@ -238,13 +250,21 @@ class PaymentController extends Controller
             return Response::redirect('/payments/edit?id=' . (int) $payment->id);
         }
 
+        $after = $this->paymentSnapshot($payment);
+
+        $audit->log(AuditAction::PAYMENT_UPDATE, $request, $auth, [
+            'entity_type' => 'payment',
+            'entity_id' => (int) $payment->id,
+            'meta' => $audit->diff($before, $after),
+        ]);
+
         unset($_SESSION['payments_edit_errors'], $_SESSION['payments_edit_old']);
         $_SESSION['payments_success'] = 'Платеж успешно обновлён.';
 
         return Response::redirect('/payments/show?id=' . (int) $payment->id);
     }
 
-    public function destroy(Request $request, AuthService $auth): Response
+    public function destroy(Request $request, AuthService $auth, AuditLogger $audit): Response
     {
         $user = $auth->user();
 
@@ -262,8 +282,18 @@ class PaymentController extends Controller
             return $this->redirectPaymentNotFound($request, (int) $user->id);
         }
 
+        $snapshot = $this->paymentSnapshot($payment);
         $agentId = (int) $payment->agent_id;
+
         $payment->delete();
+
+        $audit->log(AuditAction::PAYMENT_DELETE, $request, $auth, [
+            'entity_type' => 'payment',
+            'entity_id' => (int) $snapshot['id'],
+            'meta' => [
+                'snapshot' => $snapshot,
+            ],
+        ]);
 
         $_SESSION['payments_success'] = 'Платеж успешно удалён.';
 
@@ -365,6 +395,18 @@ class PaymentController extends Controller
         $_SESSION['agents_error'] = 'Платеж не найден.';
 
         return Response::redirect('/agents');
+    }
+
+    private function paymentSnapshot(Payment $payment): array
+    {
+        return [
+            'id' => (int) $payment->id,
+            'agent_id' => (int) $payment->agent_id,
+            'amount' => (string) $payment->amount,
+            'payment_date' => (string) $payment->payment_date,
+            'status' => (string) $payment->status,
+            'note' => $payment->note !== null ? (string) $payment->note : null,
+        ];
     }
 }
 

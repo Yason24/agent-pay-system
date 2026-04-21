@@ -2,10 +2,13 @@
 
 namespace App\Controllers;
 
+use App\Services\AuditLogger;
 use App\Services\AuthService;
 use App\Services\LoginRateLimiter;
+use App\Support\AuditAction;
 use Framework\Core\Controller;
 use Framework\Core\Http\Response;
+use Framework\Core\Request;
 
 class AuthController extends Controller
 {
@@ -36,7 +39,7 @@ class AuthController extends Controller
         ]);
     }
 
-    public function login(\Framework\Core\Request $request, AuthService $auth, LoginRateLimiter $limiter): Response
+    public function login(Request $request, AuthService $auth, LoginRateLimiter $limiter, AuditLogger $audit): Response
     {
         $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
 
@@ -44,10 +47,18 @@ class AuthController extends Controller
             $seconds = $limiter->availableIn($ip);
             $_SESSION['auth_error'] = "Слишком много неудачных попыток входа. Повторите через {$seconds} сек.";
 
+            $audit->log(AuditAction::LOGIN_FAILED, $request, $auth, [
+                'status' => 'failed',
+                'meta' => [
+                    'reason' => 'rate_limited',
+                    'available_in' => $seconds,
+                ],
+            ]);
+
             return Response::redirect('/login');
         }
 
-        $login    = trim((string) $request->input('login'));
+        $login = trim((string) $request->input('login'));
         $password = (string) $request->input('password');
 
         if ($auth->attempt($login, $password)) {
@@ -55,18 +66,43 @@ class AuthController extends Controller
             unset($_SESSION['auth_error']);
             unset($_SESSION['auth_success']);
 
+            $user = $auth->user();
+
+            $audit->log(AuditAction::LOGIN_SUCCESS, $request, $auth, [
+                'entity_type' => 'user',
+                'entity_id' => $user !== null ? (int) $user->id : null,
+            ]);
+
             return Response::redirect('/dashboard');
         }
 
         $limiter->hit($ip);
         $_SESSION['auth_error'] = 'Неверный логин или пароль.';
 
+        $audit->log(AuditAction::LOGIN_FAILED, $request, $auth, [
+            'status' => 'failed',
+            'meta' => [
+                'reason' => 'invalid_credentials',
+            ],
+        ]);
+
         return Response::redirect('/login');
     }
 
-    public function logout(AuthService $auth): Response
+    public function logout(Request $request, AuthService $auth, AuditLogger $audit): Response
     {
+        $user = $auth->user();
+        $actorUserId = $user !== null ? (int) $user->id : null;
+        $actorUserRole = $user !== null ? (string) $user->role : null;
+
         $auth->logout();
+
+        $audit->log(AuditAction::LOGOUT, $request, $auth, [
+            'actor_user_id' => $actorUserId,
+            'actor_user_role' => $actorUserRole,
+            'entity_type' => 'user',
+            'entity_id' => $actorUserId,
+        ]);
 
         return Response::redirect('/login');
     }
