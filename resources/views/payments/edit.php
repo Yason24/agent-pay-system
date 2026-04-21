@@ -17,6 +17,7 @@
     <?php $currentStatus = (string) ($old['status'] ?? $payment->status); ?>
 
     <form class="form-stack" action="/payments/update" method="post">
+        <?= csrf_field() ?>
         <input type="hidden" name="id" value="<?= (int) $payment->id ?>">
 
         <?php if (!empty($errors['_form'])): ?>

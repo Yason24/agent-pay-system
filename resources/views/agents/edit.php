@@ -13,6 +13,7 @@
     </div>
 
     <form class="form-stack" action="/agents/update" method="post">
+        <?= csrf_field() ?>
         <input type="hidden" name="id" value="<?= (int) $agent->id ?>">
 
         <label class="form-label" for="agent_name">Имя агента</label>

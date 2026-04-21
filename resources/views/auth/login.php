@@ -17,6 +17,8 @@
     <?php endif; ?>
 
     <form class="form-stack" action="/login" method="post">
+        <?= csrf_field() ?>
+
         <label class="form-label" for="login_input">Логин (имя или email)</label>
         <input class="form-input" id="login_input" type="text" name="login" required>
 

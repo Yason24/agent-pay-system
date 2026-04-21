@@ -13,6 +13,7 @@
     </div>
 
     <form class="form-stack" action="/payments" method="post">
+        <?= csrf_field() ?>
         <input type="hidden" name="agent_id" value="<?= (int) $agent->id ?>">
 
         <?php if (!empty($errors['_form'])): ?>

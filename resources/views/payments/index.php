@@ -49,6 +49,7 @@
                                 <a class="btn" href="/payments/show?id=<?= (int) $payment->id ?>">Открыть</a>
                                 <a class="btn" href="/payments/edit?id=<?= (int) $payment->id ?>">Изменить</a>
                                 <form action="/payments/delete" method="post" style="margin:0;">
+                                    <?= csrf_field() ?>
                                     <input type="hidden" name="id" value="<?= (int) $payment->id ?>">
                                     <button class="btn btn-danger" type="submit" onclick="return confirm('Удалить этот платеж?');">Удалить</button>
                                 </form>

@@ -204,6 +204,11 @@ $roleLabel = $roleLabels[$currentRole] ?? ('Роль: ' . $currentRole);
 </header>
 
 <main>
+    <?php if (!empty($_SESSION['csrf_error'])): ?>
+        <p class="flash flash-error"><?= htmlspecialchars((string) $_SESSION['csrf_error'], ENT_QUOTES, 'UTF-8') ?></p>
+        <?php unset($_SESSION['csrf_error']); ?>
+    <?php endif; ?>
+
     @yield('content')
 </main>
 

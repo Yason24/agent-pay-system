@@ -11,6 +11,8 @@
     <?php endif; ?>
 
     <form class="form-stack" method="POST" action="/register">
+        <?= csrf_field() ?>
+
         <label class="form-label" for="register_name">Name</label>
         <input class="form-input" id="register_name" type="text" name="name" placeholder="Your name">
 

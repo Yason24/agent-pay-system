@@ -11,6 +11,8 @@
     </div>
 
     <form class="form-stack" action="/agents" method="post">
+        <?= csrf_field() ?>
+
         <label class="form-label" for="agent_name">Имя агента</label>
         <input
             class="form-input"

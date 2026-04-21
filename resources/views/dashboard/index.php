@@ -12,6 +12,7 @@
     </div>
 
     <form class="form-stack" method="POST" action="/logout">
+        <?= csrf_field() ?>
         <button class="btn" type="submit">Выйти</button>
     </form>
 </section>

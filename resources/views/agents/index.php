@@ -42,6 +42,7 @@
                                 <a class="btn" href="/agents/show?id=<?= (int) $agent->id ?>">Открыть</a>
                                 <a class="btn" href="/agents/edit?id=<?= (int) $agent->id ?>">Изменить</a>
                                 <form action="/agents/delete" method="post" style="margin:0;">
+                                <?= csrf_field() ?>
                                 <input type="hidden" name="id" value="<?= (int) $agent->id ?>">
                                 <button class="btn btn-danger" type="submit" onclick="return confirm('Удалить этого агента?');">Удалить</button>
                                 </form>
