@@ -2,8 +2,8 @@
 .idea/
 vendor/
 node_modules/
-storage/log.txt
-storage/cache/
-storage/cache/views/
+/storage/log.txt
+/storage/cache/
+/storage/cache/views/
 .env
 .DS_Store
