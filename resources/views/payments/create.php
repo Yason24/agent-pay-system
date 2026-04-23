@@ -25,9 +25,9 @@
     <div class="page-actions">
         <?php if ($isAdminMode): ?>
             <a class="btn" href="/agents">Назад к агентам</a>
-            <a class="btn" href="/payments?agent_user_id=<?= (int) $agentUserId ?>">Оплачено</a>
+            <a class="btn" href="/payments?agent_user_id=<?= (int) $agentUserId ?>">Начисления</a>
         <?php else: ?>
-            <a class="btn" href="/my/payments">Оплачено</a>
+            <a class="btn" href="/my/payments">Начисления</a>
         <?php endif; ?>
     </div>
 

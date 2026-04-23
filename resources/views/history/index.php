@@ -22,10 +22,10 @@
     <div class="page-actions">
         <?php if ($isAgentMode): ?>
             <a class="btn" href="/my/requests">Мои заявки</a>
-            <a class="btn" href="/my/payments">Оплачено</a>
+            <a class="btn" href="/my/payments">Начисления</a>
         <?php else: ?>
             <a class="btn" href="/requests?agent_user_id=<?= (int) $agentUserId ?>">Заявки</a>
-            <a class="btn" href="/payments?agent_user_id=<?= (int) $agentUserId ?>">Оплачено</a>
+            <a class="btn" href="/payments?agent_user_id=<?= (int) $agentUserId ?>">Начисления</a>
         <?php endif; ?>
     </div>
 
@@ -55,6 +55,7 @@
         <table class="table">
             <thead>
             <tr>
+                <th>№</th>
                 <th>Дата</th>
                 <th>Тип</th>
                 <th>Сумма</th>
@@ -65,7 +66,11 @@
             </thead>
             <tbody>
             <?php foreach ($history as $row): ?>
+                <?php
+                $sourceId = (int) ($row['source_id'] ?? 0);
+                ?>
                 <tr>
+                    <td><?= $sourceId ?></td>
                     <td><?= htmlspecialchars(formatDateTime((string) ($row['date'] ?? '')), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars((string) ($row['type'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars(formatMoney($row['amount'] ?? 0), ENT_QUOTES, 'UTF-8') ?></td>

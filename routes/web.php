@@ -46,9 +46,6 @@ Route::middleware('auth')->group(function ($router) {
         $router->get('/payments', [PaymentController::class, 'index']);
         $router->get('/payments/create', [PaymentController::class, 'create']);
         $router->post('/payments', [PaymentController::class, 'store']);
-        $router->get('/payments/show', [PaymentController::class, 'show']);
-        $router->get('/payments/edit', [PaymentController::class, 'edit']);
-        $router->post('/payments/update', [PaymentController::class, 'update']);
         $router->post('/payments/delete', [PaymentController::class, 'destroy']);
     });
 

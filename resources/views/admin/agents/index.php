@@ -69,7 +69,7 @@
                         <div class="actions-inline">
                             <a class="btn" href="/history?agent_user_id=<?= (int) $agent->id ?>">Баланс</a>
                             <a class="btn" href="/requests?agent_user_id=<?= (int) $agent->id ?>">Заявки</a>
-                            <a class="btn" href="/payments?agent_user_id=<?= (int) $agent->id ?>">Оплачено</a>
+                            <a class="btn" href="/payments?agent_user_id=<?= (int) $agent->id ?>">Начисления</a>
                             <?php if (!empty($canTopUp)): ?>
                                 <a class="btn" href="/payments/create?agent_user_id=<?= (int) $agent->id ?>">Пополнить</a>
                             <?php endif; ?>

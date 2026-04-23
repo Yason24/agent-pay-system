@@ -7,10 +7,23 @@
 
 @section('content')
 <section>
+    <?php
+    $fullName = trim(implode(' ', array_filter([
+        trim((string) $userRecord->last_name),
+        trim((string) $userRecord->first_name),
+        trim((string) $userRecord->middle_name),
+    ])));
+    if ($fullName === '') {
+        $fullName = trim((string) $userRecord->name);
+    }
+    if ($fullName === '') {
+        $fullName = '—';
+    }
+    ?>
     <h1>Редактировать пользователя</h1>
 
     <div class="card" style="max-width:none; margin-bottom:16px;">
-        <p><strong>ID:</strong> <?= (int) $userRecord->id ?></p>
+        <p><strong>ФИО:</strong> <?= htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8') ?></p>
         <p><strong>Дата создания:</strong> <?= htmlspecialchars(formatDate((string) $userRecord->created_at), ENT_QUOTES, 'UTF-8') ?></p>
     </div>
 
@@ -48,6 +61,9 @@
 
         <label class="form-label" for="user_phone">Телефон</label>
         <input class="form-input" id="user_phone" type="text" name="phone" value="<?= htmlspecialchars((string) ($old['phone'] ?? $userRecord->phone), ENT_QUOTES, 'UTF-8') ?>">
+        <?php if (!empty($errors['phone'])): ?>
+            <p class="form-error"><?= htmlspecialchars($errors['phone'], ENT_QUOTES, 'UTF-8') ?></p>
+        <?php endif; ?>
 
         <label class="form-label" for="user_city">Город</label>
         <input class="form-input" id="user_city" type="text" name="city" value="<?= htmlspecialchars((string) ($old['city'] ?? $userRecord->city), ENT_QUOTES, 'UTF-8') ?>">

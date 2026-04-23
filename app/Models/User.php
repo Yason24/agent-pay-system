@@ -134,6 +134,24 @@ class User extends Model
         return $data ? new static($data) : null;
     }
 
+    public static function findByPhone(string $phone): ?self
+    {
+        $normalized = trim($phone);
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        $stmt = \Framework\Core\Database::getConnection()->prepare(
+            "SELECT * FROM users WHERE NULLIF(BTRIM(phone), '') = :phone LIMIT 1"
+        );
+        $stmt->execute(['phone' => $normalized]);
+
+        $data = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        return $data ? new static($data) : null;
+    }
+
     public static function agents()
     {
         return static::where('role', '=', 'agent');

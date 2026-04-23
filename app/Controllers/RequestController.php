@@ -383,18 +383,14 @@ class RequestController extends Controller
 
     private function isValidHttpUrl(string $url): bool
     {
-        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
-        $host = trim((string) parse_url($url, PHP_URL_HOST));
-
-        if (!in_array($scheme, ['http', 'https'], true)) {
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
             return false;
         }
 
-        if ($host === '') {
-            return false;
-        }
+        $parts = parse_url($url);
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
 
-        return (bool) preg_match('/^https?:\/\/[^\s]+$/iu', $url);
+        return in_array($scheme, ['http', 'https'], true);
     }
 
     private function resolveStaffContext(Request $request): array|Response
@@ -421,9 +417,19 @@ class RequestController extends Controller
 
     private function userFullName(User $user): string
     {
-        $fullName = $user->fullName();
+        $fullName = trim(implode(' ', array_filter([
+            trim((string) $user->last_name),
+            trim((string) $user->first_name),
+            trim((string) $user->middle_name),
+        ], static fn (string $part): bool => $part !== '')));
 
-        return $fullName !== '' ? $fullName : '—';
+        if ($fullName !== '') {
+            return $fullName;
+        }
+
+        $fallback = trim((string) $user->name);
+
+        return $fallback !== '' ? $fallback : '—';
     }
 
     private function allowedStatuses(): array

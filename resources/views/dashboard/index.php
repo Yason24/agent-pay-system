@@ -12,7 +12,7 @@
     <div class="page-actions">
         <?php if ($user !== null && (string) $user->role === 'agent'): ?>
             <a class="btn btn-primary" href="/cabinet">Мой кабинет</a>
-            <a class="btn" href="/my/payments">Оплачено</a>
+            <a class="btn" href="/my/payments">Начисления</a>
         <?php else: ?>
             <a class="btn btn-primary" href="/agents">Оплата</a>
             <?php if ($isAdmin): ?>

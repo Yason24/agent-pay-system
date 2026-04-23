@@ -42,6 +42,9 @@
 
         <label class="form-label" for="user_phone">Телефон</label>
         <input class="form-input" id="user_phone" type="text" name="phone" value="<?= htmlspecialchars((string) ($old['phone'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+        <?php if (!empty($errors['phone'])): ?>
+            <p class="form-error"><?= htmlspecialchars($errors['phone'], ENT_QUOTES, 'UTF-8') ?></p>
+        <?php endif; ?>
 
         <label class="form-label" for="user_city">Город</label>
         <input class="form-input" id="user_city" type="text" name="city" value="<?= htmlspecialchars((string) ($old['city'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">

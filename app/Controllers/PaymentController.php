@@ -36,7 +36,7 @@ class PaymentController extends Controller
         unset($_SESSION['payments_success'], $_SESSION['payments_error']);
 
         return $this->view('payments.index', [
-            'title' => 'Оплачено',
+            'title' => 'Начисления',
             'agent' => $context['agent'],
             'agentFullName' => $this->agentFullName($context['agent']),
             'payments' => Payment::forAgentUser($context['agent_user_id']),
@@ -74,7 +74,7 @@ class PaymentController extends Controller
         unset($_SESSION['payments_success'], $_SESSION['payments_error']);
 
         return $this->view('payments.index', [
-            'title' => 'Оплачено',
+            'title' => 'Начисления',
             'agent' => $user,
             'agentFullName' => $this->agentFullName($user),
             'payments' => Payment::forAgentUser((int) $user->id),
@@ -180,158 +180,6 @@ class PaymentController extends Controller
         $_SESSION['payments_success'] = 'Платеж успешно создан.';
 
         return redirect($this->paymentsIndexUrl($context));
-    }
-
-    public function show(Request $request, AuthService $auth): string|Response
-    {
-        $user = $auth->user();
-
-        if ($user === null) {
-            return redirect('/login');
-        }
-
-        if (!$this->paymentsStorageReady()) {
-            return $this->redirectStorageError($auth);
-        }
-
-        $context = $this->resolveContext($request, $auth);
-
-        if ($context instanceof Response) {
-            return $context;
-        }
-
-        $payment = $this->resolvePayment($request, $auth, $context);
-
-        if ($payment === null) {
-            return $this->redirectPaymentNotFound($auth, $context);
-        }
-
-        if ((string) $payment->status === 'paid' || (string) $payment->status === 'оплачено') {
-            $_SESSION['payments_error'] = 'Оплаченные записи нельзя редактировать.';
-
-            return redirect($this->paymentsIndexUrl($context));
-        }
-
-        if ((string) $payment->status === 'paid') {
-            $_SESSION['payments_error'] = 'Оплаченные записи нельзя редактировать.';
-
-            return redirect($this->paymentsIndexUrl($context));
-        }
-
-        return $this->view('payments.show', [
-            'title' => 'Начисление',
-            'payment' => $payment,
-            'agent' => $context['agent'],
-            'agentFullName' => $this->agentFullName($context['agent']),
-            'success' => $_SESSION['payments_success'] ?? null,
-            'error' => $_SESSION['payments_error'] ?? null,
-            'isAdminMode' => $context['is_admin_mode'],
-            'agentUserId' => $context['agent_user_id'],
-        ]);
-    }
-
-    public function edit(Request $request, AuthService $auth): string|Response
-    {
-        if ($auth->user() === null) {
-            return redirect('/login');
-        }
-
-        if ($response = $this->ensurePaymentWriteAccess($auth)) {
-            return $response;
-        }
-
-        if (!$this->paymentsStorageReady()) {
-            return $this->redirectStorageError($auth);
-        }
-
-        $context = $this->resolveContext($request, $auth);
-
-        if ($context instanceof Response) {
-            return $context;
-        }
-
-        $payment = $this->resolvePayment($request, $auth, $context);
-
-        if ($payment === null) {
-            return $this->redirectPaymentNotFound($auth, $context);
-        }
-
-        if ((string) $payment->status === 'paid' || (string) $payment->status === 'оплачено') {
-            $_SESSION['payments_error'] = 'Оплаченные записи нельзя редактировать.';
-
-            return redirect($this->paymentsIndexUrl($context));
-        }
-
-        $errors = $_SESSION['payments_edit_errors'] ?? [];
-        $old = $_SESSION['payments_edit_old'] ?? [];
-
-        unset($_SESSION['payments_edit_errors'], $_SESSION['payments_edit_old']);
-
-        return $this->view('payments.edit', [
-            'title' => 'Изменить начисление',
-            'payment' => $payment,
-            'agent' => $context['agent'],
-            'agentFullName' => $this->agentFullName($context['agent']),
-            'errors' => $errors,
-            'old' => $old,
-            'isAdminMode' => $context['is_admin_mode'],
-            'agentUserId' => $context['agent_user_id'],
-        ]);
-    }
-
-    public function update(Request $request, AuthService $auth): Response
-    {
-        if ($auth->user() === null) {
-            return redirect('/login');
-        }
-
-        if ($response = $this->ensurePaymentWriteAccess($auth)) {
-            return $response;
-        }
-
-        if (!$this->paymentsStorageReady()) {
-            return $this->redirectStorageError($auth);
-        }
-
-        $context = $this->resolveContext($request, $auth);
-
-        if ($context instanceof Response) {
-            return $context;
-        }
-
-        $payment = $this->resolvePayment($request, $auth, $context);
-
-        if ($payment === null) {
-            return $this->redirectPaymentNotFound($auth, $context);
-        }
-
-        $payload = $this->payloadFromRequest($request, $context['agent_user_id']);
-        $errors = $this->validatePayload($payload);
-
-        if ($errors !== []) {
-            $_SESSION['payments_edit_errors'] = $errors;
-            $_SESSION['payments_edit_old'] = $payload;
-
-            return redirect($this->paymentsEditUrl((int) $payment->id, $context));
-        }
-
-        try {
-            $payment->amount = $this->normalizeAmount($payload['amount']);
-            $payment->note = $payload['note'] !== '' ? $payload['note'] : null;
-            $payment->save();
-        } catch (\Throwable) {
-            $_SESSION['payments_edit_errors'] = [
-                '_form' => 'Не удалось обновить платеж. Проверьте введенные данные и попробуйте снова.',
-            ];
-            $_SESSION['payments_edit_old'] = $payload;
-
-            return redirect($this->paymentsEditUrl((int) $payment->id, $context));
-        }
-
-        unset($_SESSION['payments_edit_errors'], $_SESSION['payments_edit_old']);
-        $_SESSION['payments_success'] = 'Платеж успешно обновлен.';
-
-        return redirect($this->paymentsShowUrl((int) $payment->id, $context));
     }
 
     public function destroy(Request $request, AuthService $auth): Response
@@ -592,21 +440,4 @@ class PaymentController extends Controller
         return '/payments/create';
     }
 
-    private function paymentsShowUrl(int $paymentId, array $context): string
-    {
-        if ($context['is_admin_mode']) {
-            return '/payments/show?id=' . $paymentId . '&agent_user_id=' . (int) $context['agent_user_id'];
-        }
-
-        return '/payments/show?id=' . $paymentId;
-    }
-
-    private function paymentsEditUrl(int $paymentId, array $context): string
-    {
-        if ($context['is_admin_mode']) {
-            return '/payments/edit?id=' . $paymentId . '&agent_user_id=' . (int) $context['agent_user_id'];
-        }
-
-        return '/payments/edit?id=' . $paymentId;
-    }
 }

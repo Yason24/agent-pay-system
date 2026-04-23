@@ -97,8 +97,12 @@ class AdminUserController extends Controller
             $errors['login'] = 'Логин уже используется.';
         }
 
-        if (User::findByEmail($payload['email'])) {
-            $errors['email'] = 'Эл. почта уже используется.';
+        if (!isset($errors['phone']) && $payload['phone'] !== '') {
+            $existingByPhone = User::findByPhone($payload['phone']);
+
+            if ($existingByPhone !== null) {
+                $errors['phone'] = 'Телефон уже используется.';
+            }
         }
 
         if ($errors !== []) {
@@ -200,11 +204,11 @@ class AdminUserController extends Controller
             $errors['login'] = 'Логин уже используется.';
         }
 
-        if (!isset($errors['email'])) {
-            $existing = User::findByEmail($payload['email']);
+        if (!isset($errors['phone']) && $payload['phone'] !== '') {
+            $existingByPhone = User::findByPhone($payload['phone']);
 
-            if ($existing !== null && (int) $existing->id !== (int) $user->id) {
-                $errors['email'] = 'Эл. почта уже используется.';
+            if ($existingByPhone !== null && (int) $existingByPhone->id !== (int) $user->id) {
+                $errors['phone'] = 'Телефон уже используется.';
             }
         }
 

@@ -189,7 +189,7 @@ class Payment extends Model
         $normalized = strtolower(trim($status));
 
         return match ($normalized) {
-            'pending' => 'ожидает',
+            'pending' => 'начислено',
             'paid', 'done' => 'оплачено',
             default => $status,
         };

@@ -22,7 +22,7 @@
         <a class="btn" href="/dashboard">Назад в кабинет</a>
         <a class="btn" href="/history?agent_user_id=<?= (int) $agent->id ?>">Баланс</a>
         <a class="btn" href="/requests?agent_user_id=<?= (int) $agent->id ?>">Заявки</a>
-        <a class="btn btn-primary" href="/payments?agent_user_id=<?= (int) $agent->id ?>">Оплачено</a>
+        <a class="btn btn-primary" href="/payments?agent_user_id=<?= (int) $agent->id ?>">Начисления</a>
     </div>
 
     <div class="card">
@@ -33,7 +33,7 @@
     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-top:14px;">
         <div class="card"><p class="muted">Всего платежей</p><p><strong><?= (int) $paymentSummary['payments_count'] ?></strong></p></div>
         <div class="card"><p class="muted">Общая сумма</p><p><strong><?= htmlspecialchars(formatMoney($paymentSummary['total_amount']), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
-        <div class="card"><p class="muted">Оплачено</p><p><strong><?= htmlspecialchars(formatMoney($paymentSummary['paid_amount']), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
+        <div class="card"><p class="muted">Начислено</p><p><strong><?= htmlspecialchars(formatMoney($paymentSummary['paid_amount']), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
         <div class="card"><p class="muted">В ожидании</p><p><strong><?= htmlspecialchars(formatMoney($paymentSummary['pending_amount']), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
         <div class="card"><p class="muted">Неуспешно</p><p><strong><?= htmlspecialchars(formatMoney($paymentSummary['failed_amount']), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
     </div>
