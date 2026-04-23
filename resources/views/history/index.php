@@ -39,7 +39,7 @@
             <p><strong><?= htmlspecialchars(formatMoney($summary['paid_out'] ?? 0), ENT_QUOTES, 'UTF-8') ?></strong></p>
         </div>
         <div class="card">
-            <p class="muted">Всего</p>
+            <p class="muted">Остаток</p>
             <p><strong><?= htmlspecialchars(formatMoney($summary['net_total'] ?? 0), ENT_QUOTES, 'UTF-8') ?></strong></p>
         </div>
     </div>

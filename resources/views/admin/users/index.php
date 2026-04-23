@@ -11,7 +11,7 @@
 
     <div class="page-actions">
         <a class="btn" href="/dashboard">Назад в кабинет</a>
-        <a class="btn" href="/agents">Оплата</a>
+        <a class="btn" href="/agents">Баланс</a>
         <a class="btn btn-primary" href="/admin/users/create">Создать пользователя</a>
     </div>
 
@@ -80,6 +80,9 @@
                         <div class="actions-inline">
                             <a class="btn" href="/admin/users/edit?id=<?= (int) $user->id ?>">Изменить</a>
                             <a class="btn" href="/admin/users/edit?id=<?= (int) $user->id ?>#change-password">Изменить пароль</a>
+                            <?php if ((string) $user->role === 'agent'): ?>
+                                <a class="btn" href="/history?agent_user_id=<?= (int) $user->id ?>">Баланс</a>
+                            <?php endif; ?>
                         </div>
                     </td>
                 </tr>
