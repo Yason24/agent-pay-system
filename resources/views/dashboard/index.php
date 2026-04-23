@@ -14,7 +14,7 @@
             <a class="btn btn-primary" href="/cabinet">Мой кабинет</a>
             <a class="btn" href="/my/payments">Начисления</a>
         <?php else: ?>
-            <a class="btn btn-primary" href="/agents">Оплата</a>
+            <a class="btn btn-primary" href="/agents">Баланс</a>
             <?php if ($isAdmin): ?>
                 <a class="btn" href="/admin/users">Пользователи</a>
             <?php endif; ?>

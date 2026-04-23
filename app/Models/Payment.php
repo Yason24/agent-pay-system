@@ -83,14 +83,21 @@ class Payment extends Model
     {
         if ($agentUserId <= 0) {
             return [
+                'accrued' => 0.0,
+                'paid_out' => 0.0,
+                'net_total' => 0.0,
                 'total' => 0.0,
                 'reserved' => 0.0,
                 'available' => 0.0,
             ];
         }
 
-        $total = 0.0;
+        $accrued = 0.0;
+        $paidOut = 0.0;
+        $reserved = 0.0;
+        $payoutPaymentIds = [];
 
+        // Normalize money flow from payments
         foreach (static::forAgentUser($agentUserId) as $payment) {
             $type = strtolower(trim((string) $payment->type));
             if ($type === '') {
@@ -99,17 +106,65 @@ class Payment extends Model
 
             $amount = (float) $payment->amount;
 
-            if (in_array($type, ['accrual', 'adjustment'], true) && $amount > 0) {
-                $total += $amount;
+            if ($type === 'accrual') {
+                $accrued += $amount;
+            } elseif ($type === 'adjustment') {
+                if ($amount >= 0) {
+                    $accrued += $amount;
+                } else {
+                    $paidOut += abs($amount);
+                }
+            } elseif ($type === 'payout') {
+                $paidOut += abs($amount);
+                $payoutPaymentIds[(int) $payment->id] = true;
             }
         }
 
-        $reserved = AgentRequest::reservedAmountForAgentUser($agentUserId);
+        $requests = AgentRequest::forAgentUser($agentUserId);
+
+        // Keep reserved from in_progress requests
+        foreach ($requests as $request) {
+            $statusRaw = strtolower(trim((string) $request->status));
+            $statusNormalized = match ($statusRaw) {
+                'in_work' => 'in_progress',
+                'done' => 'paid',
+                default => $statusRaw,
+            };
+
+            if ($statusNormalized === 'in_progress') {
+                $amount = (float) ($request->requested_amount ?? $request->amount ?? 0);
+                $reserved += $amount;
+            }
+        }
+
+        // Paid requests are money out, but skip if already materialized by payout payment
+        foreach ($requests as $request) {
+            $statusRaw = strtolower(trim((string) $request->status));
+            $statusNormalized = match ($statusRaw) {
+                'done' => 'paid',
+                default => $statusRaw,
+            };
+
+            if ($statusNormalized !== 'paid') {
+                continue;
+            }
+
+            if (self::isRequestMaterializedByPayout($request, $payoutPaymentIds)) {
+                continue;
+            }
+
+            $paidOut += (float) ($request->requested_amount ?? $request->amount ?? 0);
+        }
+
+        $netTotal = $accrued - $paidOut;
 
         return [
-            'total' => $total,
+            'accrued' => $accrued,
+            'paid_out' => $paidOut,
+            'net_total' => $netTotal,
+            'total' => $netTotal,
             'reserved' => $reserved,
-            'available' => $total - $reserved,
+            'available' => $netTotal - $reserved,
         ];
     }
 
@@ -143,6 +198,7 @@ class Payment extends Model
                 'comment' => trim((string) ($payment->comment !== null ? $payment->comment : $payment->note)),
                 'sort_date' => (string) ($payment->created_at ?: $payment->payment_date),
                 'source_id' => (int) $payment->id,
+                'source' => 'payment',
             ];
         }
 
@@ -151,11 +207,12 @@ class Payment extends Model
                 'date' => (string) ($requestRow['date'] ?? ''),
                 'type' => 'Заявка оплачена',
                 'amount' => (float) ($requestRow['amount'] ?? 0),
-                'status' => 'оплачено',
+                'status' => 'Оплачено',
                 'actor_name' => (string) ($requestRow['actor_name'] ?? '—'),
                 'comment' => (string) ($requestRow['comment'] ?? ''),
                 'sort_date' => (string) ($requestRow['date'] ?? ''),
                 'source_id' => (int) ($requestRow['source_id'] ?? 0),
+                'source' => 'request',
             ];
         }
 
@@ -184,13 +241,28 @@ class Payment extends Model
             ->get();
     }
 
+    private static function isRequestMaterializedByPayout(AgentRequest $request, array $payoutPaymentIds): bool
+    {
+        foreach (['paid_payment_id', 'related_payment_id', 'payout_payment_id'] as $field) {
+            $paymentId = (int) ($request->{$field} ?? 0);
+
+            if ($paymentId > 0) {
+                if ($payoutPaymentIds === [] || isset($payoutPaymentIds[$paymentId])) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private static function historyStatusLabel(string $status): string
     {
         $normalized = strtolower(trim($status));
 
         return match ($normalized) {
-            'pending' => 'начислено',
-            'paid', 'done' => 'оплачено',
+            'pending' => 'Начислено',
+            'paid', 'done' => 'Оплачено',
             default => $status,
         };
     }

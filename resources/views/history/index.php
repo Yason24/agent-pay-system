@@ -31,16 +31,16 @@
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-bottom:20px;">
         <div class="card">
+            <p class="muted">Начислено</p>
+            <p><strong><?= htmlspecialchars(formatMoney($summary['accrued'] ?? 0), ENT_QUOTES, 'UTF-8') ?></strong></p>
+        </div>
+        <div class="card">
+            <p class="muted">Оплачено</p>
+            <p><strong><?= htmlspecialchars(formatMoney($summary['paid_out'] ?? 0), ENT_QUOTES, 'UTF-8') ?></strong></p>
+        </div>
+        <div class="card">
             <p class="muted">Всего</p>
-            <p><strong><?= htmlspecialchars(formatMoney($summary['total'] ?? 0), ENT_QUOTES, 'UTF-8') ?></strong></p>
-        </div>
-        <div class="card">
-            <p class="muted">В резерве</p>
-            <p><strong><?= htmlspecialchars(formatMoney($summary['reserved'] ?? 0), ENT_QUOTES, 'UTF-8') ?></strong></p>
-        </div>
-        <div class="card">
-            <p class="muted">Доступно</p>
-            <p><strong><?= htmlspecialchars(formatMoney($summary['available'] ?? 0), ENT_QUOTES, 'UTF-8') ?></strong></p>
+            <p><strong><?= htmlspecialchars(formatMoney($summary['net_total'] ?? 0), ENT_QUOTES, 'UTF-8') ?></strong></p>
         </div>
     </div>
 
@@ -68,9 +68,18 @@
             <?php foreach ($history as $row): ?>
                 <?php
                 $sourceId = (int) ($row['source_id'] ?? 0);
+                $sourceType = strtolower(trim((string) ($row['source'] ?? '')));
                 ?>
                 <tr>
-                    <td><?= $sourceId ?></td>
+                    <td>
+                        <?php if ($sourceType === 'payment'): ?>
+                            Н-<?= $sourceId ?>
+                        <?php elseif ($sourceType === 'request'): ?>
+                            О-<?= $sourceId ?>
+                        <?php else: ?>
+                            <?= $sourceId ?>
+                        <?php endif; ?>
+                    </td>
                     <td><?= htmlspecialchars(formatDateTime((string) ($row['date'] ?? '')), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars((string) ($row['type'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars(formatMoney($row['amount'] ?? 0), ENT_QUOTES, 'UTF-8') ?></td>

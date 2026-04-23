@@ -75,7 +75,7 @@
                 $dateValue = (string) ($payment->created_at ?: $payment->payment_date);
                 ?>
                 <tr>
-                    <td><?= (int) $payment->id ?></td>
+                    <td>Н-<?= (int) $payment->id ?></td>
                     <td><?= htmlspecialchars(formatDate($dateValue), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars(formatMoney($payment->amount), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars((string) ($payment->note ?? ''), ENT_QUOTES, 'UTF-8') ?></td>

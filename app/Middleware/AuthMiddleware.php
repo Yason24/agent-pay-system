@@ -11,7 +11,16 @@ class AuthMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        if (app(AuthService::class)->guest()) {
+        $auth = app(AuthService::class);
+
+        if ($auth->guest()) {
+            return redirect('/login');
+        }
+
+        $user = $auth->user();
+
+        if ($user && ($user->status ?? 'active') !== 'active') {
+            $auth->logout();
             return redirect('/login');
         }
 

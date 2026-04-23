@@ -44,7 +44,7 @@ function payment_status_label(string $status): string
 {
     return match ($status) {
         'paid' => 'Оплачено',
-        'pending' => 'В ожидании',
+        'pending' => 'Начислено',
         'failed' => 'Неуспешно',
         default => $status,
     };

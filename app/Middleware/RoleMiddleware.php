@@ -18,6 +18,11 @@ class RoleMiddleware
             return redirect('/login');
         }
 
+        if (($user->status ?? 'active') !== 'active') {
+            $auth->logout();
+            return redirect('/login');
+        }
+
         if ($roles !== [] && !$auth->hasAnyRole($roles)) {
             return new Response('Forbidden', 403);
         }

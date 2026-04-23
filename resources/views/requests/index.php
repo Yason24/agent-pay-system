@@ -76,8 +76,10 @@ $statusLabel = static function (string $status): string {
                 <th>Ссылка на оплату</th>
                 <th>Кто взял в работу</th>
                 <th>Обновлено</th>
-                <th>Изменить статус</th>
-                <th>Действие</th>
+                <?php if ($canManage): ?>
+                    <th>Изменить статус</th>
+                    <th>Действие</th>
+                <?php endif; ?>
             </tr>
             </thead>
             <tbody>
@@ -102,7 +104,7 @@ $statusLabel = static function (string $status): string {
                 $takenByDisplayName = trim((string) ($req->taken_by_name ?? ''));
                 ?>
                 <tr>
-                    <td><?= (int) $req->id ?></td>
+                    <td>О-<?= (int) $req->id ?></td>
                     <td><?= htmlspecialchars(formatDateTime((string) $req->created_at), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars(formatMoney($rowAmount), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars($statusLabel($statusNormalized), ENT_QUOTES, 'UTF-8') ?></td>
@@ -115,8 +117,8 @@ $statusLabel = static function (string $status): string {
                     </td>
                     <td><?= htmlspecialchars($takenByDisplayName !== '' ? $takenByDisplayName : '—', ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars(formatDateTime((string) $req->updated_at), ENT_QUOTES, 'UTF-8') ?></td>
-                    <td>
-                        <?php if ($canManage): ?>
+                    <?php if ($canManage): ?>
+                        <td>
                             <label for="<?= htmlspecialchars($rowSelectId, ENT_QUOTES, 'UTF-8') ?>" style="display:none;">Изменить статус заявки</label>
                             <select id="<?= htmlspecialchars($rowSelectId, ENT_QUOTES, 'UTF-8') ?>" class="form-input" name="status" form="<?= htmlspecialchars($rowFormId, ENT_QUOTES, 'UTF-8') ?>" <?= ($isFinal || $allowedTransitions === []) ? 'disabled' : '' ?>>
                                 <?php if ($allowedTransitions !== []): ?>
@@ -127,12 +129,8 @@ $statusLabel = static function (string $status): string {
                                     <option value="<?= htmlspecialchars($statusNormalized, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($statusLabel($statusNormalized), ENT_QUOTES, 'UTF-8') ?></option>
                                 <?php endif; ?>
                             </select>
-                        <?php else: ?>
-                            <span class="muted">—</span>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <?php if ($canManage): ?>
+                        </td>
+                        <td>
                             <form id="<?= htmlspecialchars($rowFormId, ENT_QUOTES, 'UTF-8') ?>" method="POST" action="/requests/change-status" style="display:inline-block;">
                                 <?= csrf_field() ?>
                                 <input type="hidden" name="request_id" value="<?= (int) $req->id ?>">
@@ -143,10 +141,8 @@ $statusLabel = static function (string $status): string {
                                     <button type="submit" class="btn" disabled>Изменить статус</button>
                                 <?php endif; ?>
                             </form>
-                        <?php else: ?>
-                            <span class="muted">—</span>
-                        <?php endif; ?>
-                    </td>
+                        </td>
+                    <?php endif; ?>
                 </tr>
             <?php endforeach; ?>
             </tbody>

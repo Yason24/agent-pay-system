@@ -49,6 +49,7 @@
         <table class="table">
             <thead>
             <tr>
+                <th>№</th>
                 <th>ФИО</th>
                 <th>Действия</th>
             </tr>
@@ -64,6 +65,7 @@
                 ]);
                 ?>
                 <tr>
+                    <td><?= (int) $agent->id ?></td>
                     <td><?= htmlspecialchars($fullName !== '' ? $fullName : '—', ENT_QUOTES, 'UTF-8') ?></td>
                     <td>
                         <div class="actions-inline">

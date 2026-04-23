@@ -70,6 +70,11 @@ class AuthService
             return false;
         }
 
+        $userStatus = (string) ($user->status ?? 'active');
+        if ($userStatus !== 'active') {
+            return false;
+        }
+
         if (!$this->hash->verify($password, $user->password)) {
             return false;
         }

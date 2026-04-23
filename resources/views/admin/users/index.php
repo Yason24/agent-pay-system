@@ -44,6 +44,7 @@
         <table class="table">
             <thead>
             <tr>
+                <th>№</th>
                 <th>ФИО</th>
                 <th>Логин</th>
                 <th>Телефон</th>
@@ -66,6 +67,7 @@
                 ]);
                 ?>
                 <tr>
+                    <td><?= (int) $user->id ?></td>
                     <td><?= htmlspecialchars($fullName !== '' ? $fullName : '—', ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars((string) ($user->login ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars((string) ($user->phone ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
