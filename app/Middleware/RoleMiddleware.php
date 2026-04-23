@@ -7,23 +7,27 @@ use Closure;
 use Framework\Core\Http\Response;
 use Framework\Core\Request;
 
-class AuthMiddleware
+class RoleMiddleware
 {
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next, string ...$roles)
     {
         $auth = app(AuthService::class);
+        $user = $auth->user();
 
-        if ($auth->guest()) {
+        if ($user === null) {
             return redirect('/login');
         }
 
-        $user = $auth->user();
-
-        if ($user && ($user->status ?? 'active') !== 'active') {
+        if (($user->status ?? 'active') !== 'active') {
             $auth->logout();
             return redirect('/login');
+        }
+
+        if ($roles !== [] && !$auth->hasAnyRole($roles)) {
+            return new Response('Forbidden', 403);
         }
 
         return $next($request);
     }
 }
+

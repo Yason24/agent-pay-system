@@ -2,10 +2,13 @@
 
 namespace App\Controllers;
 
+use App\Services\AuditLogger;
 use App\Services\AuthService;
 use App\Services\LoginRateLimiter;
+use App\Support\AuditAction;
 use Framework\Core\Controller;
 use Framework\Core\Http\Response;
+use Framework\Core\Request;
 
 class AuthController extends Controller
 {
@@ -21,12 +24,12 @@ class AuthController extends Controller
     public function showRegister(AuthService $auth): Response
     {
         if ($auth->hasRole('admin')) {
-            return Response::redirect('/admin/users/create');
+            return redirect('/admin/users/create');
         }
 
         $_SESSION['auth_error'] = 'Публичная регистрация отключена. Обратитесь к администратору.';
 
-        return Response::redirect('/login');
+        return redirect('/login');
     }
 
     public function showForgotPassword(): string
@@ -36,7 +39,7 @@ class AuthController extends Controller
         ]);
     }
 
-    public function login(\Framework\Core\Request $request, AuthService $auth, LoginRateLimiter $limiter): Response
+    public function login(Request $request, AuthService $auth, LoginRateLimiter $limiter, AuditLogger $audit): Response
     {
         $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
 
@@ -44,10 +47,18 @@ class AuthController extends Controller
             $seconds = $limiter->availableIn($ip);
             $_SESSION['auth_error'] = "Слишком много неудачных попыток входа. Повторите через {$seconds} сек.";
 
-            return Response::redirect('/login');
+            $audit->log(AuditAction::LOGIN_FAILED, $request, $auth, [
+                'status' => 'failed',
+                'meta' => [
+                    'reason' => 'rate_limited',
+                    'available_in' => $seconds,
+                ],
+            ]);
+
+            return redirect('/login');
         }
 
-        $login    = trim((string) $request->input('login'));
+        $login = trim((string) $request->input('login'));
         $password = (string) $request->input('password');
 
         if ($auth->attempt($login, $password)) {
@@ -55,30 +66,55 @@ class AuthController extends Controller
             unset($_SESSION['auth_error']);
             unset($_SESSION['auth_success']);
 
-            return Response::redirect('/dashboard');
+            $user = $auth->user();
+
+            $audit->log(AuditAction::LOGIN_SUCCESS, $request, $auth, [
+                'entity_type' => 'user',
+                'entity_id' => $user !== null ? (int) $user->id : null,
+            ]);
+
+            return redirect('/dashboard');
         }
 
         $limiter->hit($ip);
         $_SESSION['auth_error'] = 'Неверный логин или пароль.';
 
-        return Response::redirect('/login');
+        $audit->log(AuditAction::LOGIN_FAILED, $request, $auth, [
+            'status' => 'failed',
+            'meta' => [
+                'reason' => 'invalid_credentials',
+            ],
+        ]);
+
+        return redirect('/login');
     }
 
-    public function logout(AuthService $auth): Response
+    public function logout(Request $request, AuthService $auth, AuditLogger $audit): Response
     {
+        $user = $auth->user();
+        $actorUserId = $user !== null ? (int) $user->id : null;
+        $actorUserRole = $user !== null ? (string) $user->role : null;
+
         $auth->logout();
 
-        return Response::redirect('/login');
+        $audit->log(AuditAction::LOGOUT, $request, $auth, [
+            'actor_user_id' => $actorUserId,
+            'actor_user_role' => $actorUserRole,
+            'entity_type' => 'user',
+            'entity_id' => $actorUserId,
+        ]);
+
+        return redirect('/login');
     }
 
     public function register(AuthService $auth): Response
     {
         if ($auth->hasRole('admin')) {
-            return Response::redirect('/admin/users/create');
+            return redirect('/admin/users/create');
         }
 
         $_SESSION['auth_error'] = 'Публичная регистрация отключена. Обратитесь к администратору.';
 
-        return Response::redirect('/login');
+        return redirect('/login');
     }
 }

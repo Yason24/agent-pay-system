@@ -13,10 +13,17 @@ class UserSeeder
         $hash = new HashService();
 
         User::create([
-            'name' => 'Admin',
+            'name' => 'Admin User',
+            'last_name' => 'Admin',
+            'first_name' => 'User',
+            'middle_name' => null,
+            'login' => 'admin',
+            'phone' => null,
             'email' => 'admin@test.com',
+            'city' => null,
             'password' => $hash->make('12345'),
-            'role' => 'admin'
+            'role' => 'admin',
+            'status' => 'active',
         ]);
     }
 }

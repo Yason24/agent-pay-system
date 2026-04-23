@@ -1,10 +1,16 @@
-<?php /** @var \App\Models\Agent $agent */ ?>
+<?php /** @var \App\Models\User $agent */ ?>
 <?php /** @var array<string, mixed> $paymentSummary */ ?>
 <?php /** @var \Framework\Core\Collection $latestPayments */ ?>
 @extends('layouts.app')
 
 @section('content')
 <section>
+    <?php $agentDisplayName = \App\Models\User::composeFullName([
+        'last_name' => (string) $agent->last_name,
+        'first_name' => (string) $agent->first_name,
+        'middle_name' => (string) $agent->middle_name,
+        'name' => (string) $agent->name,
+    ]); ?>
     <h1>Кабинет агента</h1>
 
     <?php if (!empty($_SESSION['agents_success'])): ?>
@@ -13,23 +19,23 @@
     <?php endif; ?>
 
     <div class="page-actions">
-        <a class="btn" href="/agents">Назад к списку</a>
-        <a class="btn btn-primary" href="/payments/create?agent_id=<?= (int) $agent->id ?>">Добавить платеж</a>
-        <a class="btn" href="/payments?agent_id=<?= (int) $agent->id ?>">Все платежи</a>
-        <a class="btn" href="/agents/edit?id=<?= (int) $agent->id ?>">Изменить</a>
+        <a class="btn" href="/dashboard">Назад в кабинет</a>
+        <a class="btn" href="/history?agent_user_id=<?= (int) $agent->id ?>">Баланс</a>
+        <a class="btn" href="/requests?agent_user_id=<?= (int) $agent->id ?>">Заявки</a>
+        <a class="btn btn-primary" href="/payments?agent_user_id=<?= (int) $agent->id ?>">Начисления</a>
     </div>
 
     <div class="card">
         <p><strong>ID:</strong> <?= (int) $agent->id ?></p>
-        <p><strong>Имя:</strong> <?= htmlspecialchars((string) $agent->name, ENT_QUOTES, 'UTF-8') ?></p>
+        <p><strong>ФИО:</strong> <?= htmlspecialchars($agentDisplayName !== '' ? $agentDisplayName : '—', ENT_QUOTES, 'UTF-8') ?></p>
     </div>
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-top:14px;">
         <div class="card"><p class="muted">Всего платежей</p><p><strong><?= (int) $paymentSummary['payments_count'] ?></strong></p></div>
-        <div class="card"><p class="muted">Общая сумма</p><p><strong><?= htmlspecialchars(number_format((float) $paymentSummary['total_amount'], 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
-        <div class="card"><p class="muted">Оплачено</p><p><strong><?= htmlspecialchars(number_format((float) $paymentSummary['paid_amount'], 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
-        <div class="card"><p class="muted">В ожидании</p><p><strong><?= htmlspecialchars(number_format((float) $paymentSummary['pending_amount'], 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
-        <div class="card"><p class="muted">Неуспешно</p><p><strong><?= htmlspecialchars(number_format((float) $paymentSummary['failed_amount'], 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
+        <div class="card"><p class="muted">Общая сумма</p><p><strong><?= htmlspecialchars(formatMoney($paymentSummary['total_amount']), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
+        <div class="card"><p class="muted">Начислено</p><p><strong><?= htmlspecialchars(formatMoney($paymentSummary['paid_amount']), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
+        <div class="card"><p class="muted">В ожидании</p><p><strong><?= htmlspecialchars(formatMoney($paymentSummary['pending_amount']), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
+        <div class="card"><p class="muted">Неуспешно</p><p><strong><?= htmlspecialchars(formatMoney($paymentSummary['failed_amount']), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
     </div>
 
     <div class="card" style="max-width:none; margin-top:14px;">
@@ -41,23 +47,19 @@
             <table class="table" style="margin-top:0;">
                 <thead>
                 <tr>
-                    <th>ID</th>
                     <th>Сумма</th>
                     <th>Дата</th>
                     <th>Статус</th>
                     <th>Примечание</th>
-                    <th>Действия</th>
                 </tr>
                 </thead>
                 <tbody>
                 <?php foreach ($latestPayments as $payment): ?>
                     <tr>
-                        <td><?= (int) $payment->id ?></td>
-                        <td><?= htmlspecialchars(number_format((float) $payment->amount, 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= htmlspecialchars((string) $payment->payment_date, ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= htmlspecialchars(formatMoney($payment->amount), ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= htmlspecialchars(formatDate((string) $payment->payment_date), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars(payment_status_label((string) $payment->status), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) $payment->note, ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><a class="btn" href="/payments/show?id=<?= (int) $payment->id ?>">Открыть</a></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

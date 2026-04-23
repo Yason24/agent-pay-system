@@ -31,7 +31,7 @@ class CsrfMiddleware
             $fallback = '/';
             $target = (string) ($_SERVER['HTTP_REFERER'] ?? $fallback);
 
-            return Response::redirect($target);
+            return redirect($target);
         }
 
         return $next($request);

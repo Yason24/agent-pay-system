@@ -1,6 +1,18 @@
 <?php
 
+use App\Services\AuthService;
+use Framework\Core\Http\Response;
 use Framework\Core\View\ViewFactory;
+
+function auth(): AuthService
+{
+    return app(AuthService::class);
+}
+
+function redirect(string $location, int $status = 302): Response
+{
+    return Response::redirect($location, $status);
+}
 
 function view(string $view, array $data = [])
 {
@@ -32,9 +44,40 @@ function payment_status_label(string $status): string
 {
     return match ($status) {
         'paid' => 'Оплачено',
-        'pending' => 'В ожидании',
+        'pending' => 'Начислено',
         'failed' => 'Неуспешно',
         default => $status,
     };
+}
+
+function formatDate(?string $value): string
+{
+    if (!$value) {
+        return '';
+    }
+    try {
+        return (new DateTime($value))->format('d.m.Y');
+    } catch (\Throwable $e) {
+        return '';
+    }
+}
+
+function formatDateTime(?string $value): string
+{
+    if (!$value) {
+        return '';
+    }
+    try {
+        return (new DateTime($value))->format('d.m.Y H:i');
+    } catch (\Throwable $e) {
+        return '';
+    }
+}
+
+if (!function_exists('formatMoney')) {
+    function formatMoney($value): string
+    {
+        return number_format((float) $value, 2, ',', ' ');
+    }
 }
 

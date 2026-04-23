@@ -31,3 +31,18 @@ Do not model agent as a separate primary business entity.
 - Keep `ARCHITECTURE.md` aligned with real architecture
 - Do not add duplicate planning markdown files
 - Do not reintroduce legacy `agents` business model
+
+## UI Terminology (locked, do not change)
+
+| Concept | UI label | Notes |
+|---|---|---|
+| `/payments` section | **Начисления** | Page title, nav links, empty state |
+| Request status `paid` | **Оплачено** | Status label inside requests table only |
+| Backend `payment.status` values | `pending`, `paid`, `оплачено` | Keep as-is, never rename in DB/logic |
+
+Rules:
+- All nav links to `/payments` or `/my/payments` must say `Начисления`
+- Empty state on `/payments`: `Начислений пока нет.`
+- `requests/index.php` `$statusLabel` map: `'paid' => 'Оплачено'` — correct, do not rename
+- Backend comparisons like `['paid', 'оплачено']` — correct, do not rename
+- Do NOT use "Оплачено" as a payments section label anywhere in UI

@@ -28,6 +28,13 @@ class AuthService
         return $this->user() !== null;
     }
 
+    public function id(): ?int
+    {
+        $user = $this->user();
+
+        return $user ? (int) $user->id : null;
+    }
+
     public function guest(): bool
     {
         return !$this->check();
@@ -60,6 +67,11 @@ class AuthService
         $user = User::findByLogin($login);
 
         if (!$user) {
+            return false;
+        }
+
+        $userStatus = (string) ($user->status ?? 'active');
+        if ($userStatus !== 'active') {
             return false;
         }
 

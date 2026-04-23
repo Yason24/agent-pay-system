@@ -19,7 +19,7 @@
     <form class="form-stack" action="/login" method="post">
         <?= csrf_field() ?>
 
-        <label class="form-label" for="login_input">Логин (имя или эл. почта)</label>
+        <label class="form-label" for="login_input">Логин (логин или эл. почта)</label>
         <input class="form-input" id="login_input" type="text" name="login" required>
 
         <label class="form-label" for="password_input">Пароль</label>

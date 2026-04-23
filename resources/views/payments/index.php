@@ -1,17 +1,44 @@
-<?php /** @var \App\Models\Agent $agent */ ?>
 <?php /** @var \Framework\Core\Collection $payments */ ?>
+<?php /** @var \App\Models\User $agent */ ?>
 <?php /** @var string|null $success */ ?>
 <?php /** @var string|null $error */ ?>
+<?php $isAdminMode = $isAdminMode ?? false; ?>
+<?php $agentUserId = $agentUserId ?? (int) $agent->id; ?>
+<?php $isReadOnly = $isReadOnly ?? false; ?>
+<?php $canDelete = $canDelete ?? false; ?>
+<?php $canTopUp = $canTopUp ?? false; ?>
+<?php $agentDisplayName = trim((string) ($agentFullName ?? '')); ?>
+<?php if ($agentDisplayName === '') {
+    $agentDisplayName = \App\Models\User::composeFullName([
+        'last_name' => (string) $agent->last_name,
+        'first_name' => (string) $agent->first_name,
+        'middle_name' => (string) $agent->middle_name,
+        'name' => (string) $agent->name,
+    ]);
+} ?>
 @extends('layouts.app')
 
 @section('content')
 <section>
-    <h1>Платежи: {{ $agent->name }}</h1>
+    <h1><?= htmlspecialchars((string) ($title ?? 'Начисления'), ENT_QUOTES, 'UTF-8') ?></h1>
+    <p class="muted">
+        Агент:
+        <strong><?= htmlspecialchars($agentDisplayName !== '' ? $agentDisplayName : '—', ENT_QUOTES, 'UTF-8') ?></strong>
+    </p>
 
     <div class="page-actions">
-        <a class="btn" href="/agents">К агентам</a>
-        <a class="btn" href="/agents/show?id=<?= (int) $agent->id ?>">Карточка агента</a>
-        <a class="btn btn-primary" href="/payments/create?agent_id=<?= (int) $agent->id ?>">Создать платеж</a>
+        <?php if ($isAdminMode): ?>
+            <a class="btn" href="/agents">Назад к агентам</a>
+            <a class="btn" href="/requests?agent_user_id=<?= (int) $agentUserId ?>">Заявки</a>
+            <a class="btn" href="/history?agent_user_id=<?= (int) $agentUserId ?>">Баланс</a>
+            <?php if ($canTopUp && !$isReadOnly): ?>
+                <a class="btn btn-primary" href="/payments/create?agent_user_id=<?= (int) $agentUserId ?>">Пополнить</a>
+            <?php endif; ?>
+        <?php else: ?>
+            <a class="btn" href="/cabinet">Назад в кабинет</a>
+            <a class="btn" href="/my/requests">Мои заявки</a>
+            <a class="btn" href="/my/balance">Баланс</a>
+        <?php endif; ?>
     </div>
 
     <?php if (!empty($success)): ?>
@@ -23,40 +50,52 @@
     <?php endif; ?>
 
     <?php if ($payments->count() === 0): ?>
-        <p class="muted">Пока нет платежей.</p>
+        <p class="muted">Начислений пока нет.</p>
+        <?php if ($isAdminMode && $canTopUp && !$isReadOnly): ?>
+            <p><a class="btn btn-primary" href="/payments/create?agent_user_id=<?= (int) $agentUserId ?>">Пополнить</a></p>
+        <?php endif; ?>
     <?php else: ?>
         <table class="table">
             <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Сумма</th>
-                    <th>Дата</th>
-                    <th>Статус</th>
-                    <th>Примечание</th>
-                    <th>Действия</th>
-                </tr>
+            <tr>
+                <th>№</th>
+                <th>Дата</th>
+                <th>Сумма</th>
+                <th>Примечание</th>
+                <?php if ($isAdminMode && $canDelete): ?>
+                    <th>Удалить</th>
+                <?php endif; ?>
+            </tr>
             </thead>
             <tbody>
-                <?php foreach ($payments as $payment): ?>
-                    <tr>
-                        <td><?= (int) $payment->id ?></td>
-                        <td><?= htmlspecialchars(number_format((float) $payment->amount, 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= htmlspecialchars((string) $payment->payment_date, ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= htmlspecialchars(payment_status_label((string) $payment->status), ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= htmlspecialchars((string) ($payment->note ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+            <?php foreach ($payments as $payment): ?>
+                <?php
+                $statusRaw = strtolower(trim((string) $payment->status));
+                $canDeleteThis = !in_array($statusRaw, ['paid', 'оплачено'], true);
+                $dateValue = (string) ($payment->created_at ?: $payment->payment_date);
+                ?>
+                <tr>
+                    <td>Н-<?= (int) $payment->id ?></td>
+                    <td><?= htmlspecialchars(formatDate($dateValue), ENT_QUOTES, 'UTF-8') ?></td>
+                    <td><?= htmlspecialchars(formatMoney($payment->amount), ENT_QUOTES, 'UTF-8') ?></td>
+                    <td><?= htmlspecialchars((string) ($payment->note ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+
+                    <?php if ($isAdminMode && $canDelete): ?>
                         <td>
-                            <div class="actions-inline">
-                                <a class="btn" href="/payments/show?id=<?= (int) $payment->id ?>">Открыть</a>
-                                <a class="btn" href="/payments/edit?id=<?= (int) $payment->id ?>">Изменить</a>
-                                <form action="/payments/delete" method="post" style="margin:0;">
+                            <?php if ($canDeleteThis): ?>
+                                <form method="POST" action="/payments/delete" style="display:inline-block;">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="id" value="<?= (int) $payment->id ?>">
-                                    <button class="btn btn-danger" type="submit" onclick="return confirm('Удалить этот платеж?');">Удалить</button>
+                                    <input type="hidden" name="agent_user_id" value="<?= (int) $agentUserId ?>">
+                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Удалить запись?')">Удалить</button>
                                 </form>
-                            </div>
+                            <?php else: ?>
+                                <span class="muted">—</span>
+                            <?php endif; ?>
                         </td>
-                    </tr>
-                <?php endforeach; ?>
+                    <?php endif; ?>
+                </tr>
+            <?php endforeach; ?>
             </tbody>
         </table>
     <?php endif; ?>
