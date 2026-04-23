@@ -14,9 +14,9 @@
 
     <div class="page-actions">
         <a class="btn" href="/dashboard">Назад в кабинет</a>
-        <a class="btn btn-primary" href="/my/payments">Мои платежи</a>
-        <a class="btn" href="/my/history">Моя история</a>
-        <a class="btn" href="/requests/create">Создать заявку</a>
+        <a class="btn btn-primary" href="/my/payments">Оплачено</a>
+        <a class="btn" href="/my/balance">Баланс</a>
+        <a class="btn" href="/my/requests">Мои заявки</a>
     </div>
 
     <div class="card">
@@ -54,7 +54,7 @@
                     <tr>
                         <td><?= (int) $payment->id ?></td>
                         <td><?= htmlspecialchars(number_format((float) $payment->amount, 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= htmlspecialchars((string) $payment->payment_date, ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= htmlspecialchars(formatDate((string) $payment->payment_date), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars(payment_status_label((string) $payment->status), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) $payment->note, ENT_QUOTES, 'UTF-8') ?></td>
                         <td><span class="muted">Только просмотр</span></td>

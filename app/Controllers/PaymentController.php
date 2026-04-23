@@ -36,14 +36,14 @@ class PaymentController extends Controller
         unset($_SESSION['payments_success'], $_SESSION['payments_error']);
 
         return $this->view('payments.index', [
-            'title' => 'Платежи',
+            'title' => 'Оплачено',
             'agent' => $context['agent'],
             'payments' => Payment::forAgentUser($context['agent_user_id']),
             'success' => $success,
             'error' => $error,
             'isAdminMode' => $context['is_admin_mode'],
             'agentUserId' => $context['agent_user_id'],
-            'isReadOnly' => false,
+            'isReadOnly' => !$auth->hasAnyRole(['admin', 'accountant']),
         ]);
     }
 
@@ -71,7 +71,7 @@ class PaymentController extends Controller
         unset($_SESSION['payments_success'], $_SESSION['payments_error']);
 
         return $this->view('payments.index', [
-            'title' => 'Мои платежи',
+            'title' => 'Оплачено',
             'agent' => $user,
             'payments' => Payment::forAgentUser((int) $user->id),
             'success' => $success,
@@ -108,7 +108,7 @@ class PaymentController extends Controller
         unset($_SESSION['payments_create_errors'], $_SESSION['payments_create_old']);
 
         return $this->view('payments.create', [
-            'title' => 'Создать платеж',
+            'title' => 'Создать начисление',
             'agent' => $context['agent'],
             'errors' => $errors,
             'old' => $old,
@@ -152,7 +152,7 @@ class PaymentController extends Controller
         try {
             $createdPayment = Payment::createForAgentUser($agentUserId, [
                 'amount' => $this->normalizeAmount($payload['amount']),
-                'payment_date' => $payload['payment_date'],
+                'payment_date' => date('Y-m-d'),
                 'status' => $payload['status'],
                 'note' => $payload['note'] !== '' ? $payload['note'] : null,
             ]);
@@ -200,7 +200,7 @@ class PaymentController extends Controller
         }
 
         return $this->view('payments.show', [
-            'title' => 'Платеж',
+            'title' => 'Начисление',
             'payment' => $payment,
             'agent' => $context['agent'],
             'success' => $_SESSION['payments_success'] ?? null,
@@ -242,7 +242,7 @@ class PaymentController extends Controller
         unset($_SESSION['payments_edit_errors'], $_SESSION['payments_edit_old']);
 
         return $this->view('payments.edit', [
-            'title' => 'Изменить платеж',
+            'title' => 'Изменить начисление',
             'payment' => $payment,
             'agent' => $context['agent'],
             'errors' => $errors,
@@ -290,7 +290,6 @@ class PaymentController extends Controller
 
         try {
             $payment->amount = $this->normalizeAmount($payload['amount']);
-            $payment->payment_date = $payload['payment_date'];
             $payment->status = $payload['status'];
             $payment->note = $payload['note'] !== '' ? $payload['note'] : null;
             $payment->save();
@@ -358,9 +357,7 @@ class PaymentController extends Controller
             ];
         }
 
-        $isStaff = $auth->hasAnyRole(['admin', 'accountant', 'dispatcher']);
-
-        if (!$isStaff) {
+        if (!$auth->hasAnyRole(['admin', 'accountant', 'dispatcher'])) {
             return $this->forbidden('У вас нет доступа к платежам.');
         }
 
@@ -414,7 +411,6 @@ class PaymentController extends Controller
         return [
             'agent_user_id' => $agentUserId,
             'amount' => $this->sanitizeAmountInput((string) $request->input('amount', '')),
-            'payment_date' => trim((string) $request->input('payment_date', '')),
             'status' => trim((string) $request->input('status', 'pending')),
             'note' => $this->sanitizeNote((string) $request->input('note', '')),
         ];
@@ -435,15 +431,6 @@ class PaymentController extends Controller
             $errors['amount'] = 'Сумма должна быть больше нуля.';
         }
 
-        if ($payload['payment_date'] === '') {
-            $errors['payment_date'] = 'Дата платежа обязательна.';
-        } else {
-            $date = \DateTime::createFromFormat('Y-m-d', $payload['payment_date']);
-
-            if (!$date || $date->format('Y-m-d') !== $payload['payment_date']) {
-                $errors['payment_date'] = 'Дата платежа должна быть в формате ГГГГ-ММ-ДД.';
-            }
-        }
 
         $allowedStatuses = ['pending', 'paid', 'failed'];
 

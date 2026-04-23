@@ -27,6 +27,8 @@ class AdminAgentController extends Controller
 			'success' => $success,
 			'error' => $error,
 			'canManageUsers' => $auth->hasRole('admin'),
+			'canTopUp' => $auth->hasAnyRole(['admin', 'accountant']),
+			'canViewProfile' => $auth->hasRole('admin'),
 		]);
 	}
 
