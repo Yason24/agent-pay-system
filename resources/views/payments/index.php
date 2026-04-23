@@ -7,6 +7,15 @@
 <?php $isReadOnly = $isReadOnly ?? false; ?>
 <?php $canDelete = $canDelete ?? false; ?>
 <?php $canTopUp = $canTopUp ?? false; ?>
+<?php $agentDisplayName = trim((string) ($agentFullName ?? '')); ?>
+<?php if ($agentDisplayName === '') {
+    $agentDisplayName = \App\Models\User::composeFullName([
+        'last_name' => (string) $agent->last_name,
+        'first_name' => (string) $agent->first_name,
+        'middle_name' => (string) $agent->middle_name,
+        'name' => (string) $agent->name,
+    ]);
+} ?>
 @extends('layouts.app')
 
 @section('content')
@@ -14,7 +23,7 @@
     <h1><?= htmlspecialchars((string) ($title ?? 'Оплачено'), ENT_QUOTES, 'UTF-8') ?></h1>
     <p class="muted">
         Агент:
-        <strong><?= htmlspecialchars((string) ($agentFullName ?? $agent->name), ENT_QUOTES, 'UTF-8') ?></strong>
+        <strong><?= htmlspecialchars($agentDisplayName !== '' ? $agentDisplayName : '—', ENT_QUOTES, 'UTF-8') ?></strong>
     </p>
 
     <div class="page-actions">
@@ -41,7 +50,10 @@
     <?php endif; ?>
 
     <?php if ($payments->count() === 0): ?>
-        <p class="muted">Записей пока нет.</p>
+        <p class="muted">Записи по начислениям пока отсутствуют.</p>
+        <?php if ($isAdminMode && $canTopUp && !$isReadOnly): ?>
+            <p><a class="btn btn-primary" href="/payments/create?agent_user_id=<?= (int) $agentUserId ?>">Пополнить</a></p>
+        <?php endif; ?>
     <?php else: ?>
         <table class="table">
             <thead>

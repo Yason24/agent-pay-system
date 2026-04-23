@@ -11,10 +11,6 @@ use Framework\Core\Request;
 
 class RequestController extends Controller
 {
-    // -------------------------------------------------------------------------
-    // Agent: GET /my/requests
-    // -------------------------------------------------------------------------
-
     public function myIndex(AuthService $auth): string|Response
     {
         $user = $auth->user();
@@ -30,17 +26,17 @@ class RequestController extends Controller
         $requests = AgentRequest::forAgentUser((int) $user->id);
 
         return $this->view('requests.index', [
-            'title'       => 'Мои заявки',
-            'requests'    => $requests,
+            'title' => 'Мои заявки',
+            'page_title' => 'Мои заявки',
+            'requests' => $requests,
             'isAgentMode' => true,
+            'is_agent' => true,
+            'canManage' => false,
+            'can_manage' => false,
             'agentUserId' => (int) $user->id,
-            'agent'       => $user,
+            'agent_full_name' => $this->userFullName($user),
         ]);
     }
-
-    // -------------------------------------------------------------------------
-    // Staff: GET /requests?agent_user_id=
-    // -------------------------------------------------------------------------
 
     public function index(Request $request, AuthService $auth): string|Response
     {
@@ -54,34 +50,26 @@ class RequestController extends Controller
             return new Response('Forbidden', 403);
         }
 
-        $agentUserId = (int) $request->input('agent_user_id', 0);
+        $context = $this->resolveStaffContext($request);
 
-        if ($agentUserId <= 0) {
-            return new Response('agent_user_id is required', 400);
+        if ($context instanceof Response) {
+            return $context;
         }
 
-        $agent = User::find($agentUserId);
-
-        if ($agent === null || (string) $agent->role !== 'agent') {
-            $_SESSION['agents_error'] = 'Агент не найден.';
-
-            return redirect('/agents');
-        }
-
-        $requests = AgentRequest::forAgentUser($agentUserId);
+        $requests = AgentRequest::forAgentUser($context['agentUserId']);
 
         return $this->view('requests.index', [
-            'title'       => 'Заявки агента',
-            'requests'    => $requests,
+            'title' => 'Заявки',
+            'page_title' => 'Заявки',
+            'requests' => $requests,
             'isAgentMode' => false,
-            'agentUserId' => $agentUserId,
-            'agent'       => $agent,
+            'is_agent' => false,
+            'canManage' => true,
+            'can_manage' => true,
+            'agentUserId' => $context['agentUserId'],
+            'agent_full_name' => $this->userFullName($context['agent']),
         ]);
     }
-
-    // -------------------------------------------------------------------------
-    // Agent: GET /requests/create
-    // -------------------------------------------------------------------------
 
     public function create(AuthService $auth): string|Response
     {
@@ -97,21 +85,19 @@ class RequestController extends Controller
 
         $success = $_SESSION['requests_success'] ?? null;
         $error   = $_SESSION['requests_error'] ?? null;
+        $errors  = $_SESSION['requests_errors'] ?? [];
         $old     = $_SESSION['requests_old'] ?? [];
 
-        unset($_SESSION['requests_success'], $_SESSION['requests_error'], $_SESSION['requests_old']);
+        unset($_SESSION['requests_success'], $_SESSION['requests_error'], $_SESSION['requests_errors'], $_SESSION['requests_old']);
 
         return $this->view('requests.create', [
-            'title'   => 'Создать заявку',
+            'title' => 'Создать заявку',
             'success' => $success,
-            'error'   => $error,
-            'old'     => $old,
+            'error' => $error,
+            'errors' => $errors,
+            'old' => $old,
         ]);
     }
-
-    // -------------------------------------------------------------------------
-    // Agent: POST /requests/store
-    // -------------------------------------------------------------------------
 
     public function store(Request $request, AuthService $auth): Response
     {
@@ -125,27 +111,31 @@ class RequestController extends Controller
             return new Response('Forbidden', 403);
         }
 
-        $amountRaw   = $this->sanitizeAmountInput((string) $request->input('amount', ''));
+        $amountRaw = $this->sanitizeAmountInput((string) $request->input('amount', ''));
         $paymentLink = $this->sanitizeText((string) $request->input('payment_link', ''));
-        $comment     = $this->sanitizeText((string) $request->input('comment', ''));
+        $comment = $this->sanitizeText((string) $request->input('comment', ''));
 
-        // --- validate ---
-        $amountError = '';
+        $errors = [];
 
         if ($amountRaw === '') {
-            $amountError = 'Сумма обязательна.';
+            $errors['amount'] = 'Укажите сумму.';
         } elseif (!preg_match('/^\d{1,10}([.,]\d{1,2})?$/', $amountRaw)) {
-            $amountError = 'Формат суммы: до 10 цифр, не более 2 знаков после разделителя.';
+            $errors['amount'] = 'Некорректный формат суммы. Пример: 10000,50.';
         } elseif ((float) str_replace(',', '.', $amountRaw) <= 0) {
-            $amountError = 'Сумма должна быть больше нуля.';
+            $errors['amount'] = 'Сумма должна быть больше нуля.';
         }
 
-        if ($amountError !== '') {
-            $_SESSION['requests_error'] = $amountError;
-            $_SESSION['requests_old']   = [
-                'amount'       => $amountRaw,
+        if ($paymentLink !== '' && !$this->isValidHttpUrl($paymentLink)) {
+            $errors['payment_link'] = 'Укажите корректную ссылку (URL).';
+        }
+
+        if ($errors !== []) {
+            $_SESSION['requests_error'] = 'Проверьте заполнение формы.';
+            $_SESSION['requests_errors'] = $errors;
+            $_SESSION['requests_old'] = [
+                'amount' => $amountRaw,
                 'payment_link' => $paymentLink,
-                'comment'      => $comment,
+                'comment' => $comment,
             ];
 
             return redirect('/requests/create');
@@ -155,12 +145,12 @@ class RequestController extends Controller
 
         $created = AgentRequest::createForAgentUser((int) $user->id, [
             'requested_amount' => $amount,
-            'amount'           => $amount,
-            'payment_link'     => $paymentLink,
-            'link'             => $paymentLink,
-            'comment'          => $comment,
-            'topic'            => 'Payment request',
-            'status'           => 'new',
+            'amount' => $amount,
+            'payment_link' => $paymentLink,
+            'link' => $paymentLink,
+            'comment' => $comment,
+            'topic' => 'Payment request',
+            'status' => 'new',
         ]);
 
         if (!$created) {
@@ -171,23 +161,20 @@ class RequestController extends Controller
                 $_SESSION['requests_error'] .= ' Причина: ' . $source;
             }
 
-            $_SESSION['requests_old']   = [
-                'amount'       => $amountRaw,
+            $_SESSION['requests_old'] = [
+                'amount' => $amountRaw,
                 'payment_link' => $paymentLink,
-                'comment'      => $comment,
+                'comment' => $comment,
             ];
 
             return redirect('/requests/create');
         }
 
+        unset($_SESSION['requests_errors'], $_SESSION['requests_old']);
         $_SESSION['requests_success'] = 'Заявка успешно создана.';
 
         return redirect('/my/requests');
     }
-
-    // -------------------------------------------------------------------------
-    // Staff: POST /requests/take
-    // -------------------------------------------------------------------------
 
     public function take(Request $request, AuthService $auth): Response
     {
@@ -201,32 +188,46 @@ class RequestController extends Controller
             return new Response('Forbidden', 403);
         }
 
+        $context = $this->resolveStaffContext($request);
+
+        if ($context instanceof Response) {
+            return $context;
+        }
+
         $requestId = (int) $request->input('request_id', 0);
-        $agentUserId = (int) $request->input('agent_user_id', 0);
-        $backUrl = $agentUserId > 0 ? '/requests?agent_user_id=' . $agentUserId : '/agents';
+        $agentUserId = (int) $context['agentUserId'];
+        $backUrl = '/requests?agent_user_id=' . $agentUserId;
 
         if ($requestId <= 0) {
             return new Response('request_id is required', 400);
         }
 
-        $target = AgentRequest::find($requestId);
+        $target = AgentRequest::findForAgentUser($requestId, $agentUserId);
 
         if ($target === null) {
             return new Response('Request not found', 404);
         }
 
-        if ((string) $target->status !== 'new') {
+        if ($this->normalizeStatus((string) $target->status) !== 'new') {
             return new Response('Request is already taken', 400);
         }
 
-        $taken = AgentRequest::takeInProgress(
+        if ((int) $target->taken_by_user_id > 0) {
+            return new Response('Request is already taken', 400);
+        }
+
+        $taken = AgentRequest::updateStatusForAgentUser(
             $requestId,
-            (int) $user->id,
-            (string) ($user->name ?? '')
+            $agentUserId,
+            'in_progress',
+            [
+                'taken_by_user_id' => (int) $user->id,
+                'taken_by_name' => $this->userFullName($user),
+            ]
         );
 
         if (!$taken) {
-            $_SESSION['requests_error'] = AgentRequest::lastTakeError() ?? 'Не удалось взять заявку в работу.';
+            $_SESSION['requests_error'] = 'Не удалось взять заявку в работу.';
 
             return redirect($backUrl);
         }
@@ -235,10 +236,6 @@ class RequestController extends Controller
 
         return redirect($backUrl);
     }
-
-    // -------------------------------------------------------------------------
-    // Staff: POST /requests/complete
-    // -------------------------------------------------------------------------
 
     public function complete(Request $request, AuthService $auth): Response
     {
@@ -252,42 +249,121 @@ class RequestController extends Controller
             return new Response('Forbidden', 403);
         }
 
+        $context = $this->resolveStaffContext($request);
+
+        if ($context instanceof Response) {
+            return $context;
+        }
+
         $requestId = (int) $request->input('request_id', 0);
 
         if ($requestId <= 0) {
             return new Response('request_id is required', 400);
         }
 
-        $target = AgentRequest::find($requestId);
+        $target = AgentRequest::findForAgentUser($requestId, (int) $context['agentUserId']);
 
         if ($target === null) {
             return new Response('Request not found', 404);
         }
 
-        if ((string) $target->status !== 'in_progress') {
+        if ($this->normalizeStatus((string) $target->status) !== 'in_progress') {
             return new Response('Request is not in progress', 400);
         }
 
-        $target->status = 'paid';
-        $target->updated_at = date('Y-m-d H:i:s');
-
-        if (property_exists($target, 'processed_by_user_id')) {
-            $target->processed_by_user_id = (int) $user->id;
-        }
-
-        $target->save();
+        AgentRequest::updateStatusForAgentUser(
+            $requestId,
+            (int) $context['agentUserId'],
+            'paid',
+            [
+                'processed_by_user_id' => (int) $user->id,
+                'processed_by_name' => $this->userFullName($user),
+            ]
+        );
 
         $_SESSION['requests_success'] = 'Заявка исполнена.';
 
-        $agentUserId = (int) $request->input('agent_user_id', 0);
-        $backUrl = $agentUserId > 0 ? '/requests?agent_user_id=' . $agentUserId : '/agents';
+        $backUrl = '/requests?agent_user_id=' . (int) $context['agentUserId'];
 
         return redirect($backUrl);
     }
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
+    public function changeStatus(Request $request, AuthService $auth): Response
+    {
+        $user = $auth->user();
+
+        if ($user === null) {
+            return redirect('/login');
+        }
+
+        if (!$auth->hasAnyRole(['dispatcher', 'accountant', 'admin'])) {
+            return new Response('Forbidden', 403);
+        }
+
+        $context = $this->resolveStaffContext($request);
+
+        if ($context instanceof Response) {
+            return $context;
+        }
+
+        $agentUserId = (int) $context['agentUserId'];
+        $requestId = (int) $request->input('request_id', 0);
+        $newStatus = $this->normalizeStatus((string) $request->input('status', ''));
+
+        if ($requestId <= 0) {
+            return new Response('request_id is required', 400);
+        }
+
+        if (!in_array($newStatus, $this->allowedStatuses(), true)) {
+            return new Response('Invalid status', 400);
+        }
+
+        $target = AgentRequest::findForAgentUser($requestId, $agentUserId);
+
+        if ($target === null) {
+            return new Response('Request not found', 404);
+        }
+
+        $currentStatus = $this->normalizeStatus((string) $target->status);
+
+        if (in_array($currentStatus, ['paid', 'rejected', 'cancelled'], true)) {
+            return new Response('Final status cannot be changed', 400);
+        }
+
+        if ($currentStatus === 'new' && $newStatus !== 'in_progress') {
+            return new Response('New request can only be moved to in_progress', 400);
+        }
+
+        if ($currentStatus === 'in_progress' && !in_array($newStatus, ['paid', 'rejected', 'cancelled'], true)) {
+            return new Response('In-progress request can only be finished', 400);
+        }
+
+        $extra = [];
+
+        if ($newStatus === 'in_progress') {
+            if ((int) $target->taken_by_user_id > 0) {
+                return new Response('Request is already taken', 400);
+            }
+
+            $extra['taken_by_user_id'] = (int) $user->id;
+            $extra['taken_by_name'] = $this->userFullName($user);
+        }
+
+        if (in_array($newStatus, ['paid', 'rejected', 'cancelled'], true)) {
+            $extra['processed_by_user_id'] = (int) $user->id;
+            $extra['processed_by_name'] = $this->userFullName($user);
+        }
+
+        $updated = AgentRequest::updateStatusForAgentUser($requestId, $agentUserId, $newStatus, $extra);
+
+        if (!$updated) {
+            return new Response('Unable to update request status', 500);
+        }
+
+        $_SESSION['requests_success'] = 'Статус заявки обновлен.';
+
+        return redirect('/requests?agent_user_id=' . $agentUserId);
+    }
 
     private function sanitizeText(string $value): string
     {
@@ -303,5 +379,66 @@ class RequestController extends Controller
         $normalized = trim($amount);
 
         return str_replace(["\u{00A0}", "\u{202F}", ' '], '', $normalized);
+    }
+
+    private function isValidHttpUrl(string $url): bool
+    {
+        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+        $host = trim((string) parse_url($url, PHP_URL_HOST));
+
+        if (!in_array($scheme, ['http', 'https'], true)) {
+            return false;
+        }
+
+        if ($host === '') {
+            return false;
+        }
+
+        return (bool) preg_match('/^https?:\/\/[^\s]+$/iu', $url);
+    }
+
+    private function resolveStaffContext(Request $request): array|Response
+    {
+        $agentUserId = (int) $request->input('agent_user_id', 0);
+
+        if ($agentUserId <= 0) {
+            return new Response('agent_user_id is required', 400);
+        }
+
+        $agent = User::find($agentUserId);
+
+        if ($agent === null || (string) $agent->role !== 'agent') {
+            $_SESSION['agents_error'] = 'Агент не найден.';
+
+            return redirect('/agents');
+        }
+
+        return [
+            'agentUserId' => $agentUserId,
+            'agent' => $agent,
+        ];
+    }
+
+    private function userFullName(User $user): string
+    {
+        $fullName = $user->fullName();
+
+        return $fullName !== '' ? $fullName : '—';
+    }
+
+    private function allowedStatuses(): array
+    {
+        return ['new', 'in_progress', 'paid', 'rejected', 'cancelled'];
+    }
+
+    private function normalizeStatus(string $status): string
+    {
+        $value = strtolower(trim($status));
+
+        return match ($value) {
+            'in_work' => 'in_progress',
+            'done' => 'paid',
+            default => $value,
+        };
     }
 }

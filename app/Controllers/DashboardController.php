@@ -19,6 +19,7 @@ class DashboardController extends Controller
         return $this->view('dashboard.index', [
             'title' => 'Кабинет',
             'user' => $user,
+            'userFullName' => $user->fullName() !== '' ? $user->fullName() : 'Пользователь',
         ]);
     }
 }

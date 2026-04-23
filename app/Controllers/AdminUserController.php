@@ -24,13 +24,31 @@ class AdminUserController extends Controller
 
         unset($_SESSION['users_success'], $_SESSION['users_error']);
 
+        $searchQuery = (string) ($_GET['q'] ?? '');
+        $q = $this->normalizeSearch($searchQuery);
         $users = User::query()->orderBy('id', 'DESC')->get();
+
+        if ($q !== '') {
+            $users = $users->filter(function (User $user) use ($q): bool {
+                $fullName = User::composeFullName([
+                    'last_name' => (string) $user->last_name,
+                    'first_name' => (string) $user->first_name,
+                    'middle_name' => (string) $user->middle_name,
+                    'name' => (string) $user->name,
+                ]);
+
+                $haystack = $this->normalizeSearch($fullName . ' ' . (string) $user->login);
+
+                return str_contains($haystack, $q);
+            });
+        }
 
         return $this->view('admin.users.index', [
             'title' => 'Пользователи',
             'users' => $users,
             'success' => $success,
             'error' => $error,
+            'search_query' => $searchQuery,
         ]);
     }
 
@@ -61,16 +79,26 @@ class AdminUserController extends Controller
         }
 
         $payload = [
-            'name' => trim((string) $request->input('name', '')),
+            'last_name' => trim((string) $request->input('last_name', '')),
+            'first_name' => trim((string) $request->input('first_name', '')),
+            'middle_name' => trim((string) $request->input('middle_name', '')),
+            'login' => trim((string) $request->input('login', '')),
+            'phone' => trim((string) $request->input('phone', '')),
+            'city' => trim((string) $request->input('city', '')),
             'email' => trim((string) $request->input('email', '')),
             'password' => (string) $request->input('password', ''),
             'role' => trim((string) $request->input('role', 'agent')),
+            'status' => trim((string) $request->input('status', 'active')),
         ];
 
         $errors = $this->validateCreatePayload($payload);
 
+        if (User::findByUserLogin($payload['login'])) {
+            $errors['login'] = 'Логин уже используется.';
+        }
+
         if (User::findByEmail($payload['email'])) {
-            $errors['email'] = 'Пользователь с таким email уже существует.';
+            $errors['email'] = 'Эл. почта уже используется.';
         }
 
         if ($errors !== []) {
@@ -82,11 +110,17 @@ class AdminUserController extends Controller
         }
 
         $createdUser = User::create([
-            'name' => $payload['name'],
+            'name' => $this->composeDisplayName($payload),
+            'last_name' => $payload['last_name'],
+            'first_name' => $payload['first_name'],
+            'middle_name' => $payload['middle_name'],
+            'login' => $payload['login'],
+            'phone' => $payload['phone'],
+            'city' => $payload['city'],
             'email' => $payload['email'],
             'password' => $hash->make($payload['password']),
             'role' => $payload['role'],
-            'status' => 'active',
+            'status' => $payload['status'],
         ]);
 
         $audit->log(AuditAction::USER_CREATE, $request, $auth, [
@@ -148,39 +182,30 @@ class AdminUserController extends Controller
         }
 
         $payload = [
-            'name' => trim((string) $request->input('name', '')),
+            'last_name' => trim((string) $request->input('last_name', '')),
+            'first_name' => trim((string) $request->input('first_name', '')),
+            'middle_name' => trim((string) $request->input('middle_name', '')),
+            'login' => trim((string) $request->input('login', '')),
+            'phone' => trim((string) $request->input('phone', '')),
+            'city' => trim((string) $request->input('city', '')),
             'email' => trim((string) $request->input('email', '')),
             'role' => trim((string) $request->input('role', '')),
             'status' => trim((string) $request->input('status', 'active')),
         ];
 
-        $errors = [];
+        $errors = $this->validateProfilePayload($payload, false);
 
-        if ($payload['name'] === '') {
-            $errors['name'] = 'Имя обязательно.';
-        } elseif (strlen($payload['name']) < 2) {
-            $errors['name'] = 'Имя должно быть не короче 2 символов.';
+        $existingByLogin = User::findByUserLogin($payload['login']);
+        if ($existingByLogin !== null && (int) $existingByLogin->id !== (int) $user->id) {
+            $errors['login'] = 'Логин уже используется.';
         }
 
-        if ($payload['email'] === '' || !filter_var($payload['email'], FILTER_VALIDATE_EMAIL)) {
-            $errors['email'] = 'Укажите корректный email.';
-        } else {
+        if (!isset($errors['email'])) {
             $existing = User::findByEmail($payload['email']);
 
             if ($existing !== null && (int) $existing->id !== (int) $user->id) {
-                $errors['email'] = 'Пользователь с таким email уже существует.';
+                $errors['email'] = 'Эл. почта уже используется.';
             }
-        }
-
-        $allowedRoles = ['agent', 'dispatcher', 'accountant', 'admin'];
-        $allowedStatuses = ['active', 'blocked'];
-
-        if (!in_array($payload['role'], $allowedRoles, true)) {
-            $errors['role'] = 'Выберите корректную роль.';
-        }
-
-        if (!in_array($payload['status'], $allowedStatuses, true)) {
-            $errors['status'] = 'Выберите корректный статус.';
         }
 
         if ($this->isLastAdminRoleDowngrade($user, $payload['role'])) {
@@ -197,7 +222,13 @@ class AdminUserController extends Controller
         $before = $this->userSnapshot($user);
         $oldRole = (string) $user->role;
 
-        $user->name = $payload['name'];
+        $user->name = $this->composeDisplayName($payload);
+        $user->last_name = $payload['last_name'];
+        $user->first_name = $payload['first_name'];
+        $user->middle_name = $payload['middle_name'];
+        $user->login = $payload['login'];
+        $user->phone = $payload['phone'];
+        $user->city = $payload['city'];
         $user->email = $payload['email'];
         $user->role = $payload['role'];
         $user->status = $payload['status'];
@@ -306,27 +337,84 @@ class AdminUserController extends Controller
 
     private function validateCreatePayload(array $payload): array
     {
-        $errors = [];
-
-        if ($payload['name'] === '') {
-            $errors['name'] = 'Имя обязательно.';
-        } elseif (strlen($payload['name']) < 2) {
-            $errors['name'] = 'Имя должно быть не короче 2 символов.';
-        }
-
-        if ($payload['email'] === '' || !filter_var($payload['email'], FILTER_VALIDATE_EMAIL)) {
-            $errors['email'] = 'Укажите корректный email.';
-        }
+        $errors = $this->validateProfilePayload($payload, true);
 
         if ($payload['password'] === '' || strlen($payload['password']) < 6) {
             $errors['password'] = 'Пароль должен быть не короче 6 символов.';
+        }
+
+        return $errors;
+    }
+
+    private function validateProfilePayload(array $payload, bool $requireStatus): array
+    {
+        $errors = [];
+
+        if ($payload['last_name'] === '') {
+            $errors['last_name'] = 'Фамилия обязательна.';
+        } elseif (!$this->isValidNamePart($payload['last_name'])) {
+            $errors['last_name'] = 'Некорректный формат фамилии.';
+        }
+
+        if ($payload['first_name'] === '') {
+            $errors['first_name'] = 'Имя обязательно.';
+        } elseif (!$this->isValidNamePart($payload['first_name'])) {
+            $errors['first_name'] = 'Некорректный формат имени.';
+        }
+
+        if ($payload['middle_name'] !== '' && !$this->isValidNamePart($payload['middle_name'])) {
+            $errors['middle_name'] = 'Некорректный формат отчества.';
+        }
+
+        if ($payload['login'] === '') {
+            $errors['login'] = 'Логин обязателен.';
+        } elseif (!preg_match('/^[A-Za-z0-9_.-]{3,50}$/', $payload['login'])) {
+            $errors['login'] = 'Логин может содержать только латинские буквы, цифры и символы . _ - (3-50 знаков).';
+        }
+
+        if ($payload['email'] === '' || !filter_var($payload['email'], FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Укажите корректную эл. почту.';
         }
 
         if (!in_array($payload['role'], ['agent', 'dispatcher', 'accountant', 'admin'], true)) {
             $errors['role'] = 'Выберите корректную роль.';
         }
 
+        if ($requireStatus || array_key_exists('status', $payload)) {
+            if (!in_array($payload['status'], ['active', 'blocked'], true)) {
+                $errors['status'] = 'Выберите корректный статус.';
+            }
+        }
+
         return $errors;
+    }
+
+    private function isValidNamePart(string $value): bool
+    {
+        return (bool) preg_match('/^[\p{L}\s\-\']{2,100}$/u', $value);
+    }
+
+    private function composeDisplayName(array $payload): string
+    {
+        $name = User::composeFullName($payload);
+
+        if ($name !== '') {
+            return $name;
+        }
+
+        return (string) ($payload['login'] ?? '');
+    }
+
+    private function normalizeSearch(?string $value): string
+    {
+        $value = trim((string) $value);
+        $value = preg_replace('/\s+/u', ' ', $value) ?? '';
+
+        if (function_exists('mb_strtolower')) {
+            return mb_strtolower($value);
+        }
+
+        return strtolower($value);
     }
 
     private function userSnapshot(User $user): array
@@ -340,6 +428,12 @@ class AdminUserController extends Controller
         return [
             'id' => (int) $user->id,
             'name' => (string) $user->name,
+            'last_name' => (string) $user->last_name,
+            'first_name' => (string) $user->first_name,
+            'middle_name' => (string) $user->middle_name,
+            'login' => (string) $user->login,
+            'phone' => (string) $user->phone,
+            'city' => (string) $user->city,
             'email' => (string) $user->email,
             'role' => (string) $user->role,
             'status' => $status,

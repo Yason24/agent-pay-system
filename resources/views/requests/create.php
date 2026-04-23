@@ -1,5 +1,6 @@
 <?php /** @var string|null $success */ ?>
 <?php /** @var string|null $error */ ?>
+<?php /** @var array<string, string> $errors */ ?>
 <?php /** @var array<string, mixed> $old */ ?>
 @extends('layouts.app')
 
@@ -26,12 +27,18 @@
         <label class="form-label" for="req_amount">Сумма <span style="color:var(--danger)">*</span></label>
         <input class="form-input" id="req_amount" type="text" name="amount"
                value="<?= htmlspecialchars((string) ($old['amount'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-               placeholder="Например: 1500.00" required>
+               placeholder="Например: 10000,50 или 10 000" required>
+        <?php if (!empty($errors['amount'])): ?>
+            <p class="form-error"><?= htmlspecialchars((string) $errors['amount'], ENT_QUOTES, 'UTF-8') ?></p>
+        <?php endif; ?>
 
         <label class="form-label" for="req_payment_link">Ссылка на оплату</label>
         <input class="form-input" id="req_payment_link" type="url" name="payment_link"
                value="<?= htmlspecialchars((string) ($old['payment_link'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                placeholder="https://...">
+        <?php if (!empty($errors['payment_link'])): ?>
+            <p class="form-error"><?= htmlspecialchars((string) $errors['payment_link'], ENT_QUOTES, 'UTF-8') ?></p>
+        <?php endif; ?>
 
         <label class="form-label" for="req_comment">Комментарий</label>
         <textarea class="form-input" id="req_comment" name="comment" rows="4"><?= htmlspecialchars((string) ($old['comment'] ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>

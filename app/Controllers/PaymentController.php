@@ -206,6 +206,12 @@ class PaymentController extends Controller
             return $this->redirectPaymentNotFound($auth, $context);
         }
 
+        if ((string) $payment->status === 'paid' || (string) $payment->status === 'оплачено') {
+            $_SESSION['payments_error'] = 'Оплаченные записи нельзя редактировать.';
+
+            return redirect($this->paymentsIndexUrl($context));
+        }
+
         if ((string) $payment->status === 'paid') {
             $_SESSION['payments_error'] = 'Оплаченные записи нельзя редактировать.';
 
@@ -216,6 +222,7 @@ class PaymentController extends Controller
             'title' => 'Начисление',
             'payment' => $payment,
             'agent' => $context['agent'],
+            'agentFullName' => $this->agentFullName($context['agent']),
             'success' => $_SESSION['payments_success'] ?? null,
             'error' => $_SESSION['payments_error'] ?? null,
             'isAdminMode' => $context['is_admin_mode'],
@@ -249,6 +256,12 @@ class PaymentController extends Controller
             return $this->redirectPaymentNotFound($auth, $context);
         }
 
+        if ((string) $payment->status === 'paid' || (string) $payment->status === 'оплачено') {
+            $_SESSION['payments_error'] = 'Оплаченные записи нельзя редактировать.';
+
+            return redirect($this->paymentsIndexUrl($context));
+        }
+
         $errors = $_SESSION['payments_edit_errors'] ?? [];
         $old = $_SESSION['payments_edit_old'] ?? [];
 
@@ -258,6 +271,7 @@ class PaymentController extends Controller
             'title' => 'Изменить начисление',
             'payment' => $payment,
             'agent' => $context['agent'],
+            'agentFullName' => $this->agentFullName($context['agent']),
             'errors' => $errors,
             'old' => $old,
             'isAdminMode' => $context['is_admin_mode'],
@@ -437,17 +451,15 @@ class PaymentController extends Controller
     {
         $errors = [];
 
-        $amountRaw = $payload['amount'];
-        $amount = $this->normalizeAmount($amountRaw);
+        $amountRaw = (string) ($payload['amount'] ?? '');
 
         if ($amountRaw === '') {
-            $errors['amount'] = 'Сумма обязательна.';
+            $errors['amount'] = 'Укажите сумму.';
         } elseif (!preg_match('/^\d{1,10}([.,]\d{1,2})?$/', $amountRaw)) {
-            $errors['amount'] = 'Формат суммы: до 10 цифр и при необходимости 1-2 знака после разделителя.';
-        } elseif ((float) $amount <= 0) {
+            $errors['amount'] = 'Некорректный формат суммы. Пример: 10000,50.';
+        } elseif ((float) $this->normalizeAmount($amountRaw) <= 0) {
             $errors['amount'] = 'Сумма должна быть больше нуля.';
         }
-
 
 
         if (strlen($payload['note']) > 1000) {
@@ -480,19 +492,9 @@ class PaymentController extends Controller
 
     private function agentFullName(User $agent): string
     {
-        $fullName = trim(implode(' ', array_filter([
-            trim((string) $agent->last_name),
-            trim((string) $agent->first_name),
-            trim((string) $agent->middle_name),
-        ], static fn (string $part): bool => $part !== '')));
+        $fullName = $agent->fullName();
 
-        if ($fullName !== '') {
-            return $fullName;
-        }
-
-        $fallback = trim((string) $agent->name);
-
-        return $fallback !== '' ? $fallback : '—';
+        return $fullName !== '' ? $fullName : '—';
     }
 
     private function paymentsStorageReady(): bool

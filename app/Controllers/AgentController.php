@@ -44,6 +44,7 @@ class AgentController extends Controller
         return $this->view('cabinet.index', [
             'title'          => 'Кабинет агента',
             'agent'          => $user,
+            'agentFullName'  => $user->fullName() !== '' ? $user->fullName() : '—',
             'paymentSummary' => $paymentSummary,
         ]);
     }

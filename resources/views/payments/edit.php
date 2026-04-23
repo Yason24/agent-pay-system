@@ -4,19 +4,28 @@
 <?php /** @var array<string, mixed> $old */ ?>
 <?php $isAdminMode = $isAdminMode ?? false; ?>
 <?php $agentUserId = $agentUserId ?? (int) $agent->id; ?>
+<?php $agentDisplayName = trim((string) ($agentFullName ?? '')); ?>
+<?php if ($agentDisplayName === '') {
+    $agentDisplayName = \App\Models\User::composeFullName([
+        'last_name' => (string) $agent->last_name,
+        'first_name' => (string) $agent->first_name,
+        'middle_name' => (string) $agent->middle_name,
+        'name' => (string) $agent->name,
+    ]);
+} ?>
 @extends('layouts.app')
 
 @section('content')
 <section>
-    <h1>Редактирование начисления</h1>
-    <p class="muted">Агент: <?= htmlspecialchars((string) ($agentFullName ?? $agent->name), ENT_QUOTES, 'UTF-8') ?></p>
+    <h1>Изменить платеж</h1>
+    <p class="muted">Агент: <?= htmlspecialchars($agentDisplayName !== '' ? $agentDisplayName : '—', ENT_QUOTES, 'UTF-8') ?></p>
 
     <div class="page-actions">
         <?php if ($isAdminMode): ?>
             <a class="btn" href="/agents">Назад к агентам</a>
-            <a class="btn" href="/payments?agent_user_id=<?= (int) $agentUserId ?>">Назад к начислениям</a>
+            <a class="btn" href="/payments?agent_user_id=<?= (int) $agentUserId ?>">Оплачено</a>
         <?php else: ?>
-            <a class="btn" href="/my/payments">Назад к начислениям</a>
+            <a class="btn" href="/my/payments">Оплачено</a>
         <?php endif; ?>
     </div>
 
@@ -32,7 +41,7 @@
         <?php endif; ?>
 
         <label class="form-label" for="payment_amount">Сумма</label>
-        <input class="form-input" id="payment_amount" type="text" name="amount" value="<?= htmlspecialchars((string) ($old['amount'] ?? $payment->amount), ENT_QUOTES, 'UTF-8') ?>" required>
+        <input class="form-input" id="payment_amount" type="text" name="amount" value="<?= htmlspecialchars((string) ($old['amount'] ?? $payment->amount), ENT_QUOTES, 'UTF-8') ?>" placeholder="Например: 10000,50 или 10 000" required>
         <?php if (!empty($errors['amount'])): ?>
             <p class="form-error"><?= htmlspecialchars($errors['amount'], ENT_QUOTES, 'UTF-8') ?></p>
         <?php endif; ?>

@@ -5,6 +5,12 @@
 
 @section('content')
 <section>
+    <?php $agentDisplayName = \App\Models\User::composeFullName([
+        'last_name' => (string) $agent->last_name,
+        'first_name' => (string) $agent->first_name,
+        'middle_name' => (string) $agent->middle_name,
+        'name' => (string) $agent->name,
+    ]); ?>
     <h1>Кабинет агента</h1>
 
     <?php if (!empty($_SESSION['agents_success'])): ?>
@@ -14,14 +20,14 @@
 
     <div class="page-actions">
         <a class="btn" href="/dashboard">Назад в кабинет</a>
-        <a class="btn btn-primary" href="/my/payments">Оплачено</a>
-        <a class="btn" href="/my/balance">Баланс</a>
-        <a class="btn" href="/my/requests">Мои заявки</a>
+        <a class="btn" href="/history?agent_user_id=<?= (int) $agent->id ?>">Баланс</a>
+        <a class="btn" href="/requests?agent_user_id=<?= (int) $agent->id ?>">Заявки</a>
+        <a class="btn btn-primary" href="/payments?agent_user_id=<?= (int) $agent->id ?>">Оплачено</a>
     </div>
 
     <div class="card">
         <p><strong>ID:</strong> <?= (int) $agent->id ?></p>
-        <p><strong>Имя:</strong> <?= htmlspecialchars((string) $agent->name, ENT_QUOTES, 'UTF-8') ?></p>
+        <p><strong>ФИО:</strong> <?= htmlspecialchars($agentDisplayName !== '' ? $agentDisplayName : '—', ENT_QUOTES, 'UTF-8') ?></p>
     </div>
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-top:14px;">
@@ -41,23 +47,19 @@
             <table class="table" style="margin-top:0;">
                 <thead>
                 <tr>
-                    <th>ID</th>
                     <th>Сумма</th>
                     <th>Дата</th>
                     <th>Статус</th>
                     <th>Примечание</th>
-                    <th>Действия</th>
                 </tr>
                 </thead>
                 <tbody>
                 <?php foreach ($latestPayments as $payment): ?>
                     <tr>
-                        <td><?= (int) $payment->id ?></td>
                         <td><?= htmlspecialchars(formatMoney($payment->amount), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars(formatDate((string) $payment->payment_date), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars(payment_status_label((string) $payment->status), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) $payment->note, ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><span class="muted">Только просмотр</span></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

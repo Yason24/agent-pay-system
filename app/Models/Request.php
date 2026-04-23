@@ -14,11 +14,13 @@ class Request extends Model
     private static ?string $lastTakeError = null;
 
     public static array $statuses = [
-        'new'        => 'Новая',
-        'in_progress' => 'В работе',
-        'in_work'    => 'В работе',
-        'done'       => 'Выполнена',
-        'rejected'   => 'Отклонена',
+        'new' => 'new',
+        'in_progress' => 'in_progress',
+        'paid' => 'paid',
+        'rejected' => 'rejected',
+        'cancelled' => 'cancelled',
+        'in_work' => 'in_progress',
+        'done' => 'paid',
     ];
 
     public static function statusLabel(string $status): string
@@ -39,10 +41,28 @@ class Request extends Model
             $hasTakenByName = in_array('taken_by_name', $columns, true);
             $hasCreatedAt = in_array('created_at', $columns, true);
 
+            $usersColumns = [];
             if ($hasTakenByUserId) {
+                $usersColumnsStmt = $db->query(
+                    "SELECT column_name
+                     FROM information_schema.columns
+                     WHERE table_schema = 'public' AND table_name = 'users'"
+                );
+                $usersColumnsRows = $usersColumnsStmt->fetchAll(\PDO::FETCH_COLUMN);
+                $usersColumns = array_map('strval', is_array($usersColumnsRows) ? $usersColumnsRows : []);
+            }
+
+            if ($hasTakenByUserId) {
+                $userFullNameExpr = "NULLIF(trim(concat_ws(' ', COALESCE(u.last_name, ''), COALESCE(u.first_name, ''), COALESCE(u.middle_name, ''))), '')";
+                if (!in_array('last_name', $usersColumns, true)
+                    || !in_array('first_name', $usersColumns, true)
+                    || !in_array('middle_name', $usersColumns, true)) {
+                    $userFullNameExpr = "NULL";
+                }
+
                 $takenByExpr = $hasTakenByName
-                    ? "COALESCE(NULLIF(r.taken_by_name, ''), u.name, '') AS taken_by_name"
-                    : "COALESCE(u.name, '') AS taken_by_name";
+                    ? "COALESCE({$userFullNameExpr}, NULLIF(r.taken_by_name, ''), NULLIF(u.name, ''), '') AS taken_by_name"
+                    : "COALESCE({$userFullNameExpr}, NULLIF(u.name, ''), '') AS taken_by_name";
                 $join = ' LEFT JOIN users u ON u.id = r.taken_by_user_id ';
             } else {
                 $takenByExpr = $hasTakenByName
@@ -232,6 +252,128 @@ class Request extends Model
     public static function lastTakeError(): ?string
     {
         return static::$lastTakeError;
+    }
+
+    public static function findForAgentUser(int $requestId, int $agentUserId): ?self
+    {
+        if ($requestId <= 0 || $agentUserId <= 0) {
+            return null;
+        }
+
+        return static::where('id', '=', $requestId)
+            ->where('agent_user_id', '=', $agentUserId)
+            ->first();
+    }
+
+    public static function updateStatusForAgentUser(int $requestId, int $agentUserId, string $status, array $extra = []): bool
+    {
+        $target = static::findForAgentUser($requestId, $agentUserId);
+
+        if ($target === null) {
+            return false;
+        }
+
+        $columns = static::columns();
+
+        $target->status = $status;
+
+        if (in_array('updated_at', $columns, true)) {
+            $target->updated_at = date('Y-m-d H:i:s');
+        }
+
+        if (in_array('taken_by_user_id', $columns, true) && array_key_exists('taken_by_user_id', $extra)) {
+            $target->taken_by_user_id = $extra['taken_by_user_id'];
+        }
+
+        if (in_array('taken_by_name', $columns, true) && array_key_exists('taken_by_name', $extra)) {
+            $target->taken_by_name = $extra['taken_by_name'];
+        }
+
+        if (in_array('processed_by_user_id', $columns, true) && array_key_exists('processed_by_user_id', $extra)) {
+            $target->processed_by_user_id = $extra['processed_by_user_id'];
+        }
+
+        if (in_array('processed_by_name', $columns, true) && array_key_exists('processed_by_name', $extra)) {
+            $target->processed_by_name = $extra['processed_by_name'];
+        }
+
+        $target->save();
+
+        return true;
+    }
+
+    public static function reservedAmountForAgentUser(int $agentUserId): float
+    {
+        if ($agentUserId <= 0) {
+            return 0.0;
+        }
+
+        $reserved = 0.0;
+
+        foreach (static::forAgentUser($agentUserId) as $request) {
+            $status = strtolower(trim((string) $request->status));
+
+            if ($status === 'in_work') {
+                $status = 'in_progress';
+            }
+
+            if ($status !== 'in_progress') {
+                continue;
+            }
+
+            $amount = $request->requested_amount;
+
+            if ($amount === null || $amount === '') {
+                $amount = $request->amount;
+            }
+
+            $reserved += (float) $amount;
+        }
+
+        return $reserved;
+    }
+
+    public static function paidHistoryRowsForAgentUser(int $agentUserId): array
+    {
+        if ($agentUserId <= 0) {
+            return [];
+        }
+
+        $result = [];
+
+        foreach (static::forAgentUser($agentUserId) as $request) {
+            $status = strtolower(trim((string) $request->status));
+
+            if ($status === 'done') {
+                $status = 'paid';
+            }
+
+            if ($status !== 'paid') {
+                continue;
+            }
+
+            $amount = $request->requested_amount;
+
+            if ($amount === null || $amount === '') {
+                $amount = $request->amount;
+            }
+
+            $actorName = trim((string) $request->processed_by_name);
+
+            if ($actorName === '') {
+                $actorName = trim((string) $request->taken_by_name);
+            }
+
+            $result[] = [
+                'date' => (string) ($request->updated_at ?: $request->created_at),
+                'amount' => (float) $amount,
+                'actor_name' => $actorName !== '' ? $actorName : '—',
+                'comment' => trim((string) $request->comment),
+                'source_id' => (int) $request->id,
+            ];
+        }
+
+        return $result;
     }
 
     private static function columns(): array

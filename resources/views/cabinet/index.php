@@ -4,8 +4,14 @@
 
 @section('content')
 <section>
+    <?php $agentDisplayName = (string) ($agentFullName ?? \App\Models\User::composeFullName([
+        'last_name' => (string) $agent->last_name,
+        'first_name' => (string) $agent->first_name,
+        'middle_name' => (string) $agent->middle_name,
+        'name' => (string) $agent->name,
+    ])); ?>
     <h1>Мой кабинет</h1>
-    <p class="muted">Добро пожаловать, <?= htmlspecialchars((string) $agent->name, ENT_QUOTES, 'UTF-8') ?></p>
+    <p class="muted">Добро пожаловать, <?= htmlspecialchars($agentDisplayName !== '' ? $agentDisplayName : '—', ENT_QUOTES, 'UTF-8') ?></p>
 
     <?php if (!empty($_SESSION['requests_success'])): ?>
         <p class="flash flash-success"><?= htmlspecialchars((string) $_SESSION['requests_success'], ENT_QUOTES, 'UTF-8') ?></p>
@@ -20,8 +26,8 @@
     <div class="page-actions">
         <a class="btn btn-primary" href="/requests/create">Создать заявку</a>
         <a class="btn" href="/my/requests">Мои заявки</a>
-        <a class="btn" href="/my/payments">Мои начисления</a>
-        <a class="btn" href="/my/balance">История платежей</a>
+        <a class="btn" href="/my/payments">Оплачено</a>
+        <a class="btn" href="/my/balance">Баланс</a>
     </div>
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-top:14px;">

@@ -21,15 +21,45 @@ class AdminAgentController extends Controller
 
 		unset($_SESSION['agents_success'], $_SESSION['agents_error']);
 
+		$searchQuery = (string) ($_GET['q'] ?? '');
+		$q = $this->normalizeSearch($searchQuery);
+		$agents = User::agents()->orderBy('id', 'DESC')->get();
+
+		if ($q !== '') {
+			$agents = $agents->filter(function (User $agent) use ($q): bool {
+				$fullName = User::composeFullName([
+					'last_name' => (string) $agent->last_name,
+					'first_name' => (string) $agent->first_name,
+					'middle_name' => (string) $agent->middle_name,
+					'name' => (string) $agent->name,
+				]);
+
+				return str_contains($this->normalizeSearch($fullName), $q);
+			});
+		}
+
 		return $this->view('admin.agents.index', [
 			'title' => 'Агенты',
-			'agents' => User::agents()->orderBy('id', 'DESC')->get(),
+			'agents' => $agents,
 			'success' => $success,
 			'error' => $error,
+			'search_query' => $searchQuery,
 			'canManageUsers' => $auth->hasRole('admin'),
 			'canTopUp' => $auth->hasAnyRole(['admin', 'accountant']),
 			'canViewProfile' => $auth->hasRole('admin'),
 		]);
+	}
+
+	private function normalizeSearch(?string $value): string
+	{
+		$value = trim((string) $value);
+		$value = preg_replace('/\s+/u', ' ', $value) ?? '';
+
+		if (function_exists('mb_strtolower')) {
+			return mb_strtolower($value);
+		}
+
+		return strtolower($value);
 	}
 
 

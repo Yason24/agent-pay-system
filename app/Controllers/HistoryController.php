@@ -3,7 +3,6 @@
 namespace App\Controllers;
 
 use App\Models\Payment;
-use App\Models\PaymentRequest;
 use App\Models\User;
 use App\Services\AuthService;
 use Framework\Core\Controller;
@@ -24,15 +23,18 @@ class HistoryController extends Controller
             return new Response('Forbidden', 403);
         }
 
-        $rows = $this->buildHistoryRows((int) $user->id);
+        $agentUserId = (int) $user->id;
 
         return $this->view('history.index', [
-            'title' => 'История',
-            'agent' => $user,
-            'summary' => $this->buildSummary($rows),
-            'history' => $rows,
+            'title' => 'Баланс',
+            'summary' => Payment::balanceSummaryForAgentUser($agentUserId),
+            'history' => Payment::unifiedHistoryForAgentUser($agentUserId),
+            'agent_full_name' => $this->agentFullName($user),
             'isAgentMode' => true,
-            'agentUserId' => (int) $user->id,
+            'is_agent' => true,
+            'canTopUp' => false,
+            'agentUserId' => $agentUserId,
+            'agent_user_id' => $agentUserId,
         ]);
     }
 
@@ -62,68 +64,23 @@ class HistoryController extends Controller
             return redirect('/agents');
         }
 
-        $rows = $this->buildHistoryRows($agentUserId);
-
         return $this->view('history.index', [
-            'title' => 'История агента',
-            'agent' => $agent,
-            'summary' => $this->buildSummary($rows),
-            'history' => $rows,
+            'title' => 'Баланс',
+            'summary' => Payment::balanceSummaryForAgentUser($agentUserId),
+            'history' => Payment::unifiedHistoryForAgentUser($agentUserId),
+            'agent_full_name' => $this->agentFullName($agent),
             'isAgentMode' => false,
+            'is_agent' => false,
+            'canTopUp' => $auth->hasAnyRole(['admin', 'accountant']),
             'agentUserId' => $agentUserId,
+            'agent_user_id' => $agentUserId,
         ]);
     }
 
-    private function buildHistoryRows(int $agentUserId): array
+    private function agentFullName(User $user): string
     {
-        $paymentRows = Payment::historyRowsForAgentUser($agentUserId);
-        $linkedRequestIds = [];
+        $fullName = $user->fullName();
 
-        foreach ($paymentRows as $row) {
-            $relatedRequestId = (int) ($row['related_request_id'] ?? 0);
-
-            if ($relatedRequestId > 0) {
-                $linkedRequestIds[] = $relatedRequestId;
-            }
-        }
-
-        $requestRows = PaymentRequest::paidHistoryRowsForAgentUser($agentUserId, $linkedRequestIds);
-        $rows = array_merge($paymentRows, $requestRows);
-
-        usort($rows, static function (array $a, array $b): int {
-            $byDate = strcmp((string) ($b['date'] ?? ''), (string) ($a['date'] ?? ''));
-
-            if ($byDate !== 0) {
-                return $byDate;
-            }
-
-            return ((int) ($b['source_id'] ?? 0)) <=> ((int) ($a['source_id'] ?? 0));
-        });
-
-        return $rows;
-    }
-
-    private function buildSummary(array $rows): array
-    {
-        $balanceTotal = 0.0;
-
-        foreach ($rows as $row) {
-            $type = (string) ($row['type'] ?? '');
-            $amount = (float) ($row['amount'] ?? 0);
-
-            if (in_array($type, ['Начисление', 'Корректировка'], true)) {
-                $balanceTotal += $amount;
-                continue;
-            }
-
-            if (in_array($type, ['Выплата', 'Заявка исполнена', 'Выплата по заявке'], true)) {
-                $balanceTotal -= $amount;
-            }
-        }
-
-        return [
-            'operations_count' => count($rows),
-            'balance_total' => $balanceTotal,
-        ];
+        return $fullName !== '' ? $fullName : '—';
     }
 }
