@@ -36,14 +36,17 @@ class PaymentController extends Controller
         unset($_SESSION['payments_success'], $_SESSION['payments_error']);
 
         return $this->view('payments.index', [
-            'title' => 'Начисления',
+            'title' => 'Оплачено',
             'agent' => $context['agent'],
+            'agentFullName' => $this->agentFullName($context['agent']),
             'payments' => Payment::forAgentUser($context['agent_user_id']),
             'success' => $success,
             'error' => $error,
             'isAdminMode' => $context['is_admin_mode'],
             'agentUserId' => $context['agent_user_id'],
-            'isReadOnly' => false,
+            'canDelete' => $auth->hasAnyRole(['admin', 'accountant']),
+            'canTopUp' => $auth->hasAnyRole(['admin', 'accountant']),
+            'isReadOnly' => !$auth->hasAnyRole(['admin', 'accountant']),
         ]);
     }
 
@@ -71,13 +74,16 @@ class PaymentController extends Controller
         unset($_SESSION['payments_success'], $_SESSION['payments_error']);
 
         return $this->view('payments.index', [
-            'title' => 'Мои начисления',
+            'title' => 'Оплачено',
             'agent' => $user,
+            'agentFullName' => $this->agentFullName($user),
             'payments' => Payment::forAgentUser((int) $user->id),
             'success' => $success,
             'error' => $error,
             'isAdminMode' => false,
             'agentUserId' => (int) $user->id,
+            'canDelete' => false,
+            'canTopUp' => false,
             'isReadOnly' => true,
         ]);
     }
@@ -108,8 +114,9 @@ class PaymentController extends Controller
         unset($_SESSION['payments_create_errors'], $_SESSION['payments_create_old']);
 
         return $this->view('payments.create', [
-            'title' => 'Создать начисление',
+            'title' => 'Пополнить',
             'agent' => $context['agent'],
+            'agentFullName' => $this->agentFullName($context['agent']),
             'errors' => $errors,
             'old' => $old,
             'isAdminMode' => $context['is_admin_mode'],
@@ -153,7 +160,7 @@ class PaymentController extends Controller
             $createdPayment = Payment::createForAgentUser($agentUserId, [
                 'amount' => $this->normalizeAmount($payload['amount']),
                 'payment_date' => date('Y-m-d'),
-                'status' => $payload['status'],
+                'status' => 'pending',
                 'note' => $payload['note'] !== '' ? $payload['note'] : null,
             ]);
 
@@ -197,6 +204,12 @@ class PaymentController extends Controller
 
         if ($payment === null) {
             return $this->redirectPaymentNotFound($auth, $context);
+        }
+
+        if ((string) $payment->status === 'paid') {
+            $_SESSION['payments_error'] = 'Оплаченные записи нельзя редактировать.';
+
+            return redirect($this->paymentsIndexUrl($context));
         }
 
         return $this->view('payments.show', [
@@ -290,7 +303,6 @@ class PaymentController extends Controller
 
         try {
             $payment->amount = $this->normalizeAmount($payload['amount']);
-            $payment->status = $payload['status'];
             $payment->note = $payload['note'] !== '' ? $payload['note'] : null;
             $payment->save();
         } catch (\Throwable) {
@@ -334,6 +346,12 @@ class PaymentController extends Controller
             return $this->redirectPaymentNotFound($auth, $context);
         }
 
+        if ((string) $payment->status === 'paid' || (string) $payment->status === 'оплачено') {
+            $_SESSION['payments_error'] = 'Оплаченные записи нельзя удалять.';
+
+            return redirect($this->paymentsIndexUrl($context));
+        }
+
         $payment->delete();
 
         $_SESSION['payments_success'] = 'Платеж успешно удален.';
@@ -357,9 +375,7 @@ class PaymentController extends Controller
             ];
         }
 
-        $isStaff = $auth->hasAnyRole(['admin', 'accountant', 'dispatcher']);
-
-        if (!$isStaff) {
+        if (!$auth->hasAnyRole(['admin', 'accountant', 'dispatcher'])) {
             return $this->forbidden('У вас нет доступа к платежам.');
         }
 
@@ -413,7 +429,6 @@ class PaymentController extends Controller
         return [
             'agent_user_id' => $agentUserId,
             'amount' => $this->sanitizeAmountInput((string) $request->input('amount', '')),
-            'status' => trim((string) $request->input('status', 'pending')),
             'note' => $this->sanitizeNote((string) $request->input('note', '')),
         ];
     }
@@ -434,13 +449,6 @@ class PaymentController extends Controller
         }
 
 
-        $allowedStatuses = ['pending', 'paid', 'failed'];
-
-        if ($payload['status'] === '') {
-            $errors['status'] = 'Статус обязателен.';
-        } elseif (!in_array($payload['status'], $allowedStatuses, true)) {
-            $errors['status'] = 'Выберите корректный статус.';
-        }
 
         if (strlen($payload['note']) > 1000) {
             $errors['note'] = 'Примечание не должно превышать 1000 символов.';
@@ -468,6 +476,23 @@ class PaymentController extends Controller
         $sanitized = preg_replace('/\s{2,}/u', ' ', $sanitized) ?? $sanitized;
 
         return trim($sanitized);
+    }
+
+    private function agentFullName(User $agent): string
+    {
+        $fullName = trim(implode(' ', array_filter([
+            trim((string) $agent->last_name),
+            trim((string) $agent->first_name),
+            trim((string) $agent->middle_name),
+        ], static fn (string $part): bool => $part !== '')));
+
+        if ($fullName !== '') {
+            return $fullName;
+        }
+
+        $fallback = trim((string) $agent->name);
+
+        return $fallback !== '' ? $fallback : '—';
     }
 
     private function paymentsStorageReady(): bool

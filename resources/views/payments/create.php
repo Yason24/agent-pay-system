@@ -7,19 +7,18 @@
 
 @section('content')
 <section>
-    <h1>Создать начисление</h1>
+    <h1>Пополнить</h1>
     <p class="muted">
         Агент:
-        <strong><?= htmlspecialchars((string) $agent->name, ENT_QUOTES, 'UTF-8') ?></strong>
-        (ID: <?= (int) $agent->id ?>)
+        <strong><?= htmlspecialchars((string) ($agentFullName ?? $agent->name), ENT_QUOTES, 'UTF-8') ?></strong>
     </p>
 
     <div class="page-actions">
         <?php if ($isAdminMode): ?>
             <a class="btn" href="/agents">Назад к агентам</a>
-            <a class="btn" href="/payments?agent_user_id=<?= (int) $agentUserId ?>">Назад к начислениям</a>
+            <a class="btn" href="/payments?agent_user_id=<?= (int) $agentUserId ?>">Назад к оплатам</a>
         <?php else: ?>
-            <a class="btn" href="/my/payments">Назад к начислениям</a>
+            <a class="btn" href="/my/payments">Назад к оплатам</a>
         <?php endif; ?>
     </div>
 
@@ -45,20 +44,6 @@
             >
             <?php if (!empty($errors['amount'])): ?>
                 <p class="field-error"><?= htmlspecialchars((string) $errors['amount'], ENT_QUOTES, 'UTF-8') ?></p>
-            <?php endif; ?>
-        </div>
-
-
-        <div class="form-group">
-            <label for="status">Статус</label>
-            <select id="status" name="status" required>
-                <?php $currentStatus = (string) ($old['status'] ?? 'pending'); ?>
-                <option value="pending" <?= $currentStatus === 'pending' ? 'selected' : '' ?>>Ожидает</option>
-                <option value="paid" <?= $currentStatus === 'paid' ? 'selected' : '' ?>>Оплачен</option>
-                <option value="failed" <?= $currentStatus === 'failed' ? 'selected' : '' ?>>Ошибка</option>
-            </select>
-            <?php if (!empty($errors['status'])): ?>
-                <p class="field-error"><?= htmlspecialchars((string) $errors['status'], ENT_QUOTES, 'UTF-8') ?></p>
             <?php endif; ?>
         </div>
 

@@ -9,19 +9,16 @@
 @section('content')
 <section>
     <h1>Редактирование начисления</h1>
-    <p class="muted">Агент: <?= htmlspecialchars((string) $agent->name, ENT_QUOTES, 'UTF-8') ?></p>
+    <p class="muted">Агент: <?= htmlspecialchars((string) ($agentFullName ?? $agent->name), ENT_QUOTES, 'UTF-8') ?></p>
 
     <div class="page-actions">
         <?php if ($isAdminMode): ?>
             <a class="btn" href="/agents">Назад к агентам</a>
             <a class="btn" href="/payments?agent_user_id=<?= (int) $agentUserId ?>">Назад к начислениям</a>
-            <a class="btn" href="/payments/show?id=<?= (int) $payment->id ?>&agent_user_id=<?= (int) $agentUserId ?>">Карточка начисления</a>
         <?php else: ?>
             <a class="btn" href="/my/payments">Назад к начислениям</a>
         <?php endif; ?>
     </div>
-
-    <?php $currentStatus = (string) ($old['status'] ?? $payment->status); ?>
 
     <form class="form-stack" action="/payments/update" method="post">
         <?= csrf_field() ?>
@@ -38,17 +35,6 @@
         <input class="form-input" id="payment_amount" type="text" name="amount" value="<?= htmlspecialchars((string) ($old['amount'] ?? $payment->amount), ENT_QUOTES, 'UTF-8') ?>" required>
         <?php if (!empty($errors['amount'])): ?>
             <p class="form-error"><?= htmlspecialchars($errors['amount'], ENT_QUOTES, 'UTF-8') ?></p>
-        <?php endif; ?>
-
-
-        <label class="form-label" for="payment_status">Статус</label>
-        <select class="form-input" id="payment_status" name="status" required>
-            <option value="pending" <?= $currentStatus === 'pending' ? 'selected' : '' ?>>В ожидании</option>
-            <option value="paid" <?= $currentStatus === 'paid' ? 'selected' : '' ?>>Оплачено</option>
-            <option value="failed" <?= $currentStatus === 'failed' ? 'selected' : '' ?>>Неуспешно</option>
-        </select>
-        <?php if (!empty($errors['status'])): ?>
-            <p class="form-error"><?= htmlspecialchars($errors['status'], ENT_QUOTES, 'UTF-8') ?></p>
         <?php endif; ?>
 
         <label class="form-label" for="payment_note">Примечание</label>

@@ -5,29 +5,30 @@
 <?php $isAdminMode = $isAdminMode ?? false; ?>
 <?php $agentUserId = $agentUserId ?? (int) $agent->id; ?>
 <?php $isReadOnly = $isReadOnly ?? false; ?>
+<?php $canDelete = $canDelete ?? false; ?>
+<?php $canTopUp = $canTopUp ?? false; ?>
 @extends('layouts.app')
 
 @section('content')
 <section>
-    <h1><?= htmlspecialchars((string) ($title ?? 'Начисления'), ENT_QUOTES, 'UTF-8') ?></h1>
+    <h1><?= htmlspecialchars((string) ($title ?? 'Оплачено'), ENT_QUOTES, 'UTF-8') ?></h1>
     <p class="muted">
         Агент:
-        <strong><?= htmlspecialchars((string) $agent->name, ENT_QUOTES, 'UTF-8') ?></strong>
-        (ID: <?= (int) $agent->id ?>)
+        <strong><?= htmlspecialchars((string) ($agentFullName ?? $agent->name), ENT_QUOTES, 'UTF-8') ?></strong>
     </p>
 
     <div class="page-actions">
         <?php if ($isAdminMode): ?>
             <a class="btn" href="/agents">Назад к агентам</a>
             <a class="btn" href="/requests?agent_user_id=<?= (int) $agentUserId ?>">Заявки</a>
-            <a class="btn" href="/history?agent_user_id=<?= (int) $agentUserId ?>">История</a>
-            <?php if (!$isReadOnly): ?>
-                <a class="btn btn-primary" href="/payments/create?agent_user_id=<?= (int) $agentUserId ?>">Создать начисление</a>
+            <a class="btn" href="/history?agent_user_id=<?= (int) $agentUserId ?>">Баланс</a>
+            <?php if ($canTopUp && !$isReadOnly): ?>
+                <a class="btn btn-primary" href="/payments/create?agent_user_id=<?= (int) $agentUserId ?>">Пополнить</a>
             <?php endif; ?>
         <?php else: ?>
             <a class="btn" href="/cabinet">Назад в кабинет</a>
             <a class="btn" href="/my/requests">Мои заявки</a>
-            <a class="btn" href="/my/balance">История платежей</a>
+            <a class="btn" href="/my/balance">Баланс</a>
         <?php endif; ?>
     </div>
 
@@ -40,32 +41,42 @@
     <?php endif; ?>
 
     <?php if ($payments->count() === 0): ?>
-        <p class="muted">Начислений пока нет.</p>
+        <p class="muted">Записей пока нет.</p>
     <?php else: ?>
         <table class="table">
             <thead>
             <tr>
-                <th>ID</th>
                 <th>Дата</th>
                 <th>Сумма</th>
                 <th>Статус</th>
                 <th>Примечание</th>
-                <th>Действия</th>
+                <?php if ($isAdminMode && $canDelete): ?>
+                    <th>Удалить</th>
+                <?php endif; ?>
             </tr>
             </thead>
             <tbody>
             <?php foreach ($payments as $payment): ?>
+                <?php
+                $statusRaw = strtolower(trim((string) $payment->status));
+                $statusLabel = (string) $payment->status;
+                if ($statusRaw === 'pending') {
+                    $statusLabel = 'ожидает';
+                } elseif ($statusRaw === 'paid') {
+                    $statusLabel = 'оплачено';
+                }
+                $canDeleteThis = !in_array($statusRaw, ['paid', 'оплачено'], true);
+                $dateValue = (string) ($payment->created_at ?: $payment->payment_date);
+                ?>
                 <tr>
-                    <td><?= (int) $payment->id ?></td>
-                    <td><?= htmlspecialchars(formatDate((string) $payment->payment_date), ENT_QUOTES, 'UTF-8') ?></td>
-                    <td><?= htmlspecialchars((string) $payment->amount, ENT_QUOTES, 'UTF-8') ?></td>
-                    <td><?= htmlspecialchars((string) $payment->status, ENT_QUOTES, 'UTF-8') ?></td>
+                    <td><?= htmlspecialchars(formatDate($dateValue), ENT_QUOTES, 'UTF-8') ?></td>
+                    <td><?= htmlspecialchars(formatMoney($payment->amount), ENT_QUOTES, 'UTF-8') ?></td>
+                    <td><?= htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars((string) ($payment->note ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
-                    <td>
-                        <div class="table-actions">
-                            <?php if ($isAdminMode): ?>
-                                <a class="btn" href="/payments/show?id=<?= (int) $payment->id ?>&agent_user_id=<?= (int) $agentUserId ?>">Просмотр</a>
-                                <a class="btn" href="/payments/edit?id=<?= (int) $payment->id ?>&agent_user_id=<?= (int) $agentUserId ?>">Редактировать</a>
+
+                    <?php if ($isAdminMode && $canDelete): ?>
+                        <td>
+                            <?php if ($canDeleteThis): ?>
                                 <form method="POST" action="/payments/delete" style="display:inline-block;">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="id" value="<?= (int) $payment->id ?>">
@@ -73,10 +84,10 @@
                                     <button type="submit" class="btn btn-danger" onclick="return confirm('Удалить начисление?')">Удалить</button>
                                 </form>
                             <?php else: ?>
-                                <span class="muted">Доступно только для просмотра</span>
+                                <span class="muted">—</span>
                             <?php endif; ?>
-                        </div>
-                    </td>
+                        </td>
+                    <?php endif; ?>
                 </tr>
             <?php endforeach; ?>
             </tbody>

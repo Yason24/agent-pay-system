@@ -26,10 +26,10 @@
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-top:14px;">
         <div class="card"><p class="muted">Всего платежей</p><p><strong><?= (int) $paymentSummary['payments_count'] ?></strong></p></div>
-        <div class="card"><p class="muted">Общая сумма</p><p><strong><?= htmlspecialchars(number_format((float) $paymentSummary['total_amount'], 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
-        <div class="card"><p class="muted">Оплачено</p><p><strong><?= htmlspecialchars(number_format((float) $paymentSummary['paid_amount'], 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
-        <div class="card"><p class="muted">В ожидании</p><p><strong><?= htmlspecialchars(number_format((float) $paymentSummary['pending_amount'], 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
-        <div class="card"><p class="muted">Неуспешно</p><p><strong><?= htmlspecialchars(number_format((float) $paymentSummary['failed_amount'], 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
+        <div class="card"><p class="muted">Общая сумма</p><p><strong><?= htmlspecialchars(formatMoney($paymentSummary['total_amount']), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
+        <div class="card"><p class="muted">Оплачено</p><p><strong><?= htmlspecialchars(formatMoney($paymentSummary['paid_amount']), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
+        <div class="card"><p class="muted">В ожидании</p><p><strong><?= htmlspecialchars(formatMoney($paymentSummary['pending_amount']), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
+        <div class="card"><p class="muted">Неуспешно</p><p><strong><?= htmlspecialchars(formatMoney($paymentSummary['failed_amount']), ENT_QUOTES, 'UTF-8') ?></strong></p></div>
     </div>
 
     <div class="card" style="max-width:none; margin-top:14px;">
@@ -53,7 +53,7 @@
                 <?php foreach ($latestPayments as $payment): ?>
                     <tr>
                         <td><?= (int) $payment->id ?></td>
-                        <td><?= htmlspecialchars(number_format((float) $payment->amount, 2, '.', ' '), ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= htmlspecialchars(formatMoney($payment->amount), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars(formatDate((string) $payment->payment_date), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars(payment_status_label((string) $payment->status), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) $payment->note, ENT_QUOTES, 'UTF-8') ?></td>

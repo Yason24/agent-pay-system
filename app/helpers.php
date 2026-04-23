@@ -74,3 +74,10 @@ function formatDateTime(?string $value): string
     }
 }
 
+if (!function_exists('formatMoney')) {
+    function formatMoney($value): string
+    {
+        return number_format((float) $value, 2, ',', ' ');
+    }
+}
+
