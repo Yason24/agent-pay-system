@@ -61,19 +61,17 @@ class AdminUserController extends Controller
         }
 
         $payload = [
-            'last_name' => trim((string) $request->input('last_name', '')),
-            'first_name' => trim((string) $request->input('first_name', '')),
-            'middle_name' => trim((string) $request->input('middle_name', '')),
-            'login' => trim((string) $request->input('login', '')),
-            'phone' => trim((string) $request->input('phone', '')),
-            'city' => trim((string) $request->input('city', '')),
+            'name' => trim((string) $request->input('name', '')),
             'email' => trim((string) $request->input('email', '')),
             'password' => (string) $request->input('password', ''),
             'role' => trim((string) $request->input('role', 'agent')),
-            'status' => trim((string) $request->input('status', 'active')),
         ];
 
-        $errors = $this->validateUserPayload($payload, null, true);
+        $errors = $this->validateCreatePayload($payload);
+
+        if (User::findByEmail($payload['email'])) {
+            $errors['email'] = 'Пользователь с таким email уже существует.';
+        }
 
         if ($errors !== []) {
             unset($payload['password']);
@@ -84,17 +82,11 @@ class AdminUserController extends Controller
         }
 
         $createdUser = User::create([
-            'name' => $this->composeDisplayName($payload),
-            'last_name' => $payload['last_name'],
-            'first_name' => $payload['first_name'],
-            'middle_name' => $payload['middle_name'] !== '' ? $payload['middle_name'] : null,
-            'login' => $payload['login'],
-            'phone' => $payload['phone'] !== '' ? $payload['phone'] : null,
-            'city' => $payload['city'] !== '' ? $payload['city'] : null,
+            'name' => $payload['name'],
             'email' => $payload['email'],
             'password' => $hash->make($payload['password']),
             'role' => $payload['role'],
-            'status' => $payload['status'],
+            'status' => 'active',
         ]);
 
         $audit->log(AuditAction::USER_CREATE, $request, $auth, [
@@ -156,18 +148,40 @@ class AdminUserController extends Controller
         }
 
         $payload = [
-            'last_name' => trim((string) $request->input('last_name', '')),
-            'first_name' => trim((string) $request->input('first_name', '')),
-            'middle_name' => trim((string) $request->input('middle_name', '')),
-            'login' => trim((string) $request->input('login', '')),
-            'phone' => trim((string) $request->input('phone', '')),
-            'city' => trim((string) $request->input('city', '')),
+            'name' => trim((string) $request->input('name', '')),
             'email' => trim((string) $request->input('email', '')),
             'role' => trim((string) $request->input('role', '')),
             'status' => trim((string) $request->input('status', 'active')),
         ];
 
-        $errors = $this->validateUserPayload($payload, (int) $user->id, false);
+        $errors = [];
+
+        if ($payload['name'] === '') {
+            $errors['name'] = 'Имя обязательно.';
+        } elseif (strlen($payload['name']) < 2) {
+            $errors['name'] = 'Имя должно быть не короче 2 символов.';
+        }
+
+        if ($payload['email'] === '' || !filter_var($payload['email'], FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Укажите корректный email.';
+        } else {
+            $existing = User::findByEmail($payload['email']);
+
+            if ($existing !== null && (int) $existing->id !== (int) $user->id) {
+                $errors['email'] = 'Пользователь с таким email уже существует.';
+            }
+        }
+
+        $allowedRoles = ['agent', 'dispatcher', 'accountant', 'admin'];
+        $allowedStatuses = ['active', 'blocked'];
+
+        if (!in_array($payload['role'], $allowedRoles, true)) {
+            $errors['role'] = 'Выберите корректную роль.';
+        }
+
+        if (!in_array($payload['status'], $allowedStatuses, true)) {
+            $errors['status'] = 'Выберите корректный статус.';
+        }
 
         if ($this->isLastAdminRoleDowngrade($user, $payload['role'])) {
             $errors['role'] = 'Нельзя изменить роль последнего администратора.';
@@ -183,13 +197,7 @@ class AdminUserController extends Controller
         $before = $this->userSnapshot($user);
         $oldRole = (string) $user->role;
 
-        $user->name = $this->composeDisplayName($payload);
-        $user->last_name = $payload['last_name'];
-        $user->first_name = $payload['first_name'];
-        $user->middle_name = $payload['middle_name'] !== '' ? $payload['middle_name'] : null;
-        $user->login = $payload['login'];
-        $user->phone = $payload['phone'] !== '' ? $payload['phone'] : null;
-        $user->city = $payload['city'] !== '' ? $payload['city'] : null;
+        $user->name = $payload['name'];
         $user->email = $payload['email'];
         $user->role = $payload['role'];
         $user->status = $payload['status'];
@@ -261,7 +269,7 @@ class AdminUserController extends Controller
             ],
         ]);
 
-        $_SESSION['users_success'] = 'Пароль пользователя изменен.';
+        $_SESSION['users_success'] = 'Пароль пользователя обновлен.';
 
         return redirect('/admin/users/edit?id=' . (int) $user->id);
     }
@@ -296,45 +304,21 @@ class AdminUserController extends Controller
         return $adminsCount <= 1;
     }
 
-    private function validateUserPayload(array $payload, ?int $ignoreUserId = null, bool $withPassword = false): array
+    private function validateCreatePayload(array $payload): array
     {
         $errors = [];
 
-        if (!$this->isValidName($payload['last_name'])) {
-            $errors['last_name'] = 'Фамилия обязательна и может содержать только буквы, пробел и дефис.';
-        }
-
-        if (!$this->isValidName($payload['first_name'])) {
-            $errors['first_name'] = 'Имя обязательно и может содержать только буквы, пробел и дефис.';
-        }
-
-        if ($payload['middle_name'] !== '' && !$this->isValidName($payload['middle_name'])) {
-            $errors['middle_name'] = 'Отчество может содержать только буквы, пробел и дефис.';
-        }
-
-        if ($payload['login'] === '') {
-            $errors['login'] = 'Логин обязателен.';
-        } elseif (!preg_match('/^[A-Za-z0-9]+$/', $payload['login'])) {
-            $errors['login'] = 'Логин должен содержать только латинские буквы и цифры.';
-        } else {
-            $existingByLogin = User::findByUserLogin($payload['login']);
-
-            if ($existingByLogin !== null && (int) $existingByLogin->id !== (int) ($ignoreUserId ?? 0)) {
-                $errors['login'] = 'Пользователь с таким логином уже существует.';
-            }
+        if ($payload['name'] === '') {
+            $errors['name'] = 'Имя обязательно.';
+        } elseif (strlen($payload['name']) < 2) {
+            $errors['name'] = 'Имя должно быть не короче 2 символов.';
         }
 
         if ($payload['email'] === '' || !filter_var($payload['email'], FILTER_VALIDATE_EMAIL)) {
             $errors['email'] = 'Укажите корректный email.';
-        } else {
-            $existingByEmail = User::findByEmail($payload['email']);
-
-            if ($existingByEmail !== null && (int) $existingByEmail->id !== (int) ($ignoreUserId ?? 0)) {
-                $errors['email'] = 'Пользователь с таким email уже существует.';
-            }
         }
 
-        if ($withPassword && ($payload['password'] === '' || strlen($payload['password']) < 6)) {
+        if ($payload['password'] === '' || strlen($payload['password']) < 6) {
             $errors['password'] = 'Пароль должен быть не короче 6 символов.';
         }
 
@@ -342,33 +326,7 @@ class AdminUserController extends Controller
             $errors['role'] = 'Выберите корректную роль.';
         }
 
-        if (!in_array($payload['status'], ['active', 'blocked'], true)) {
-            $errors['status'] = 'Выберите корректный статус.';
-        }
-
         return $errors;
-    }
-
-    private function isValidName(string $value): bool
-    {
-        $trimmed = trim($value);
-
-        if ($trimmed === '') {
-            return false;
-        }
-
-        return (bool) preg_match('/^[\p{L}\s-]+$/u', $trimmed);
-    }
-
-    private function composeDisplayName(array $payload): string
-    {
-        $parts = [
-            trim((string) ($payload['last_name'] ?? '')),
-            trim((string) ($payload['first_name'] ?? '')),
-            trim((string) ($payload['middle_name'] ?? '')),
-        ];
-
-        return trim(implode(' ', array_filter($parts, static fn (string $part): bool => $part !== '')));
     }
 
     private function userSnapshot(User $user): array
@@ -382,13 +340,7 @@ class AdminUserController extends Controller
         return [
             'id' => (int) $user->id,
             'name' => (string) $user->name,
-            'last_name' => (string) $user->last_name,
-            'first_name' => (string) $user->first_name,
-            'middle_name' => (string) $user->middle_name,
-            'login' => (string) $user->login,
-            'phone' => (string) $user->phone,
             'email' => (string) $user->email,
-            'city' => (string) $user->city,
             'role' => (string) $user->role,
             'status' => $status,
         ];

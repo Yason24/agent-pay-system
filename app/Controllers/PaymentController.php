@@ -36,14 +36,14 @@ class PaymentController extends Controller
         unset($_SESSION['payments_success'], $_SESSION['payments_error']);
 
         return $this->view('payments.index', [
-            'title' => 'Оплачено',
+            'title' => 'Начисления',
             'agent' => $context['agent'],
             'payments' => Payment::forAgentUser($context['agent_user_id']),
             'success' => $success,
             'error' => $error,
             'isAdminMode' => $context['is_admin_mode'],
             'agentUserId' => $context['agent_user_id'],
-            'isReadOnly' => !$auth->hasAnyRole(['admin', 'accountant']),
+            'isReadOnly' => false,
         ]);
     }
 
@@ -71,7 +71,7 @@ class PaymentController extends Controller
         unset($_SESSION['payments_success'], $_SESSION['payments_error']);
 
         return $this->view('payments.index', [
-            'title' => 'Оплачено',
+            'title' => 'Мои начисления',
             'agent' => $user,
             'payments' => Payment::forAgentUser((int) $user->id),
             'success' => $success,
@@ -357,7 +357,9 @@ class PaymentController extends Controller
             ];
         }
 
-        if (!$auth->hasAnyRole(['admin', 'accountant', 'dispatcher'])) {
+        $isStaff = $auth->hasAnyRole(['admin', 'accountant', 'dispatcher']);
+
+        if (!$isStaff) {
             return $this->forbidden('У вас нет доступа к платежам.');
         }
 

@@ -18,9 +18,10 @@
     <?php endif; ?>
 
     <div class="page-actions">
-        <a class="btn btn-primary" href="/my/balance">Баланс</a>
+        <a class="btn btn-primary" href="/requests/create">Создать заявку</a>
         <a class="btn" href="/my/requests">Мои заявки</a>
-        <a class="btn" href="/my/payments">Оплачено</a>
+        <a class="btn" href="/my/payments">Мои начисления</a>
+        <a class="btn" href="/my/balance">История платежей</a>
     </div>
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-top:14px;">

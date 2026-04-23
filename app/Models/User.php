@@ -8,6 +8,8 @@ class User extends Model
 {
     protected static string $table = 'users';
 
+    private static ?bool $hasLoginColumnCache = null;
+
     public static array $sortable = [
         'id',
         'last_name',
@@ -75,13 +77,41 @@ class User extends Model
 
     public static function findByLogin(string $login): ?self
     {
-        $stmt = \Framework\Core\Database::getConnection()->prepare(
-            'SELECT * FROM users
-             WHERE LOWER(login) = LOWER(:login)
-                OR LOWER(email) = LOWER(:login)
-             LIMIT 1'
-        );
-        $stmt->execute(['login' => $login]);
+        $normalized = trim($login);
+
+        try {
+            if (static::hasLoginColumn()) {
+                $stmt = \Framework\Core\Database::getConnection()->prepare(
+                    'SELECT * FROM users
+                     WHERE LOWER(login) = LOWER(:login)
+                        OR LOWER(email) = LOWER(:login)
+                     LIMIT 1'
+                );
+                $stmt->execute(['login' => $normalized]);
+            } else {
+                $stmt = \Framework\Core\Database::getConnection()->prepare(
+                    'SELECT * FROM users
+                     WHERE LOWER(email) = LOWER(:login)
+                        OR LOWER(name) = LOWER(:login)
+                     LIMIT 1'
+                );
+                $stmt->execute(['login' => $normalized]);
+            }
+        } catch (\PDOException $e) {
+            if ((string) $e->getCode() !== '42703') {
+                throw $e;
+            }
+
+            static::$hasLoginColumnCache = false;
+
+            $stmt = \Framework\Core\Database::getConnection()->prepare(
+                'SELECT * FROM users
+                 WHERE LOWER(email) = LOWER(:login)
+                    OR LOWER(name) = LOWER(:login)
+                 LIMIT 1'
+            );
+            $stmt->execute(['login' => $normalized]);
+        }
 
         $data = $stmt->fetch(\PDO::FETCH_ASSOC);
 
@@ -90,6 +120,10 @@ class User extends Model
 
     public static function findByUserLogin(string $login): ?self
     {
+        if (!static::hasLoginColumn()) {
+            return null;
+        }
+
         $stmt = \Framework\Core\Database::getConnection()->prepare(
             'SELECT * FROM users WHERE LOWER(login) = LOWER(:login) LIMIT 1'
         );
@@ -136,5 +170,30 @@ class User extends Model
         }
 
         return trim((string) ($user['name'] ?? ''));
+    }
+
+    private static function hasLoginColumn(): bool
+    {
+        if (static::$hasLoginColumnCache !== null) {
+            return static::$hasLoginColumnCache;
+        }
+
+        try {
+            $stmt = \Framework\Core\Database::getConnection()->prepare(
+                "SELECT 1
+                 FROM information_schema.columns
+                 WHERE table_schema = 'public'
+                   AND table_name = 'users'
+                   AND column_name = 'login'
+                 LIMIT 1"
+            );
+            $stmt->execute();
+
+            static::$hasLoginColumnCache = (bool) $stmt->fetchColumn();
+        } catch (\Throwable) {
+            static::$hasLoginColumnCache = false;
+        }
+
+        return static::$hasLoginColumnCache;
     }
 }

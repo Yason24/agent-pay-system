@@ -16,12 +16,12 @@
         <?php if (!empty($isAgentMode)): ?>
             <a class="btn" href="/cabinet">Назад в кабинет</a>
             <a class="btn btn-primary" href="/requests/create">Создать заявку</a>
-            <a class="btn" href="/my/balance">Баланс</a>
-            <a class="btn" href="/my/payments">Оплачено</a>
+            <a class="btn" href="/my/balance">История платежей</a>
+            <a class="btn" href="/my/payments">Мои начисления</a>
         <?php else: ?>
             <a class="btn" href="/agents">Назад к агентам</a>
-            <a class="btn" href="/payments?agent_user_id=<?= (int) $agentUserId ?>">Оплачено</a>
-            <a class="btn" href="/history?agent_user_id=<?= (int) $agentUserId ?>">Баланс</a>
+            <a class="btn" href="/payments?agent_user_id=<?= (int) $agentUserId ?>">Начисления</a>
+            <a class="btn" href="/history?agent_user_id=<?= (int) $agentUserId ?>">История</a>
         <?php endif; ?>
     </div>
 
