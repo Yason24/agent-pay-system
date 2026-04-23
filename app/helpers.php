@@ -50,3 +50,27 @@ function payment_status_label(string $status): string
     };
 }
 
+function formatDate(?string $value): string
+{
+    if (!$value) {
+        return '';
+    }
+    try {
+        return (new DateTime($value))->format('d.m.Y');
+    } catch (\Throwable $e) {
+        return '';
+    }
+}
+
+function formatDateTime(?string $value): string
+{
+    if (!$value) {
+        return '';
+    }
+    try {
+        return (new DateTime($value))->format('d.m.Y H:i');
+    } catch (\Throwable $e) {
+        return '';
+    }
+}
+

@@ -10,17 +10,22 @@ return [
         $db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50)");
         $db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(120)");
 
+        /** @noinspection SqlResolve */
         $db->exec("UPDATE users SET first_name = COALESCE(NULLIF(TRIM(name), ''), first_name)");
 
+        /** @noinspection SqlResolve */
         $db->exec("UPDATE users SET login = 'user' || id WHERE login IS NULL OR TRIM(login) = ''");
+        /** @noinspection SqlResolve */
         $db->exec("ALTER TABLE users ALTER COLUMN login SET NOT NULL");
 
         $db->exec('DROP INDEX IF EXISTS users_login_unique_idx');
+        /** @noinspection SqlResolve */
         $db->exec('CREATE UNIQUE INDEX users_login_unique_idx ON users (LOWER(login))');
     },
 
     'down' => function (PDO $db) {
         $db->exec('DROP INDEX IF EXISTS users_login_unique_idx');
+        /** @noinspection SqlResolve */
         $db->exec('ALTER TABLE users ALTER COLUMN login DROP NOT NULL');
         $db->exec('ALTER TABLE users DROP COLUMN IF EXISTS city');
         $db->exec('ALTER TABLE users DROP COLUMN IF EXISTS phone');
@@ -31,4 +36,5 @@ return [
     },
 
 ];
+
 

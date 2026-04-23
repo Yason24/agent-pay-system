@@ -153,15 +153,24 @@ class RequestController extends Controller
 
         $amount = (float) str_replace(',', '.', $amountRaw);
 
-        try {
-            AgentRequest::createForAgentUser((int) $user->id, [
-                'requested_amount' => $amount,
-                'payment_link'     => $paymentLink,
-                'comment'          => $comment,
-                'status'           => 'new',
-            ]);
-        } catch (\Throwable) {
+        $created = AgentRequest::createForAgentUser((int) $user->id, [
+            'requested_amount' => $amount,
+            'amount'           => $amount,
+            'payment_link'     => $paymentLink,
+            'link'             => $paymentLink,
+            'comment'          => $comment,
+            'topic'            => 'Payment request',
+            'status'           => 'new',
+        ]);
+
+        if (!$created) {
+            $source = AgentRequest::lastCreateError();
             $_SESSION['requests_error'] = 'Не удалось сохранить заявку. Попробуйте снова.';
+
+            if ($source !== null && $source !== '') {
+                $_SESSION['requests_error'] .= ' Причина: ' . $source;
+            }
+
             $_SESSION['requests_old']   = [
                 'amount'       => $amountRaw,
                 'payment_link' => $paymentLink,
@@ -174,6 +183,106 @@ class RequestController extends Controller
         $_SESSION['requests_success'] = 'Заявка успешно создана.';
 
         return redirect('/my/requests');
+    }
+
+    // -------------------------------------------------------------------------
+    // Staff: POST /requests/take
+    // -------------------------------------------------------------------------
+
+    public function take(Request $request, AuthService $auth): Response
+    {
+        $user = $auth->user();
+
+        if ($user === null) {
+            return redirect('/login');
+        }
+
+        if (!$auth->hasAnyRole(['dispatcher', 'accountant', 'admin'])) {
+            return new Response('Forbidden', 403);
+        }
+
+        $requestId = (int) $request->input('request_id', 0);
+        $agentUserId = (int) $request->input('agent_user_id', 0);
+        $backUrl = $agentUserId > 0 ? '/requests?agent_user_id=' . $agentUserId : '/agents';
+
+        if ($requestId <= 0) {
+            return new Response('request_id is required', 400);
+        }
+
+        $target = AgentRequest::find($requestId);
+
+        if ($target === null) {
+            return new Response('Request not found', 404);
+        }
+
+        if ((string) $target->status !== 'new') {
+            return new Response('Request is already taken', 400);
+        }
+
+        $taken = AgentRequest::takeInProgress(
+            $requestId,
+            (int) $user->id,
+            (string) ($user->name ?? '')
+        );
+
+        if (!$taken) {
+            $_SESSION['requests_error'] = AgentRequest::lastTakeError() ?? 'Не удалось взять заявку в работу.';
+
+            return redirect($backUrl);
+        }
+
+        $_SESSION['requests_success'] = 'Заявка взята в работу.';
+
+        return redirect($backUrl);
+    }
+
+    // -------------------------------------------------------------------------
+    // Staff: POST /requests/complete
+    // -------------------------------------------------------------------------
+
+    public function complete(Request $request, AuthService $auth): Response
+    {
+        $user = $auth->user();
+
+        if ($user === null) {
+            return redirect('/login');
+        }
+
+        if (!$auth->hasAnyRole(['dispatcher', 'accountant', 'admin'])) {
+            return new Response('Forbidden', 403);
+        }
+
+        $requestId = (int) $request->input('request_id', 0);
+
+        if ($requestId <= 0) {
+            return new Response('request_id is required', 400);
+        }
+
+        $target = AgentRequest::find($requestId);
+
+        if ($target === null) {
+            return new Response('Request not found', 404);
+        }
+
+        if ((string) $target->status !== 'in_progress') {
+            return new Response('Request is not in progress', 400);
+        }
+
+        $target->status = 'paid';
+        $target->updated_at = date('Y-m-d H:i:s');
+
+        if (property_exists($target, 'processed_by_user_id')) {
+            $target->processed_by_user_id = (int) $user->id;
+        }
+
+        $target->save();
+
+        $_SESSION['requests_success'] = 'Заявка исполнена.';
+
+        $agentUserId = (int) $request->input('agent_user_id', 0);
+        $backUrl = $agentUserId > 0 ? '/requests?agent_user_id=' . $agentUserId : '/agents';
+
+        return redirect($backUrl);
     }
 
     // -------------------------------------------------------------------------

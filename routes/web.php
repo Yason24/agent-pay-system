@@ -39,6 +39,8 @@ Route::middleware('auth')->group(function ($router) {
 
         $router->get('/history', [HistoryController::class, 'index']);
         $router->get('/requests', [RequestController::class, 'index']);
+        $router->post('/requests/take', [RequestController::class, 'take']);
+        $router->post('/requests/complete', [RequestController::class, 'complete']);
 
         $router->get('/payments', [PaymentController::class, 'index']);
         $router->get('/payments/create', [PaymentController::class, 'create']);
@@ -52,6 +54,7 @@ Route::middleware('auth')->group(function ($router) {
     $router->middleware('role:agent')->group(function ($router) {
         $router->get('/cabinet', [AgentController::class, 'index']);
         $router->get('/my/balance', [HistoryController::class, 'myIndex']);
+        $router->get('/my/history', [HistoryController::class, 'myIndex']);
         $router->get('/my/requests', [RequestController::class, 'myIndex']);
         $router->get('/my/payments', [PaymentController::class, 'myIndex']);
         $router->get('/requests/create', [RequestController::class, 'create']);

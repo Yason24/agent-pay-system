@@ -27,35 +27,25 @@ class AgentController extends Controller
             return redirect('/dashboard');
         }
 
+        $emptySummary = [
+            'total_amount'   => 0.0,
+            'paid_amount'    => 0.0,
+            'pending_amount' => 0.0,
+            'failed_amount'  => 0.0,
+            'payments_count' => 0,
+        ];
+
         try {
             $paymentSummary = Payment::summaryForAgentUser((int) $user->id);
-            $latestPayments = Payment::latestForAgentUser((int) $user->id, 5);
         } catch (\Throwable) {
-            $_SESSION['app_error'] = 'Раздел платежей временно недоступен. Выполните миграции базы данных.';
-
-            return $this->view('agents.show', [
-                'title' => 'Кабинет агента',
-                'agent' => $user,
-                'paymentSummary' => [
-                    'total_amount' => 0.0,
-                    'paid_amount' => 0.0,
-                    'pending_amount' => 0.0,
-                    'failed_amount' => 0.0,
-                    'payments_count' => 0,
-                ],
-                'latestPayments' => new \Framework\Core\Collection([]),
-            ]);
+            $paymentSummary = $emptySummary;
         }
 
-        return $this->view('agents.show', [
-            'title' => 'Кабинет агента',
-            'agent' => $user,
+        return $this->view('cabinet.index', [
+            'title'          => 'Кабинет агента',
+            'agent'          => $user,
             'paymentSummary' => $paymentSummary,
-            'latestPayments' => $latestPayments,
         ]);
     }
-
 }
-
-
 

@@ -8,16 +8,16 @@
 
 @section('content')
 <section>
-    <h1>Редактирование платежа</h1>
+    <h1>Редактирование начисления</h1>
     <p class="muted">Агент: <?= htmlspecialchars((string) $agent->name, ENT_QUOTES, 'UTF-8') ?></p>
 
     <div class="page-actions">
         <?php if ($isAdminMode): ?>
             <a class="btn" href="/agents">Назад к агентам</a>
-            <a class="btn" href="/payments?agent_user_id=<?= (int) $agentUserId ?>">Назад к платежам</a>
-            <a class="btn" href="/payments/show?id=<?= (int) $payment->id ?>&agent_user_id=<?= (int) $agentUserId ?>">Карточка платежа</a>
+            <a class="btn" href="/payments?agent_user_id=<?= (int) $agentUserId ?>">Назад к начислениям</a>
+            <a class="btn" href="/payments/show?id=<?= (int) $payment->id ?>&agent_user_id=<?= (int) $agentUserId ?>">Карточка начисления</a>
         <?php else: ?>
-            <a class="btn" href="/my/payments">Назад к платежам</a>
+            <a class="btn" href="/my/payments">Назад к начислениям</a>
         <?php endif; ?>
     </div>
 
@@ -40,11 +40,6 @@
             <p class="form-error"><?= htmlspecialchars($errors['amount'], ENT_QUOTES, 'UTF-8') ?></p>
         <?php endif; ?>
 
-        <label class="form-label" for="payment_date">Дата платежа</label>
-        <input class="form-input" id="payment_date" type="date" name="payment_date" value="<?= htmlspecialchars((string) ($old['payment_date'] ?? $payment->payment_date), ENT_QUOTES, 'UTF-8') ?>" required>
-        <?php if (!empty($errors['payment_date'])): ?>
-            <p class="form-error"><?= htmlspecialchars($errors['payment_date'], ENT_QUOTES, 'UTF-8') ?></p>
-        <?php endif; ?>
 
         <label class="form-label" for="payment_status">Статус</label>
         <select class="form-input" id="payment_status" name="status" required>

@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use Framework\Core\Collection;
+use Framework\Core\Database;
 use Framework\Core\Model;
 
 class Payment extends Model
 {
     protected static string $table = 'payments';
+    private static ?array $columnsCache = null;
 
     public static array $sortable = ['id', 'payment_date', 'amount', 'status'];
 
@@ -125,6 +127,128 @@ class Payment extends Model
         }
 
         return static::findForAgentUser($paymentId, $currentUserId);
+    }
+
+    public static function historyRowsForAgentUser(int $agentUserId): array
+    {
+        if ($agentUserId <= 0) {
+            return [];
+        }
+
+        try {
+            $db = Database::getConnection();
+            $columns = self::columns();
+
+            if (in_array('created_at', $columns, true)) {
+                $orderDateColumn = 'p.created_at';
+                $dateExpr = 'p.created_at';
+            } elseif (in_array('payment_date', $columns, true)) {
+                $orderDateColumn = 'p.payment_date';
+                $dateExpr = "(p.payment_date::text || ' 00:00:00')";
+            } else {
+                $orderDateColumn = 'p.id';
+                $dateExpr = "''";
+            }
+
+            $typeExpr = in_array('type', $columns, true) ? 'p.type' : "'accrual'";
+
+            if (in_array('comment', $columns, true)) {
+                $commentExpr = 'p.comment';
+            } elseif (in_array('note', $columns, true)) {
+                $commentExpr = 'p.note';
+            } else {
+                $commentExpr = "''";
+            }
+
+            $statusExpr = in_array('status', $columns, true) ? 'p.status' : "'completed'";
+            $relatedRequestExpr = in_array('related_request_id', $columns, true)
+                ? 'p.related_request_id'
+                : 'NULL';
+
+            $actorNameExpr = "'—'";
+
+            if (in_array('created_by_name', $columns, true)) {
+                $actorNameExpr = "COALESCE(NULLIF(p.created_by_name, ''), '—')";
+            } elseif (in_array('actor_name', $columns, true)) {
+                $actorNameExpr = "COALESCE(NULLIF(p.actor_name, ''), '—')";
+            } elseif (in_array('created_by_user_id', $columns, true)) {
+                $actorNameExpr = "COALESCE(NULLIF(u.name, ''), '—')";
+            }
+
+            $join = in_array('created_by_user_id', $columns, true)
+                ? ' LEFT JOIN users u ON u.id = p.created_by_user_id '
+                : '';
+
+            $sql = "SELECT
+                    p.id,
+                    {$dateExpr} AS operation_date,
+                    {$typeExpr} AS operation_type,
+                    p.amount,
+                    {$statusExpr} AS operation_status,
+                    {$actorNameExpr} AS actor_name,
+                    {$commentExpr} AS operation_comment,
+                    {$relatedRequestExpr} AS related_request_id
+                FROM payments p
+                {$join}
+                WHERE p.agent_user_id = :agent_user_id
+                ORDER BY {$orderDateColumn} DESC, p.id DESC";
+
+            $stmt = $db->prepare($sql);
+            $stmt->execute(['agent_user_id' => $agentUserId]);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\Throwable) {
+            return [];
+        }
+
+        $result = [];
+
+        foreach ($rows as $row) {
+            $typeRaw = (string) ($row['operation_type'] ?? 'accrual');
+
+            $type = match ($typeRaw) {
+                'adjustment' => 'Корректировка',
+                'payout' => 'Выплата',
+                default => 'Начисление',
+            };
+
+            $actorName = trim((string) ($row['actor_name'] ?? ''));
+            $comment = trim((string) ($row['operation_comment'] ?? ''));
+
+            $result[] = [
+                'date' => (string) ($row['operation_date'] ?? ''),
+                'type' => $type,
+                'amount' => (float) ($row['amount'] ?? 0),
+                'status' => (string) ($row['operation_status'] ?? 'completed'),
+                'actor_name' => $actorName !== '' ? $actorName : '—',
+                'comment' => $comment !== '' ? $comment : '—',
+                'source' => 'payment',
+                'source_id' => (int) ($row['id'] ?? 0),
+                'related_request_id' => isset($row['related_request_id']) ? (int) $row['related_request_id'] : null,
+            ];
+        }
+
+        return $result;
+    }
+
+    private static function columns(): array
+    {
+        if (is_array(static::$columnsCache)) {
+            return static::$columnsCache;
+        }
+
+        try {
+            $stmt = Database::getConnection()->query(
+                "SELECT column_name
+                 FROM information_schema.columns
+                 WHERE table_schema = 'public' AND table_name = 'payments'"
+            );
+            $rows = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+            static::$columnsCache = array_map('strval', is_array($rows) ? $rows : []);
+        } catch (\Throwable) {
+            static::$columnsCache = [];
+        }
+
+        return static::$columnsCache;
     }
 }
 

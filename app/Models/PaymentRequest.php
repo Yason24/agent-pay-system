@@ -15,7 +15,7 @@ class PaymentRequest extends Model
             return [];
         }
 
-        $tableName = static::resolveTableName();
+        $tableName = self::resolveTableName();
 
         if ($tableName === null) {
             return [];
@@ -23,15 +23,23 @@ class PaymentRequest extends Model
 
         try {
             $db = Database::getConnection();
-            $columns = static::columns($tableName);
+            $columns = self::columns($tableName);
 
-            $dateExpr = in_array('updated_at', $columns, true)
-                ? 'r.updated_at'
-                : (in_array('created_at', $columns, true) ? 'r.created_at' : "''");
+            if (in_array('updated_at', $columns, true)) {
+                $dateExpr = 'r.updated_at';
+            } elseif (in_array('created_at', $columns, true)) {
+                $dateExpr = 'r.created_at';
+            } else {
+                $dateExpr = "''";
+            }
 
-            $amountExpr = in_array('requested_amount', $columns, true)
-                ? 'r.requested_amount'
-                : (in_array('amount', $columns, true) ? 'r.amount' : '0');
+            if (in_array('requested_amount', $columns, true)) {
+                $amountExpr = 'r.requested_amount';
+            } elseif (in_array('amount', $columns, true)) {
+                $amountExpr = 'r.amount';
+            } else {
+                $amountExpr = '0';
+            }
 
             $commentExpr = in_array('comment', $columns, true) ? 'r.comment' : "''";
 
@@ -124,7 +132,7 @@ class PaymentRequest extends Model
                 'comment' => $comment !== '' ? $comment : '—',
                 'source' => 'request',
                 'source_id' => (int) ($row['id'] ?? 0),
-+                'related_request_id' => (int) ($row['id'] ?? 0),
+                'related_request_id' => (int) ($row['id'] ?? 0),
             ];
         }
 
@@ -157,8 +165,7 @@ class PaymentRequest extends Model
     private static function columns(string $tableName): array
     {
         try {
-            $db = Database::getConnection();
-            $stmt = $db->prepare(
+            $stmt = Database::getConnection()->prepare(
                 "SELECT column_name
                  FROM information_schema.columns
                  WHERE table_schema = 'public' AND table_name = :table_name"
@@ -173,4 +180,6 @@ class PaymentRequest extends Model
         }
     }
 }
+
+
 

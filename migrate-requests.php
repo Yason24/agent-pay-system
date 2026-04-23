@@ -46,6 +46,7 @@ try {
                 payment_link     TEXT NOT NULL DEFAULT '',
                 comment          TEXT NOT NULL DEFAULT '',
                 status           VARCHAR(32) NOT NULL DEFAULT 'new',
+                taken_by_user_id INTEGER NULL REFERENCES users(id) ON DELETE SET NULL,
                 taken_by_name    VARCHAR(255) NOT NULL DEFAULT '',
                 created_at       TIMESTAMP NOT NULL DEFAULT NOW(),
                 updated_at       TIMESTAMP NOT NULL DEFAULT NOW()
@@ -54,6 +55,7 @@ try {
 
         $db->exec("CREATE INDEX idx_requests_agent_user_id ON requests(agent_user_id)");
         $db->exec("CREATE INDEX idx_requests_status ON requests(status)");
+        $db->exec("CREATE INDEX idx_requests_taken_by_user_id ON requests(taken_by_user_id)");
 
         echo "✓ Таблица requests создана успешно.\n";
 
@@ -75,4 +77,5 @@ try {
     echo "✗ Ошибка: " . $e->getMessage() . "\n";
     exit(1);
 }
+
 

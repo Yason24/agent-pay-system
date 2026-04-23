@@ -7,7 +7,7 @@
 
 @section('content')
 <section>
-    <h1>Создать платеж</h1>
+    <h1>Создать начисление</h1>
     <p class="muted">
         Агент:
         <strong><?= htmlspecialchars((string) $agent->name, ENT_QUOTES, 'UTF-8') ?></strong>
@@ -17,9 +17,9 @@
     <div class="page-actions">
         <?php if ($isAdminMode): ?>
             <a class="btn" href="/agents">Назад к агентам</a>
-            <a class="btn" href="/payments?agent_user_id=<?= (int) $agentUserId ?>">Назад к платежам</a>
+            <a class="btn" href="/payments?agent_user_id=<?= (int) $agentUserId ?>">Назад к начислениям</a>
         <?php else: ?>
-            <a class="btn" href="/my/payments">Назад к платежам</a>
+            <a class="btn" href="/my/payments">Назад к начислениям</a>
         <?php endif; ?>
     </div>
 
@@ -48,19 +48,6 @@
             <?php endif; ?>
         </div>
 
-        <div class="form-group">
-            <label for="payment_date">Дата платежа</label>
-            <input
-                id="payment_date"
-                type="date"
-                name="payment_date"
-                value="<?= htmlspecialchars((string) ($old['payment_date'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                required
-            >
-            <?php if (!empty($errors['payment_date'])): ?>
-                <p class="field-error"><?= htmlspecialchars((string) $errors['payment_date'], ENT_QUOTES, 'UTF-8') ?></p>
-            <?php endif; ?>
-        </div>
 
         <div class="form-group">
             <label for="status">Статус</label>
